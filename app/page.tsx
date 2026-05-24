@@ -9,7 +9,7 @@ import FAQSection from "@/components/FAQSection";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
-export default function Home() {
+export default function Home({ searchParams }: { searchParams: { ref?: string; pago?: string } }) {
   return (
     <main>
       <Navbar />
@@ -17,11 +17,16 @@ export default function Home() {
       <StatsBar />
       <TestimonialsSection />
       <ServicesSection />
-      <PricingSection />
-      <CalculatorSection />
+      <PricingSection ref={searchParams.ref} />
+      <CalculatorSection ref={searchParams.ref} />
       <FAQSection />
       <FinalCTA />
       <Footer />
+      {searchParams.pago === "ok" && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-[#111] border border-green-400/30 text-green-400 px-6 py-3 rounded-xl text-sm font-semibold shadow-xl">
+          ✅ ¡Pago completado! Recibirás un email de confirmación en breve.
+        </div>
+      )}
     </main>
   );
 }
