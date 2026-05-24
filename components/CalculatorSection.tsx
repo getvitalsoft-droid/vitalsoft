@@ -7,9 +7,9 @@ import { calcPrice, savings, buildStripeUrl } from "@/lib/stripe";
 const PLAN_ANCHORS: Record<number, string> = { 10: "Starter", 20: "Growth", 30: "Scale", 40: "Pro" };
 const PLAN_KEYS: Record<number, string> = { 10: "starter", 20: "growth", 30: "scale", 40: "pro" };
 
-interface Props { ref?: string }
+interface Props { refCode?: string }
 
-export default function CalculatorSection({ ref: refCode }: Props) {
+export default function CalculatorSection({ refCode }: Props) {
   const [videos, setVideos] = useState(10);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,7 +20,6 @@ export default function CalculatorSection({ ref: refCode }: Props) {
   const [submitted, setSubmitted] = useState(false);
   const [urlRef, setUrlRef] = useState(refCode || "");
 
-  // Capturar ?ref= de la URL en el cliente también
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const r = params.get("ref");
@@ -39,6 +38,7 @@ export default function CalculatorSection({ ref: refCode }: Props) {
     setLoading(true);
 
     try {
+      // Guardar lead siempre
       await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -46,15 +46,18 @@ export default function CalculatorSection({ ref: refCode }: Props) {
       });
 
       if (planKey) {
-        // Plan fijo — usar Payment Link directo con ref en client_reference_id
-        const base = buildStripeUrl(planKey as any, { email, videos });
-        const url = urlRef ? `${base}&client_reference_id=ref_${urlRef}` : base;
+        // Plan fijo (10, 20, 30, 40) → Payment Link directo
+        const base = buildStripeUrl(planKey as any);
+        const sep = base.includes("?") ? "&" : "?";
+        const url = urlRef
+          ? `${base}${sep}prefilled_email=${encodeURIComponent(email)}&client_reference_id=ref_${urlRef}`
+          : `${base}${sep}prefilled_email=${encodeURIComponent(email)}`;
         setSubmitted(true);
-        setTimeout(() => window.open(url, "_blank"), 600);
+        setTimeout(() => { window.open(url, "_blank"); }, 600);
         return;
       }
 
-      // Plan custom — sesión dinámica
+      // Plan custom (cualquier otro número) → Stripe Checkout Session dinámica
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -87,14 +90,13 @@ export default function CalculatorSection({ ref: refCode }: Props) {
 
         <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="glass rounded-2xl p-8 md:p-10 max-w-2xl mx-auto">
 
-          {/* Ref badge */}
           {urlRef && (
-            <div className="mb-4 bg-[rgba(232,255,71,0.06)] border border-[rgba(232,255,71,0.15)] rounded-lg px-4 py-2 text-xs text-accent flex items-center gap-2">
-              <span>🤝</span> Referido por agente: <strong>{urlRef}</strong>
+            <div className="mb-5 bg-[rgba(232,255,71,0.06)] border border-[rgba(232,255,71,0.2)] rounded-lg px-4 py-2.5 text-xs text-accent flex items-center gap-2">
+              🤝 Referido por agente: <strong>{urlRef}</strong>
             </div>
           )}
 
-          {/* Anclas de planes */}
+          {/* Anclas */}
           <div className="grid grid-cols-4 gap-2 mb-6">
             {[{v:10,n:"Starter",p:150},{v:20,n:"Growth",p:250},{v:30,n:"Scale",p:350},{v:40,n:"Pro",p:450}].map((plan) => (
               <button key={plan.v} onClick={() => setVideos(plan.v)}
@@ -120,9 +122,9 @@ export default function CalculatorSection({ ref: refCode }: Props) {
             <div className="font-display font-extrabold text-5xl text-accent leading-none mb-2">€{price.toLocaleString("es-ES")}</div>
             <div className="text-white/35 text-sm">€{perVid} por vídeo · facturación mensual</div>
             <div className="flex items-center justify-center gap-2 flex-wrap mt-3">
-              {saved > 0 && <span className="inline-block bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">Ahorras €{saved} vs tarifa individual</span>}
-              {planMatch && <span className="inline-block bg-[rgba(232,255,71,0.12)] border border-[rgba(232,255,71,0.25)] text-accent font-display text-xs font-bold px-3 py-1 rounded-full">= Plan {planMatch}</span>}
-              {!planMatch && <span className="inline-block bg-white/[0.05] border border-white/10 text-white/40 text-xs px-3 py-1 rounded-full">Plan personalizado</span>}
+              {saved > 0 && <span className="bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">Ahorras €{saved} vs tarifa individual</span>}
+              {planMatch && <span className="bg-[rgba(232,255,71,0.12)] border border-[rgba(232,255,71,0.25)] text-accent font-display text-xs font-bold px-3 py-1 rounded-full">= Plan {planMatch}</span>}
+              {!planMatch && <span className="bg-white/[0.05] border border-white/10 text-white/40 text-xs px-3 py-1 rounded-full">Plan personalizado · precio exacto</span>}
             </div>
           </div>
 

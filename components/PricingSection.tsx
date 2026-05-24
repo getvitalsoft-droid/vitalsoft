@@ -3,9 +3,9 @@ import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import { PRICING_PLANS, buildStripeUrl } from "@/lib/stripe";
 
-interface Props { ref?: string }
+interface Props { refCode?: string }
 
-export default function PricingSection({ ref: refCode }: Props) {
+export default function PricingSection({ refCode }: Props) {
   const handlePlan = (planKey: string) => {
     const base = buildStripeUrl(planKey as any);
     const url = refCode ? `${base}?client_reference_id=ref_${refCode}` : base;

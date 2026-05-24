@@ -9,7 +9,9 @@ import FAQSection from "@/components/FAQSection";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
+// "ref" es palabra reservada en React — usamos "refCode" internamente
 export default function Home({ searchParams }: { searchParams: { ref?: string; pago?: string } }) {
+  const refCode = searchParams.ref;
   return (
     <main>
       <Navbar />
@@ -17,8 +19,8 @@ export default function Home({ searchParams }: { searchParams: { ref?: string; p
       <StatsBar />
       <TestimonialsSection />
       <ServicesSection />
-      <PricingSection ref={searchParams.ref} />
-      <CalculatorSection ref={searchParams.ref} />
+      <PricingSection refCode={refCode} />
+      <CalculatorSection refCode={refCode} />
       <FAQSection />
       <FinalCTA />
       <Footer />
