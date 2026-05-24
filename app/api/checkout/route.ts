@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { buscarAgente } from "@/lib/agentes";
+import { supabase } from "@/lib/supabase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 const CUSTOM_PRODUCT_ID = "prod_UZb2VZCsFBQfmJ";
@@ -12,10 +12,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Faltan datos requeridos." }, { status: 400 });
     }
 
-    // Buscar agente referido
-    const agente = ref ? buscarAgente(ref) : null;
+    // Buscar agente en Supabase
+    let agenteNombre = "";
+    if (ref) {
+      const { data: agente } = await supabase.from("agentes").select("nombre,codigo").eq("codigo", ref.toUpperCase()).single();
+      if (agente) agenteNombre = agente.nombre;
+    }
 
-    // Crear precio dinámico
+    // Crear precio dinámico en Stripe
     const stripePrice = await stripe.prices.create({
       currency: "eur",
       product: CUSTOM_PRODUCT_ID,
@@ -24,14 +28,13 @@ export async function POST(req: NextRequest) {
       metadata: { videos: String(videos) },
     });
 
-    // Crear sesión de Stripe Checkout
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       line_items: [{ price: stripePrice.id, quantity: 1 }],
       customer_email: email,
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?pago=ok&videos=${videos}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#calculadora`,
-      client_reference_id: agente ? `ref_${agente.codigo}` : `custom_${videos}v`,
+      client_reference_id: ref ? `ref_${ref}` : `custom_${videos}v`,
       metadata: {
         nombre: name || "",
         email,
@@ -39,12 +42,11 @@ export async function POST(req: NextRequest) {
         videos: String(videos),
         precio: String(price),
         notas: notes || "",
-        agente_codigo: agente?.codigo || "",
-        agente_nombre: agente?.nombre || "",
+        agente_codigo: ref || "",
+        agente_nombre: agenteNombre,
       },
     });
 
-    console.log("[VitalSoft] Checkout creado:", { email, videos, price, agente: agente?.codigo });
     return NextResponse.json({ url: session.url });
   } catch (err) {
     console.error("[VitalSoft] Error checkout:", err);

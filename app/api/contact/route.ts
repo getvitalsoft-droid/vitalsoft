@@ -1,91 +1,31 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// VitalSoft — Contact Form API Route
-// POST /api/contact
-//
-// Receives form submissions from the pricing calculator.
-// Stores to console (mock) — replace with DB / email / CRM as needed.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { NextRequest, NextResponse } from "next/server";
-
-export interface ContactPayload {
-  name: string;
-  email: string;
-  social?: string;
-  source?: string;
-  notes?: string;
-  videos: number;
-  price: number;
-}
-
-// Simple in-memory store for demo purposes.
-// Replace with: Supabase, Prisma, Airtable, Notion API, etc.
-const submissions: ContactPayload[] = [];
+import { supabase } from "@/lib/supabase";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as Partial<ContactPayload>;
+    const body = await req.json();
+    const { name, email, social, source, notes, videos, price, ref } = body;
 
-    // ── Validation ──────────────────────────────────────────────────────────
-    if (!body.name?.trim()) {
-      return NextResponse.json({ error: "Name is required." }, { status: 400 });
-    }
-    if (!body.email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-      return NextResponse.json(
-        { error: "Valid email is required." },
-        { status: 400 }
-      );
-    }
-    if (!body.videos || body.videos < 1 || body.videos > 100) {
-      return NextResponse.json(
-        { error: "Videos must be between 1 and 100." },
-        { status: 400 }
-      );
+    if (!email?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
+      return NextResponse.json({ error: "Email inválido." }, { status: 400 });
     }
 
-    const submission: ContactPayload = {
-      name: body.name.trim(),
-      email: body.email.trim().toLowerCase(),
-      social: body.social?.trim() || undefined,
-      source: body.source?.trim() || undefined,
-      notes: body.notes?.trim() || undefined,
-      videos: body.videos,
-      price: body.price ?? 0,
-    };
+    const { error } = await supabase.from("leads").insert({
+      nombre: name?.trim() || null,
+      email: email.trim().toLowerCase(),
+      social: social?.trim() || null,
+      source: source?.trim() || null,
+      notas: notes?.trim() || null,
+      videos: Number(videos),
+      precio: Number(price),
+      agente_codigo: ref || null,
+    });
 
-    // ── Store (mock) ─────────────────────────────────────────────────────────
-    // TODO: Replace with real storage:
-    //   - Supabase: await supabase.from('leads').insert(submission)
-    //   - Prisma:   await prisma.lead.create({ data: submission })
-    //   - Resend:   await resend.emails.send({ to: NOTIFICATION_EMAIL, ... })
-    submissions.push(submission);
-    console.log("[VitalSoft] New lead:", submission);
+    if (error) console.error("[VitalSoft] Error guardando lead:", error.message);
+    else console.log("[VitalSoft] Lead guardado:", { email, videos, price, ref });
 
-    // ── Optional: Send notification email ───────────────────────────────────
-    // if (process.env.RESEND_API_KEY) {
-    //   await resend.emails.send({
-    //     from: "VitalSoft <no-reply@vitalsoft.com>",
-    //     to: process.env.NOTIFICATION_EMAIL!,
-    //     subject: `New lead: ${submission.name} — ${submission.videos} videos/month`,
-    //     html: `<p>${JSON.stringify(submission, null, 2)}</p>`,
-    //   });
-    // }
-
-    return NextResponse.json(
-      { success: true, message: "Submission received." },
-      { status: 200 }
-    );
-  } catch (err) {
-    console.error("[VitalSoft] Contact route error:", err);
-    return NextResponse.json(
-      { error: "Internal server error." },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: true });
+  } catch {
+    return NextResponse.json({ error: "Error interno." }, { status: 500 });
   }
-}
-
-// Optional: GET to retrieve submissions (protect with auth in production!)
-export async function GET() {
-  // TODO: Add authentication guard before deploying
-  return NextResponse.json({ submissions, count: submissions.length });
 }
