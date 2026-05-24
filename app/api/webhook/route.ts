@@ -1,14 +1,12 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// VitalSoft — Stripe Webhook
-// POST /api/webhook
-// Escucha pagos completados y registra ventas + envía emails
-// ─────────────────────────────────────────────────────────────────────────────
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
 import { enviarEmailAdmin, enviarEmailAgente } from "@/lib/emails";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
+
+// Next.js 14 App Router — deshabilitar body parsing para webhooks Stripe
+export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -22,7 +20,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Webhook signature invalid" }, { status: 400 });
   }
 
-  // Solo procesamos el primer pago de una suscripción
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const meta = session.metadata || {};
@@ -36,7 +33,7 @@ export async function POST(req: NextRequest) {
 
     console.log("[Webhook] Pago completado:", { clienteEmail, agenteCodigo, importe, plan });
 
-    // Buscar agente en Supabase
+    // Buscar agente
     let agente = null;
     if (agenteCodigo) {
       const { data } = await supabase
@@ -47,11 +44,10 @@ export async function POST(req: NextRequest) {
       agente = data;
     }
 
-    // Calcular comisión (20% del primer pago)
     const comision = agente ? Math.round(importe * 0.20 * 100) / 100 : 0;
 
-    // Registrar venta en Supabase
-    const { error: ventaError } = await supabase.from("ventas").insert({
+    // Guardar venta en Supabase
+    await supabase.from("ventas").insert({
       agente_id: agente?.id || null,
       agente_codigo: agenteCodigo || null,
       cliente_email: clienteEmail,
@@ -61,19 +57,14 @@ export async function POST(req: NextRequest) {
       stripe_session_id: session.id,
     });
 
-    if (ventaError) console.error("[Webhook] Error guardando venta:", ventaError.message);
-
     // Enviar emails
     try {
       await enviarEmailAdmin({ clienteEmail, plan, importe, agente, comision });
       if (agente) await enviarEmailAgente({ agente, clienteEmail, plan, importe, comision });
     } catch (emailErr) {
-      console.error("[Webhook] Error enviando emails:", emailErr);
+      console.error("[Webhook] Error emails:", emailErr);
     }
   }
 
   return NextResponse.json({ received: true });
 }
-
-// Importante: deshabilitar bodyParser para webhooks de Stripe
-export const config = { api: { bodyParser: false } };
