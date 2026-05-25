@@ -14,7 +14,7 @@ const OWNERSHIP_DIAS = 30;
 const ONBOARDING_URL = `${process.env.NEXT_PUBLIC_SITE_URL}/onboarding`;
 
 async function log(accion: string, detalle: string, tipo = "evento") {
-  await supabase.from("activity_logs").insert({ admin: "stripe_webhook", accion, objetivo_tipo: tipo, detalle }).catch(console.error);
+  await supabase.from("activity_logs").insert({ admin: "stripe_webhook", accion, objetivo_tipo: tipo, detalle });
 }
 
 async function logEmail(destinatario: string, tipo_email: string, evento: string, resend_id?: string, error?: string) {
@@ -22,7 +22,7 @@ async function logEmail(destinatario: string, tipo_email: string, evento: string
     destinatario, tipo_email, evento,
     estado: error ? "fallido" : "enviado",
     resend_id, error,
-  }).catch(console.error);
+  });
 }
 
 async function sendEmail(fn: () => Promise<any>, destinatario: string, tipo: string, evento: string) {

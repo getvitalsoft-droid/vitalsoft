@@ -12,7 +12,9 @@ function buildLinks(codigo: string) {
 }
 
 async function log(accion: string, objetivo_id?: string, detalle?: string, tipo = "agente") {
-  await supabase.from("activity_logs").insert({ admin: "system", accion, objetivo_tipo: tipo, objetivo_id, detalle }).catch(console.error);
+  try {
+    await supabase.from("activity_logs").insert({ admin: "system", accion, objetivo_tipo: tipo, objetivo_id, detalle });
+  } catch (e) { console.error("Log error:", e); }
 }
 
 export async function GET(req: NextRequest) {
@@ -24,12 +26,9 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  // Rate limit por IP
   const ip = getIP(req);
-  const { allowed, remaining } = rateLimit(`agentes:${ip}`, LIMITS.agentesRegistro);
-  if (!allowed) {
-    return NextResponse.json({ error: "Demasiados intentos. Espera un momento antes de volver a intentarlo." }, { status: 429 });
-  }
+  const { allowed } = rateLimit(`agentes:${ip}`, LIMITS.agentesRegistro);
+  if (!allowed) return NextResponse.json({ error: "Demasiados intentos. Espera un momento." }, { status: 429 });
 
   try {
     const { nombre, email } = await req.json();
@@ -50,7 +49,7 @@ export async function POST(req: NextRequest) {
     if (err) return NextResponse.json({ error: err.message }, { status: 500 });
 
     await log("solicitud_agente", nuevo.id, `${nombre} (${emailLower}) IP:${ip}`);
-    await enviarEmailAdminNuevoPendiente({ nombre: nuevo.nombre, email: nuevo.email }).catch(console.error);
+    try { await enviarEmailAdminNuevoPendiente({ nombre: nuevo.nombre, email: nuevo.email }); } catch (e) { console.error(e); }
 
     return NextResponse.json({ agente: { ...nuevo, ventas: [] }, aprobado: false, pendiente: true, mensaje: "Solicitud recibida. Te avisaremos en 24–48h.", links: null }, { status: 201 });
   } catch { return NextResponse.json({ error: "Error interno" }, { status: 500 }); }
@@ -66,14 +65,14 @@ export async function PATCH(req: NextRequest) {
     const { data, error } = await supabase.from("agentes").update({ aprobado: true, bloqueado: false, aprobado_at: new Date().toISOString(), notas_admin }).eq("id", agente_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await log("aprobar_agente", agente_id, notas_admin);
-    await enviarEmailBienvenidaAgente({ agente: data, links: buildLinks(data.codigo) }).catch(console.error);
+    try { await enviarEmailBienvenidaAgente({ agente: data, links: buildLinks(data.codigo) }); } catch (e) { console.error(e); }
     return NextResponse.json({ success: true, agente: data });
   }
   if (accion === "bloquear") {
     const { data, error } = await supabase.from("agentes").update({ aprobado: false, bloqueado: true, bloqueado_at: new Date().toISOString(), motivo_bloqueo, notas_admin }).eq("id", agente_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await log("bloquear_agente", agente_id, motivo_bloqueo);
-    await enviarEmailAgenteBloqueo({ agente: data, motivo: motivo_bloqueo }).catch(console.error);
+    try { await enviarEmailAgenteBloqueo({ agente: data, motivo: motivo_bloqueo }); } catch (e) { console.error(e); }
     return NextResponse.json({ success: true, agente: data });
   }
   if (accion === "reactivar") {
@@ -88,7 +87,7 @@ export async function PATCH(req: NextRequest) {
     await log("marcar_pagado", venta_id, undefined, "venta");
     if (venta.agentes) {
       const comision = Math.round(Number(venta.importe) * 0.20 * 100) / 100;
-      await enviarEmailAgenteComisionPagada({ agente: venta.agentes, comision, plan: venta.plan }).catch(console.error);
+      try { await enviarEmailAgenteComisionPagada({ agente: venta.agentes, comision, plan: venta.plan }); } catch (e) { console.error(e); }
     }
     return NextResponse.json({ success: true, venta });
   }
