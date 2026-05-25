@@ -1,7 +1,3 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// VitalSoft — Stripe Utility & Pricing Logic
-// ─────────────────────────────────────────────────────────────────────────────
-
 export const STRIPE_PAYMENT_LINKS = {
   starter: process.env.NEXT_PUBLIC_STRIPE_STARTER_LINK ?? "#",
   growth: process.env.NEXT_PUBLIC_STRIPE_GROWTH_LINK ?? "#",
@@ -12,36 +8,11 @@ export const STRIPE_PAYMENT_LINKS = {
 
 export type PlanKey = keyof typeof STRIPE_PAYMENT_LINKS;
 
-/**
- * Precios exactos para 1–10 vídeos.
- * Ancla: 10 vídeos = €150 (plan Starter)
- */
 const EXACT_PRICES: Record<number, number> = {
-  1: 25,
-  2: 45,
-  3: 60,
-  4: 80,
-  5: 100,
-  6: 115,
-  7: 130,
-  8: 140,
-  9: 145,
-  10: 150,
+  1: 25, 2: 45, 3: 60, 4: 80, 5: 100,
+  6: 115, 7: 130, 8: 140, 9: 145, 10: 150,
 };
 
-/**
- * Tabla de precios con anclas perfectas en los 4 planes:
- *   10 → €150  (Starter)
- *   20 → €250  (Growth)
- *   30 → €350  (Scale)
- *   40 → €450  (Pro)
- * 
- * Tramos 1–40: €10/vídeo marginal desde el tramo 11
- * Tramos >40:  descuentos progresivos más agresivos
- *   41–60 → €8/vídeo marginal  → 60 = €610
- *   61–80 → €7/vídeo marginal  → 80 = €750
- *   81–100→ €6/vídeo marginal  → 100= €870
- */
 export function calcPrice(videos: number): number {
   if (videos <= 10) return EXACT_PRICES[videos];
   if (videos <= 20) return 150 + (videos - 10) * 10;
@@ -52,24 +23,16 @@ export function calcPrice(videos: number): number {
   return 750 + Math.round((videos - 80) * 6);
 }
 
-/** Precio de referencia sin descuentos (tarifa unitaria €25 + €20 adicionales) */
 export function fullPrice(videos: number): number {
   if (videos === 1) return 25;
   return 25 + (videos - 1) * 20;
 }
 
-/** Ahorro respecto a tarifa individual */
 export function savings(videos: number): number {
   return Math.max(0, fullPrice(videos) - calcPrice(videos));
 }
 
-/**
- * Build a Stripe payment link URL with optional pre-filled params.
- */
-export function buildStripeUrl(
-  plan: PlanKey,
-  opts: { email?: string; videos?: number } = {}
-): string {
+export function buildStripeUrl(plan: PlanKey, opts: { email?: string; videos?: number } = {}): string {
   const base = STRIPE_PAYMENT_LINKS[plan];
   if (base === "#") return "#";
   const params = new URLSearchParams();
@@ -79,77 +42,30 @@ export function buildStripeUrl(
   return qs ? `${base}?${qs}` : base;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Pricing Plans Data
-// ─────────────────────────────────────────────────────────────────────────────
-
 export interface PricingPlan {
-  key: PlanKey;
-  name: string;
-  price: number;
-  videos: number;
-  featured?: boolean;
-  features: string[];
-  turnaround: string;
-  revisions: string;
+  key: PlanKey; name: string; price: number; videos: number;
+  featured?: boolean; features: string[]; turnaround: string; revisions: string;
 }
 
 export const PRICING_PLANS: PricingPlan[] = [
   {
-    key: "starter",
-    name: "Starter",
-    price: 150,
-    videos: 10,
-    features: [
-      "10 clips de formato corto",
-      "Subtítulos animados",
-      "Formato vertical 9:16",
-      "Soporte por email",
-    ],
-    turnaround: "Entrega en 48h",
-    revisions: "1 revisión por clip",
+    key: "starter", name: "Starter", price: 150, videos: 10,
+    features: ["10 clips mensuales", "Formato 9:16 vertical", "Subtítulos animados", "Drive compartido incluido"],
+    turnaround: "Entrega en 48h", revisions: "1 ajuste por clip",
   },
   {
-    key: "growth",
-    name: "Growth",
-    price: 250,
-    videos: 20,
-    featured: true,
-    features: [
-      "20 clips de formato corto",
-      "Subtítulos animados",
-      "Formatos multiplataforma",
-      "Soporte prioritario",
-    ],
-    turnaround: "Entrega en 36h",
-    revisions: "2 revisiones por clip",
+    key: "growth", name: "Growth", price: 250, videos: 20, featured: true,
+    features: ["20 clips mensuales", "Todos los formatos", "Subtítulos animados", "Soporte prioritario"],
+    turnaround: "Entrega en 36h", revisions: "2 ajustes por clip",
   },
   {
-    key: "scale",
-    name: "Scale",
-    price: 350,
-    videos: 30,
-    features: [
-      "30 clips de formato corto",
-      "Subtítulos avanzados",
-      "Formatos multiplataforma",
-      "Editor dedicado",
-    ],
-    turnaround: "Entrega en 24h",
-    revisions: "Revisiones ilimitadas",
+    key: "scale", name: "Scale", price: 350, videos: 30,
+    features: ["30 clips mensuales", "Todos los formatos", "Subtítulos avanzados", "Editor dedicado"],
+    turnaround: "Entrega en 24h", revisions: "3 ajustes por clip",
   },
   {
-    key: "pro",
-    name: "Pro",
-    price: 450,
-    videos: 40,
-    features: [
-      "40 clips de formato corto",
-      "Subtítulos premium + B-roll",
-      "Todos los formatos + largo",
-      "Llamada estratégica mensual",
-    ],
-    turnaround: "Entrega en 24h",
-    revisions: "Revisiones ilimitadas",
+    key: "pro", name: "Pro", price: 450, videos: 40,
+    features: ["40 clips mensuales", "Todos los formatos + episodio completo", "Subtítulos premium", "Editor dedicado"],
+    turnaround: "Entrega en 24h", revisions: "4 ajustes por clip",
   },
 ];
