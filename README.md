@@ -130,4 +130,3 @@ vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
 - **Pricing:** Edit `PRICING_PLANS` array in `lib/stripe.ts`
 - **Services:** Edit `services` array in `ServicesSection.tsx`
 - **FAQ:** Edit `faqs` array in `FAQSection.tsx`
- 
