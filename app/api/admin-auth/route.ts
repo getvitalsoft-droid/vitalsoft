@@ -9,27 +9,37 @@ const supabaseAdmin = createClient(
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "")
   .split(",").map(e => e.trim().toLowerCase()).filter(Boolean);
 
-// POST — enviar magic link
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json();
     if (!email) return NextResponse.json({ error: "Email requerido." }, { status: 400 });
 
-    // Respuesta genérica siempre para no revelar si el email es admin
     if (ADMIN_EMAILS.includes(email.toLowerCase())) {
+      // Usar NEXT_PUBLIC_SITE_URL para garantizar que apunta a producción
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://vitalsoft.pro";
+
       const { error } = await supabaseAdmin.auth.admin.generateLink({
         type: "magiclink",
         email: email.toLowerCase(),
-        options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/admin?auth=1` },
+        options: {
+          redirectTo: `${siteUrl}/admin`,
+        },
       });
-      if (error) console.error("[AdminAuth] Error:", error.message);
+
+      if (error) {
+        console.error("[AdminAuth] Error generando link:", error.message);
+        return NextResponse.json({ error: "Error al enviar el enlace." }, { status: 500 });
+      }
     }
 
+    // Respuesta genérica siempre
     return NextResponse.json({ success: true });
-  } catch { return NextResponse.json({ error: "Error interno." }, { status: 500 }); }
+  } catch (err) {
+    console.error("[AdminAuth] Error:", err);
+    return NextResponse.json({ error: "Error interno." }, { status: 500 });
+  }
 }
 
-// GET — verificar token de sesión
 export async function GET(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!token) return NextResponse.json({ valid: false }, { status: 401 });
