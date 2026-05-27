@@ -34,6 +34,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [session, setSession] = useState<any>(null);
+  const [adminToken, setAdminToken] = useState("");
   const [agentes, setAgentes] = useState<Agente[]>([]);
   const [tab, setTab] = useState<"pendientes" | "activos" | "sospechas" | "todos">("pendientes");
   const [saving, setSaving] = useState("");
@@ -43,33 +44,51 @@ export default function AdminPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Escuchar cambio de sesión (magic link callback)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
       if (sess?.user) {
         setSession(sess);
+        // Usamos el access_token como admin token para las llamadas a la API
+        setAdminToken(sess.access_token);
         setStep("dashboard");
         await cargarAgentes(sess.access_token);
+      } else if (event === "SIGNED_OUT") {
+        setStep("login");
+        setSession(null);
+        setAgentes([]);
       }
     });
-    // Comprobar sesión existente
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
-      if (sess?.user) { setSession(sess); setStep("dashboard"); cargarAgentes(sess.access_token); }
+      if (sess?.user) {
+        setSession(sess);
+        setAdminToken(sess.access_token);
+        setStep("dashboard");
+        cargarAgentes(sess.access_token);
+      }
     });
     return () => subscription.unsubscribe();
   }, []);
 
   const cargarAgentes = async (token?: string) => {
-    const t = token || session?.access_token;
+    const t = token || adminToken;
     if (!t) return;
-    const res = await fetch("/api/agentes", { headers: { "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || t } });
-    const data = await res.json();
-    if (data.agentes) setAgentes(data.agentes);
+    try {
+      // Usar ADMIN_TOKEN de env via API — la API verifica con ADMIN_TOKEN en el servidor
+      const res = await fetch("/api/agentes", {
+        headers: { "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || t },
+      });
+      const data = await res.json();
+      if (data.agentes) setAgentes(data.agentes);
+    } catch (e) { console.error("Error cargando agentes:", e); }
   };
 
   const sendMagicLink = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true); setError("");
-    const res = await fetch("/api/admin-auth", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+    const res = await fetch("/api/admin-auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
     const data = await res.json();
     if (data.success) setStep("sending");
     else setError(data.error || "Error al enviar el enlace.");
@@ -78,12 +97,16 @@ export default function AdminPage() {
 
   const cerrarSesion = async () => {
     await supabase.auth.signOut();
-    setSession(null); setAgentes([]); setStep("login");
+    setSession(null); setAgentes([]); setStep("login"); setAdminToken("");
   };
 
   const accion = async (body: Record<string, string>) => {
     setSaving(body.agente_id || body.venta_id || "x");
-    await fetch("/api/agentes", { method: "PATCH", headers: { "Content-Type": "application/json", "x-admin-token": session?.access_token || "" }, body: JSON.stringify(body) });
+    await fetch("/api/agentes", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || adminToken },
+      body: JSON.stringify(body),
+    });
     await cargarAgentes();
     setSaving(""); setModal(null); setMotivo("");
   };
@@ -92,7 +115,6 @@ export default function AdminPage() {
 
   if (!mounted) return <main className="min-h-screen bg-[#080808]" />;
 
-  // ── Login ─────────────────────────────────────────────────────────────────
   if (step === "login") return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
@@ -109,25 +131,23 @@ export default function AdminPage() {
           <button type="submit" disabled={loading} className="w-full py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50">
             {loading ? "Enviando..." : "Enviar enlace de acceso →"}
           </button>
-          <p className="text-white/20 text-xs text-center">Recibirás un enlace seguro en tu email. Sin contraseña.</p>
+          <p className="text-white/20 text-xs text-center">Recibirás un enlace seguro en tu email.</p>
         </form>
       </div>
     </main>
   );
 
-  // ── Email enviado ────────────────────────────────────────────────────────
   if (step === "sending") return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
       <div className="text-center max-w-sm">
         <div className="text-5xl mb-6">📧</div>
         <h2 className="font-display font-black text-xl mb-3">Revisa tu email</h2>
-        <p className="text-white/40 text-sm mb-6">Hemos enviado un enlace de acceso a <strong className="text-white/60">{email}</strong>. Haz clic en el enlace para entrar.</p>
+        <p className="text-white/40 text-sm mb-6">Hemos enviado un enlace a <strong className="text-white/60">{email}</strong>. Haz clic para entrar.</p>
         <button onClick={() => setStep("login")} className="text-white/25 text-xs hover:text-white/50 transition-colors">← Volver</button>
       </div>
     </main>
   );
 
-  // ── Dashboard ─────────────────────────────────────────────────────────────
   const todasVentas = agentes.flatMap(a => a.ventas);
   const totalIngresos = todasVentas.reduce((a, v) => a + Number(v.importe), 0);
   const comPend = todasVentas.filter(v => ["pendiente_validacion","disponible"].includes(v.estado)).reduce((a, v) => a + Number(v.importe) * COMISION, 0);
@@ -145,7 +165,6 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-[#080808] px-4 py-10">
       <div className="max-w-5xl mx-auto">
-        {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <div className="font-display font-black text-xl"><span className="text-[#d4f53c]">Vital</span>Soft</div>
@@ -157,7 +176,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
           {[
             { label: "Agentes activos", value: agentes.filter(a => a.aprobado && !a.bloqueado).length, color: "text-[#d4f53c]" },
@@ -182,7 +200,6 @@ export default function AdminPage() {
           </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex gap-2 mb-5 flex-wrap">
           {([
             { key: "pendientes", label: `Pendientes (${pendientesAprob})` },
@@ -197,7 +214,6 @@ export default function AdminPage() {
           ))}
         </div>
 
-        {/* Lista agentes */}
         <div className="space-y-4">
           {filtrados.length === 0 && (
             <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">
@@ -288,7 +304,6 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* Modal */}
       {modal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm">
