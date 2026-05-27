@@ -7,8 +7,7 @@ interface Props { refCode?: string }
 
 export default function PricingSection({ refCode }: Props) {
   const handlePlan = (planKey: string) => {
-    const base = buildStripeUrl(planKey as any);
-    const url = refCode ? `${base}?client_reference_id=ref_${refCode}` : base;
+    const url = buildStripeUrl(planKey as any, refCode);
     window.open(url, "_blank");
   };
 

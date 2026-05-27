@@ -54,11 +54,10 @@ export default function CalculatorSection({ refCode }: Props) {
       });
 
       if (planKey) {
-        const base = buildStripeUrl(planKey as any);
+        // buildStripeUrl ya incluye ?client_reference_id=ref_X si hay ref
+        const base = buildStripeUrl(planKey as any, urlRef || undefined);
         const sep = base.includes("?") ? "&" : "?";
-        const url = urlRef
-          ? `${base}${sep}prefilled_email=${encodeURIComponent(email)}&client_reference_id=ref_${urlRef}`
-          : `${base}${sep}prefilled_email=${encodeURIComponent(email)}`;
+        const url = `${base}${sep}prefilled_email=${encodeURIComponent(email)}`;
         setSubmitted(true);
         setTimeout(() => window.open(url, "_blank"), 600);
         return;
