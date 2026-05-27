@@ -57,8 +57,11 @@ const SITE = "https://vitalsoft.pro";
 // ─── Estilos base compartidos ──────────────────────────────────────────────
 const BASE_STYLE = `font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:560px;margin:0 auto;background:#0d0d0d;color:#f0f0f0;border-radius:14px;overflow:hidden`;
 const HEADER = (titulo: string, subtitulo: string, emoji = "") => `
-  <div style="background:#111;padding:28px 32px;border-bottom:1px solid #222">
-    <div style="font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:#d4f53c;margin-bottom:6px">VitalSoft</div>
+  <div style="background:#111;padding:20px 32px 20px;border-bottom:1px solid #222">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <img src="https://vitalsoft.pro/logo-email.png" alt="VitalSoft" width="36" height="36" style="border-radius:8px;display:block" />
+      <span style="font-size:16px;font-weight:800;color:#f0f0f0"><span style="color:#d4f53c">Vital</span>Soft</span>
+    </div>
     <div style="font-size:22px;font-weight:800;margin-bottom:4px">${emoji ? emoji + " " : ""}${titulo}</div>
     <div style="font-size:13px;color:#666">${subtitulo}</div>
   </div>`;
