@@ -98,7 +98,7 @@ export async function enviarEmailClientePagoRealizado({
       Puedes cancelar en cualquier momento desde Stripe sin penalización.
     </p>`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: email,
     subject: `✅ Suscripción activada — Configura tu proyecto`,
     html: WRAP(HEADER("¡Suscripción activada!", nombre ? `Hola ${nombre}, ya estás dentro.` : "Ya estás dentro.", "✅"), body),
@@ -119,7 +119,7 @@ export async function enviarEmailClienteRenovacion({
     `)}
     <p style="font-size:13px;color:#888">Tu suscripción se ha renovado correctamente. Puedes subir nuevo contenido a tu Drive cuando quieras.</p>`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: email,
     subject: `🔄 Renovación mensual — €${importe}`,
     html: WRAP(HEADER("Renovación mensual", "Tu plan se ha renovado correctamente.", "🔄"), body),
@@ -143,7 +143,7 @@ export async function enviarEmailClientePagoFallido({
     </p>
     ${intentoUrl ? BTN("Actualizar método de pago", intentoUrl) : ""}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: email,
     subject: `⚠️ Pago fallido — Acción requerida`,
     html: WRAP(HEADER("Pago fallido", "Necesitamos que actualices tu método de pago.", "⚠️"), body),
@@ -167,7 +167,7 @@ export async function enviarEmailClienteCancelacion({
     </p>
     ${BTN("Volver a VitalSoft", SITE)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: email,
     subject: `Suscripción cancelada — ${plan}`,
     html: WRAP(HEADER("Suscripción cancelada", "Sentimos verte marchar.", "👋"), body),
@@ -188,7 +188,7 @@ export async function enviarEmailClienteReembolso({
     `)}
     <p style="font-size:13px;color:#888">El reembolso ha sido procesado. Puede tardar unos días en aparecer en tu cuenta según tu banco.</p>`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: email,
     subject: `💳 Reembolso procesado — €${importe}`,
     html: WRAP(HEADER("Reembolso procesado", "Hemos procesado tu devolución.", "💳"), body),
@@ -229,7 +229,7 @@ export async function enviarEmailBienvenidaAgente({
     `)}
     ${BTN("Ver mi panel", `${SITE}/agentes`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `🚀 ¡Cuenta de agente VitalSoft activa!`,
     html: WRAP(HEADER("¡Ya eres agente!", "Tu cuenta ha sido aprobada.", "🚀"), body),
@@ -256,7 +256,7 @@ export async function enviarEmailAgente({
     </p>
     ${BTN("Ver mis comisiones", `${SITE}/agentes`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `🎉 Nueva comisión de €${comision} — VitalSoft`,
     html: WRAP(HEADER("¡Nueva comisión!", `Has generado una venta con ${agente.codigo}`, "🎉"), body),
@@ -279,7 +279,7 @@ export async function enviarEmailAgenteComisionDisponible({
     <p style="font-size:13px;color:#888">El equipo de VitalSoft procesará tu pago próximamente. Recibirás confirmación cuando se realice la transferencia.</p>
     ${BTN("Ver mi panel", `${SITE}/agentes`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `💰 Comisión disponible — €${comision}`,
     html: WRAP(HEADER("Comisión disponible", "Tu comisión ya está lista para cobrar.", "💰"), body),
@@ -302,7 +302,7 @@ export async function enviarEmailAgenteComisionPagada({
     <p style="font-size:13px;color:#888">La transferencia ha sido enviada. Puede tardar 1–3 días hábiles en aparecer en tu cuenta.</p>
     ${BTN("Ver mi historial", `${SITE}/agentes`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `✅ Comisión pagada — €${comision}`,
     html: WRAP(HEADER("Comisión pagada", "Hemos enviado tu pago.", "✅"), body),
@@ -320,7 +320,7 @@ export async function enviarEmailAgenteBloqueo({
     ${motivo ? CARD(ROW("Motivo", motivo)) : ""}
     <p style="font-size:13px;color:#888">Si crees que es un error, contacta con nosotros en <a href="mailto:${ADMIN_EMAIL}" style="color:#d4f53c">${ADMIN_EMAIL}</a>.</p>`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `Cuenta de agente desactivada — VitalSoft`,
     html: WRAP(HEADER("Cuenta desactivada", "Tu acceso como agente ha sido suspendido.", "🔒"), body),
@@ -352,7 +352,7 @@ export async function enviarEmailAdmin({
     ${agenteHtml}
     ${BTN("Ver panel admin", `${SITE}/admin`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: ADMIN_EMAIL,
     subject: `${sospechoso ? "⚠️ REVISAR — " : ""}💰 Nueva venta — €${importe}`,
     html: WRAP(HEADER("Nueva venta", `${clienteEmail} acaba de contratar.`, "💰"), body),
@@ -371,7 +371,7 @@ export async function enviarEmailAdminPagoFallido({
     <p style="font-size:13px;color:#888">Stripe reintentará el cobro automáticamente. Si persiste, el cliente recibirá un aviso.</p>
     ${BTN("Ver en Stripe", "https://dashboard.stripe.com/subscriptions")}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: ADMIN_EMAIL,
     subject: `⚠️ Pago fallido — ${clienteEmail}`,
     html: WRAP(HEADER("Pago fallido", "Un cliente no pudo renovar.", "⚠️"), body),
@@ -388,7 +388,7 @@ export async function enviarEmailAdminCancelacion({
     ${CARD(`${ROW("Cliente", clienteEmail)}${plan ? ROW("Plan cancelado", plan) : ""}`)}
     <p style="font-size:13px;color:#888">El cliente ha cancelado su suscripción. Sigue teniendo acceso hasta el final del período pagado.</p>`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: ADMIN_EMAIL,
     subject: `👋 Cancelación — ${clienteEmail}`,
     html: WRAP(HEADER("Suscripción cancelada", `${clienteEmail} ha cancelado.`, "👋"), body),
@@ -404,7 +404,7 @@ export async function enviarEmailAdminReembolso({
   const body = `
     ${CARD(`${ROW("Cliente", clienteEmail)}${ROW("Importe reembolsado", `€${importe}`, true)}${motivo ? ROW("Motivo", motivo) : ""}`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: ADMIN_EMAIL,
     subject: `💳 Reembolso procesado — €${importe}`,
     html: WRAP(HEADER("Reembolso procesado", `Se ha reembolsado €${importe} a ${clienteEmail}.`, "💳"), body),
@@ -422,7 +422,7 @@ export async function enviarEmailAdminNuevoPendiente({
     <p style="font-size:13px;color:#888">Revisa el perfil y aprueba o rechaza desde el panel de administración.</p>
     ${BTN("Revisar en admin", `${SITE}/admin`)}`;
 
-  await resend.emails.send({
+  return await resend.emails.send({
     from: FROM, to: ADMIN_EMAIL,
     subject: `👤 Nuevo agente pendiente — ${nombre}`,
     html: WRAP(HEADER("Nuevo agente pendiente", `${nombre} quiere unirse al programa.`, "👤"), body),

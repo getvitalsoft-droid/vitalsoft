@@ -22,8 +22,8 @@ export async function POST(req: NextRequest) {
 
     if (orderErr || !order) return NextResponse.json({ error: "Pedido no encontrado." }, { status: 404 });
 
-    // Guardar onboarding
-    const { error: onbErr } = await supabase.from("onboarding").insert({
+    // Guardar onboarding - upsert para evitar duplicados (UNIQUE en order_id)
+    const { error: onbErr } = await supabase.from("onboarding").upsert({
       order_id: order.id, cliente_email: email,
       nombre_proyecto, redes_sociales, tipo_contenido,
       plataformas: plataformas || [],

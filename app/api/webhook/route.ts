@@ -107,6 +107,23 @@ export async function POST(req: NextRequest) {
             .gte("ownership_hasta", new Date().toISOString());
         }
 
+        // Crear carpeta Drive automáticamente
+        if (order?.id) {
+          fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/drive`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-internal-secret": process.env.CRON_SECRET || "",
+            },
+            body: JSON.stringify({
+              clienteNombre: meta.nombre || clienteEmail.split("@")[0],
+              clienteEmail,
+              plan,
+              orderId: order.id,
+            }),
+          }).catch(e => console.error("[Drive] Error llamando API:", e));
+        }
+
         await log("venta_registrada", `${clienteEmail} · €${importe} · agente:${agenteCodigo || "directo"}${sospechoso ? " ⚠️" : ""}`);
 
         // Emails
@@ -174,9 +191,11 @@ export async function POST(req: NextRequest) {
         const charge = event.data.object as Stripe.Charge;
         const clienteEmail = charge.billing_details?.email || charge.receipt_email || "";
         const importe = (charge.amount_refunded || 0) / 100;
-        await log("reembolso", `${clienteEmail} · €${importe}`);
-        if (clienteEmail) await sendEmail(() => enviarEmailClienteReembolso({ email: clienteEmail, importe }), clienteEmail, "cliente_reembolso", event.type);
-        await sendEmail(() => enviarEmailAdminReembolso({ clienteEmail, importe }), process.env.ADMIN_EMAIL!, "admin_reembolso", event.type);
+        await log("reembolso", `${clienteEmail || "desconocido"} · €${importe}`);
+        if (clienteEmail) {
+          await sendEmail(() => enviarEmailClienteReembolso({ email: clienteEmail, importe }), clienteEmail, "cliente_reembolso", event.type);
+        }
+        await sendEmail(() => enviarEmailAdminReembolso({ clienteEmail: clienteEmail || "email desconocido", importe }), process.env.ADMIN_EMAIL!, "admin_reembolso", event.type);
         break;
       }
     }

@@ -73,8 +73,8 @@ export default function AdminPage() {
     if (!t) return;
     try {
       // Usar ADMIN_TOKEN de env via API — la API verifica con ADMIN_TOKEN en el servidor
-      const res = await fetch("/api/agentes", {
-        headers: { "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || t },
+      const res = await fetch("/api/agentes/admin", {
+        headers: { "Authorization": `Bearer ${t}` },
       });
       const data = await res.json();
       if (data.agentes) setAgentes(data.agentes);
@@ -102,9 +102,9 @@ export default function AdminPage() {
 
   const accion = async (body: Record<string, string>) => {
     setSaving(body.agente_id || body.venta_id || "x");
-    await fetch("/api/agentes", {
+    await fetch("/api/agentes/admin", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "x-admin-token": process.env.NEXT_PUBLIC_ADMIN_TOKEN || adminToken },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` },
       body: JSON.stringify(body),
     });
     await cargarAgentes();
