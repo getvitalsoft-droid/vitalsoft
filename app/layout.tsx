@@ -9,8 +9,11 @@ const dmSans = DM_Sans({ subsets: ["latin"], weight: ["300", "400", "500"], vari
 
 export const metadata: Metadata = {
   icons: {
-    icon: "/favicon.png",
-    apple: "/favicon.png",
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.png",
   },
   title: "VitalSoft — Convierte Contenido Largo en Shorts",
   description: "Edición de vídeo profesional para creadores, podcasters y marcas. Subtítulos, formato vertical, edición de retención — optimizado para TikTok, Reels y YouTube Shorts.",
