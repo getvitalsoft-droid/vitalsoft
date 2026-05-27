@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.2" baseProfile="tiny-ps"
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 500 500"
+  width="500" height="500">
+  <title>VitalSoft</title>
+
+  <!-- Fondo negro circular (BIMI requiere fondo para que se vea bien) -->
+  <rect width="500" height="500" fill="#000000" rx="0"/>
+
+  <!-- V principal - brazo izquierdo -->
+  <path d="M 60 80 L 195 380 L 250 290 L 145 80 Z" fill="#d4f53c"/>
+
+  <!-- V principal - brazo derecho (con corte para el rayo) -->
+  <path d="M 440 80 L 305 80 L 250 290 L 305 380 Z" fill="#c8e830"/>
+
+  <!-- Rayo / corte diagonal en el brazo derecho -->
+  <path d="M 305 80 L 290 80 L 250 185 L 265 185 Z" fill="#000000"/>
+
+  <!-- Puntos dispersos (efecto digital) -->
+  <!-- Fila 1 - arriba derecha -->
+  <rect x="350" y="55" width="28" height="24" rx="5" fill="#d4f53c"/>
+  <rect x="388" y="40" width="22" height="18" rx="4" fill="#d4f53c"/>
+
+  <!-- Fila 2 -->
+  <rect x="335" y="95" width="24" height="20" rx="4" fill="#d4f53c"/>
+  <rect x="370" y="82" width="20" height="17" rx="4" fill="#d4f53c"/>
+  <rect x="402" y="70" width="17" height="14" rx="3" fill="#d4f53c"/>
+
+  <!-- Fila 3 -->
+  <rect x="320" y="135" width="20" height="17" rx="4" fill="#d4f53c"/>
+  <rect x="352" y="122" width="17" height="14" rx="3" fill="#d4f53c"/>
+  <rect x="381" y="112" width="14" height="11" rx="3" fill="#d4f53c"/>
+
+  <!-- Fila 4 - más pequeños -->
+  <rect x="338" y="163" width="14" height="11" rx="3" fill="#d4f53c" opacity="0.7"/>
+  <rect x="363" y="152" width="11" height="9" rx="2" fill="#d4f53c" opacity="0.5"/>
+</svg>

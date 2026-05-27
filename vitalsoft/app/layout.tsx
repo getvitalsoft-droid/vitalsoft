@@ -8,6 +8,13 @@ const syne = Syne({ subsets: ["latin"], weight: ["400", "600", "700", "800"], va
 const dmSans = DM_Sans({ subsets: ["latin"], weight: ["300", "400", "500"], variable: "--font-dm-sans", display: "swap" });
 
 export const metadata: Metadata = {
+  icons: {
+    icon: [
+      { url: "/favicon.png", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+    shortcut: "/favicon.png",
+  },
   title: "VitalSoft — Convierte Contenido Largo en Shorts",
   description: "Edición de vídeo profesional para creadores, podcasters y marcas. Subtítulos, formato vertical, edición de retención — optimizado para TikTok, Reels y YouTube Shorts.",
   keywords: ["edición de vídeo", "shorts", "TikTok", "YouTube Shorts", "Instagram Reels", "clips podcast", "VitalSoft"],
