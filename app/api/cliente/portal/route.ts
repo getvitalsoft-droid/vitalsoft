@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyClientToken } from "@/app/api/cliente-auth/route";
+import { verifyClientToken } from "@/lib/cliente-token";
 import { getOrCreateRefCode } from "@/lib/referrals";
 
 const sb = createClient(

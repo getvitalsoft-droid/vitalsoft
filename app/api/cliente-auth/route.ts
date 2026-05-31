@@ -1,12 +1,11 @@
 // app/api/cliente-auth/route.ts
 // Magic link para portal de cliente — sin contraseña.
-// El cliente escribe su email → si tiene un order activo → recibe link.
-// Respuesta siempre genérica para no revelar si el email existe.
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { rateLimit, LIMITS, getIP } from "@/lib/rateLimit";
+import { signClientToken, verifyClientToken } from "@/lib/cliente-token";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,7 +18,7 @@ const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://vitalsoft.pro";
 export async function POST(req: NextRequest) {
   const ip = getIP(req);
   const { allowed } = rateLimit(`cliente-auth:${ip}`, LIMITS.checkout);
-  if (!allowed) return NextResponse.json({ success: true }); // genérico
+  if (!allowed) return NextResponse.json({ success: true });
 
   try {
     const { email } = await req.json();
@@ -27,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const emailNorm = email.toLowerCase().trim();
 
-    // Verificar que tiene al menos un order (no importa el estado para el acceso)
+    // Verificar que tiene al menos un order
     const { data: order } = await supabase
       .from("orders")
       .select("id")
@@ -35,27 +34,10 @@ export async function POST(req: NextRequest) {
       .limit(1)
       .single();
 
-    // Si no hay order → respuesta genérica sin revelar nada
-    if (!order) {
-      return NextResponse.json({ success: true });
-    }
+    // Respuesta genérica siempre — no revelar si el email existe
+    if (!order) return NextResponse.json({ success: true });
 
-    // Generar token seguro (JWT firmado, 1h de vida)
-    // Usamos un token simple en base64 firmado con CRON_SECRET
-    // No usamos Supabase Auth para clientes (no tienen cuenta)
-    const payload = {
-      email: emailNorm,
-      exp: Date.now() + 60 * 60 * 1000, // 1 hora
-    };
-    const token = Buffer.from(JSON.stringify(payload)).toString("base64url");
-    // Firma básica: hash del payload + secret
-    const crypto = await import("crypto");
-    const sig = crypto
-      .createHmac("sha256", process.env.CRON_SECRET || "vitalsoft-secret")
-      .update(token)
-      .digest("base64url");
-    const signedToken = `${token}.${sig}`;
-
+    const signedToken = signClientToken(emailNorm);
     const link = `${SITE}/cliente?token=${signedToken}`;
 
     await resend.emails.send({
@@ -81,11 +63,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[ClienteAuth]", err);
-    return NextResponse.json({ success: true }); // siempre genérico
+    return NextResponse.json({ success: true });
   }
 }
 
-// GET — verificar token y devolver datos del cliente
+// GET — verificar token (para uso interno desde el cliente)
 export async function GET(req: NextRequest) {
   const token = req.headers.get("x-cliente-token");
   if (!token) return NextResponse.json({ valid: false }, { status: 401 });
@@ -94,28 +76,4 @@ export async function GET(req: NextRequest) {
   if (!email) return NextResponse.json({ valid: false }, { status: 401 });
 
   return NextResponse.json({ valid: true, email });
-}
-
-// Helper exportado para reusar en otras rutas
-export function verifyClientToken(token: string): string | null {
-  try {
-    const [payload, sig] = token.split(".");
-    if (!payload || !sig) return null;
-
-    const crypto = require("crypto");
-    const expectedSig = crypto
-      .createHmac("sha256", process.env.CRON_SECRET || "vitalsoft-secret")
-      .update(payload)
-      .digest("base64url");
-
-    if (sig !== expectedSig) return null;
-
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString());
-    if (!data.email || !data.exp) return null;
-    if (Date.now() > data.exp) return null;
-
-    return data.email as string;
-  } catch {
-    return null;
-  }
 }

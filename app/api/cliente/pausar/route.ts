@@ -7,7 +7,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
-import { verifyClientToken } from "@/app/api/cliente-auth/route";
+import { verifyClientToken } from "@/lib/cliente-token";
 import {
   enviarEmailClientePausada,
   enviarEmailClienteReactivada,
