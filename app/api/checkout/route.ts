@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!allowed) return NextResponse.json({ error: "Demasiadas solicitudes. Espera un momento." }, { status: 429 });
 
   try {
-    const { name, email, social, notes, videos, price, ref } = await req.json();
+    const { name, email, social, notes, videos, price, ref, client_ref } = await req.json();
     if (!email || !videos || !price) return NextResponse.json({ error: "Faltan datos requeridos." }, { status: 400 });
 
     let agente = null;
@@ -35,7 +35,18 @@ export async function POST(req: NextRequest) {
       success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/?pago=ok&videos=${videos}`,
       cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/#calculadora`,
       client_reference_id: ref ? `ref_${ref}` : `custom_${videos}v`,
-      metadata: { nombre: name || "", email, social: social || "", videos: String(videos), precio: String(price), notas: notes || "", agente_codigo: ref || "", agente_nombre: agente?.nombre || "" },
+      metadata: {
+        nombre: name || "",
+        email,
+        social: social || "",
+        videos: String(videos),
+        precio: String(price),
+        notas: notes || "",
+        agente_codigo: ref || "",
+        agente_nombre: agente?.nombre || "",
+        // Código de referido de CLIENTE (distinto del código de agente)
+        client_ref: client_ref || "",
+      },
     });
 
     return NextResponse.json({ url: session.url });

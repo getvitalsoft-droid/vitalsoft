@@ -10,6 +10,8 @@ const supabase = createClient(
 interface Venta { id: string; plan: string; importe: number; creado_at: string; estado: string; cliente_email: string; notas_admin?: string; sospechoso?: boolean; sospechoso_motivo?: string; disponible_at?: string; }
 interface Agente { id: string; nombre: string; email: string; codigo: string; creado_at: string; aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; ventas: Venta[]; }
 interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; }
+interface Referral { id: string; referrer_email: string; referred_email: string; amount_paid: number; credit_amount: number; status: string; is_suspicious: boolean; suspicious_reason: string | null; notes: string | null; created_at: string; available_at: string | null; applied_at: string | null; }
+interface ReferralStats { pendiente_validacion: { count: number; total: number }; disponible: { count: number; total: number }; aplicado: { count: number; total: number }; invalido: { count: number }; suspicious: { count: number }; }
 
 const COMISION = 0.20;
 const ESTADO_VENTA_COLORS: Record<string, string> = { pendiente_validacion: "bg-yellow-400/10 text-yellow-400", disponible: "bg-blue-400/10 text-blue-400", pagada: "bg-green-400/10 text-green-400", invalida: "bg-red-400/10 text-red-400", cancelada: "bg-white/5 text-white/25", reembolsada: "bg-orange-400/10 text-orange-400" };
@@ -26,9 +28,14 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [agentes, setAgentes] = useState<Agente[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [mainTab, setMainTab] = useState<"agentes"|"orders">("agentes");
+  const [mainTab, setMainTab] = useState<"agentes"|"orders"|"referidos">("agentes");
   const [agentesTab, setAgentesTab] = useState<"pendientes"|"activos"|"sospechas"|"todos">("pendientes");
   const [ordersTab, setOrdersTab] = useState<"todos"|"onboarding_pendiente"|"esperando_material"|"material_invalido"|"en_edicion">("todos");
+  const [referrals, setReferrals] = useState<Referral[]>([]);
+  const [referralStats, setReferralStats] = useState<ReferralStats | null>(null);
+  const [referralsTab, setReferralsTab] = useState<"todos"|"pendiente_validacion"|"disponible"|"aplicado"|"invalido">("todos");
+  const [referralModal, setReferralModal] = useState<{referral: Referral; accion: string} | null>(null);
+  const [referralNota, setReferralNota] = useState("");
   const [saving, setSaving] = useState("");
   const [modal, setModal] = useState<{tipo: string; id: string; id2?: string} | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -51,18 +58,29 @@ export default function AdminPage() {
     const t = token || adminToken;
     if (!t) return;
     const headers = { "Authorization": `Bearer ${t}` };
-    const [a, o] = await Promise.all([
+    const [a, o, r] = await Promise.all([
       fetch("/api/agentes/admin", { headers }).then(r => r.json()),
       fetch("/api/orders", { headers }).then(r => r.json()),
+      fetch("/api/admin/referrals", { headers }).then(r => r.json()).catch(() => ({})),
     ]);
     if (a.agentes) setAgentes(a.agentes);
     if (o.orders) setOrders(o.orders);
+    if (r.referrals) setReferrals(r.referrals);
+    if (r.stats) setReferralStats(r.stats);
   };
 
   const accionAgente = async (body: Record<string, string>) => {
     setSaving(body.agente_id || body.venta_id || "x");
     await fetch("/api/agentes/admin", { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` }, body: JSON.stringify(body) });
     await cargarTodo(); setSaving(""); setModal(null); setMotivo(""); setInputText("");
+  };
+
+  const accionReferral = async (accion: string, referral_id: string, notas?: string) => {
+    setSaving(referral_id);
+    const res = await fetch("/api/admin/referrals", { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` }, body: JSON.stringify({ accion, referral_id, notas }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || "Error"); setSaving(""); return; }
+    await cargarTodo(); setSaving(""); setReferralModal(null); setReferralNota("");
   };
 
   const accionOrder = async (body: Record<string, any>) => {
@@ -147,9 +165,9 @@ export default function AdminPage() {
         </div>
 
         {/* Main tabs */}
-        <div className="flex gap-2 mb-5">
-          {(["agentes","orders"] as const).map(t => (
-            <button key={t} onClick={() => setMainTab(t)} className={`px-5 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all ${mainTab === t ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{t === "agentes" ? `Agentes` : `Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`}</button>
+        <div className="flex gap-2 mb-5 flex-wrap">
+          {([["agentes","Agentes"],["orders",`Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`],["referidos",`Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`]] as const).map(([t,l]) => (
+            <button key={t} onClick={() => setMainTab(t)} className={`px-5 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all ${mainTab === t ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
           ))}
         </div>
 
@@ -270,9 +288,98 @@ export default function AdminPage() {
             </div>
           </>
         )}
+
+        {/* REFERIDOS */}
+        {mainTab === "referidos" && (
+          <>
+            {/* Stats */}
+            {referralStats && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                {([["pendiente_validacion","Pendientes","yellow"],["disponible","Disponibles","green"],["aplicado","Aplicados","blue"],["invalido","Inválidos","red"]] as const).map(([k,l,c]) => (
+                  <div key={k} className={`border rounded-xl p-3 text-center ${c==="yellow"?"border-yellow-400/20 bg-yellow-400/5":c==="green"?"border-green-400/20 bg-green-400/5":c==="blue"?"border-blue-400/20 bg-blue-400/5":"border-red-400/20 bg-red-400/5"}`}>
+                    <div className={`font-display font-black text-xl ${c==="yellow"?"text-yellow-400":c==="green"?"text-green-400":c==="blue"?"text-blue-400":"text-red-400"}`}>{(referralStats as any)[k].count}</div>
+                    <div className="text-white/25 text-xs mt-0.5">{l}</div>
+                    {(referralStats as any)[k].total != null && <div className={`text-xs font-bold mt-0.5 ${c==="yellow"?"text-yellow-400/70":c==="green"?"text-green-400/70":"text-blue-400/70"}`}>€{((referralStats as any)[k].total ?? 0).toFixed(2)}</div>}
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Filtros */}
+            <div className="flex gap-2 mb-4 flex-wrap">
+              {([["todos","Todos"],["pendiente_validacion","Pendientes"],["disponible","Disponibles 🟢"],["aplicado","Aplicados"],["invalido","Inválidos"]] as const).map(([k,l]) => (
+                <button key={k} onClick={() => setReferralsTab(k)} className={`px-4 py-2 rounded-lg text-xs font-display font-bold uppercase transition-all ${referralsTab === k ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
+              ))}
+            </div>
+            {/* Tabla */}
+            <div className="space-y-3">
+              {(referralsTab === "todos" ? referrals : referrals.filter(r => r.status === referralsTab)).length === 0 && (
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">Sin referidos en esta categoría.</div>
+              )}
+              {(referralsTab === "todos" ? referrals : referrals.filter(r => r.status === referralsTab)).map(r => (
+                <div key={r.id} className={`bg-white/[0.02] border rounded-2xl p-4 ${r.is_suspicious ? "border-red-400/30" : "border-white/[0.06]"}`}>
+                  <div className="flex items-start justify-between gap-3 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <span className="text-sm font-medium text-white/80">{r.referrer_email}</span>
+                        <span className="text-white/25 text-xs">→</span>
+                        <span className="text-sm text-white/60">{r.referred_email}</span>
+                        {r.is_suspicious && <span className="text-xs bg-red-400/10 text-red-400 px-2 py-0.5 rounded-full">⚠️ {r.suspicious_reason}</span>}
+                      </div>
+                      <div className="flex gap-3 text-xs text-white/30 flex-wrap">
+                        <span>Pagado: <strong className="text-white/50">€{r.amount_paid?.toFixed(2)}</strong></span>
+                        <span>Crédito: <strong className="text-[#d4f53c]">€{r.credit_amount?.toFixed(2)}</strong></span>
+                        <span className={`px-2 py-0.5 rounded-full font-bold ${r.status==="disponible"?"bg-green-400/10 text-green-400":r.status==="aplicado"?"bg-blue-400/10 text-blue-400":r.status==="invalido"||r.status==="reembolsado"?"bg-red-400/10 text-red-400":"bg-yellow-400/10 text-yellow-400"}`}>{r.status.replace(/_/g," ")}</span>
+                        <span>{new Date(r.created_at).toLocaleDateString("es-ES")}</span>
+                      </div>
+                      {r.notes && <div className="text-white/25 text-xs mt-1 italic">{r.notes}</div>}
+                    </div>
+                    <div className="flex gap-1.5 flex-wrap">
+                      {r.status === "pendiente_validacion" && !r.is_suspicious && (
+                        <button onClick={() => setReferralModal({referral: r, accion: "liberar_credito"})} disabled={saving===r.id} className="px-3 py-1.5 bg-green-400/10 text-green-400 border border-green-400/20 rounded-lg text-xs font-bold hover:bg-green-400/20 disabled:opacity-40">Liberar</button>
+                      )}
+                      {r.status === "disponible" && (
+                        <button onClick={() => setReferralModal({referral: r, accion: "marcar_aplicado"})} disabled={saving===r.id} className="px-3 py-1.5 bg-blue-400/10 text-blue-400 border border-blue-400/20 rounded-lg text-xs font-bold hover:bg-blue-400/20 disabled:opacity-40">Marcar aplicado</button>
+                      )}
+                      {!["invalido","aplicado","cancelado","reembolsado"].includes(r.status) && (
+                        <button onClick={() => setReferralModal({referral: r, accion: "invalidar"})} disabled={saving===r.id} className="px-3 py-1.5 bg-red-400/10 text-red-400 border border-red-400/20 rounded-lg text-xs font-bold hover:bg-red-400/20 disabled:opacity-40">Invalidar</button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
 
-      {/* Modals */}
+      {/* Modal referidos */}
+      {referralModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="font-display font-bold mb-1">
+              {referralModal.accion === "liberar_credito" ? "¿Liberar crédito?" : referralModal.accion === "marcar_aplicado" ? "¿Marcar como aplicado?" : "¿Invalidar crédito?"}
+            </h3>
+            <p className="text-white/40 text-xs mb-4">{referralModal.referral.referrer_email} → {referralModal.referral.referred_email} · <strong className="text-[#d4f53c]">€{referralModal.referral.credit_amount?.toFixed(2)}</strong></p>
+            <textarea
+              rows={3}
+              placeholder={referralModal.accion === "invalidar" ? "Motivo de invalidación (obligatorio)" : "Nota interna (recomendada)"}
+              value={referralNota}
+              onChange={e => setReferralNota(e.target.value)}
+              className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none"
+            />
+            <div className="flex gap-2">
+              <button onClick={() => { setReferralModal(null); setReferralNota(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button>
+              <button
+                disabled={referralModal.accion === "invalidar" ? !referralNota.trim() : false}
+                onClick={() => accionReferral(referralModal.accion, referralModal.referral.id, referralNota)}
+                className={`flex-1 py-2 rounded-lg font-bold text-sm disabled:opacity-40 ${referralModal.accion === "invalidar" ? "bg-red-500 text-white" : "bg-[#d4f53c] text-[#080808]"}`}
+              >Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modals existentes */}
       {modal && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
           <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm">

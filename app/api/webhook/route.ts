@@ -5,7 +5,12 @@ import {
   enviarEmailAdmin, enviarEmailAdminPagoFallido, enviarEmailAdminCancelacion, enviarEmailAdminReembolso,
   enviarEmailAgente, enviarEmailClientePagoRealizado, enviarEmailClienteRenovacion,
   enviarEmailClientePagoFallido, enviarEmailClienteCancelacion, enviarEmailClienteReembolso,
+  // Referidos
+  enviarEmailReferidoRegistrado, enviarEmailAdminNuevoReferido,
 } from "@/lib/emails";
+import { registerReferral, lookupRefCode, handleReferralRefund, getOrCreateRefCode } from "@/lib/referrals";
+import { maybeRequestReview } from "@/lib/reviews";
+import { enviarEmailPedirResena } from "@/lib/emails";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 export const dynamic = "force-dynamic";
@@ -62,6 +67,7 @@ export async function POST(req: NextRequest) {
         const importe = (session.amount_total || 0) / 100;
         const plan = meta.videos ? `${meta.videos} clips/mes` : "Plan VitalSoft";
         const clips = meta.videos ? parseInt(meta.videos) : null;
+        const stripeCustomerId = typeof session.customer === "string" ? session.customer : null;
 
         // Idempotencia
         const { data: existing } = await supabase.from("orders").select("id").eq("stripe_session_id", session.id).single();
@@ -79,7 +85,7 @@ export async function POST(req: NextRequest) {
         const { data: order } = await supabase.from("orders").insert({
           cliente_email: clienteEmail,
           cliente_nombre: meta.nombre || null,
-          stripe_customer_id: typeof session.customer === "string" ? session.customer : null,
+          stripe_customer_id: stripeCustomerId,
           stripe_session_id: session.id,
           stripe_subscription_id: typeof session.subscription === "string" ? session.subscription : null,
           plan, clips_mensuales: clips, importe,
@@ -107,13 +113,50 @@ export async function POST(req: NextRequest) {
             .gte("ownership_hasta", new Date().toISOString());
         }
 
-        // Drive — llamada no bloqueante
+        // Drive — no bloqueante
         if (order?.id) {
           fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/drive`, {
             method: "POST",
             headers: { "Content-Type": "application/json", "x-internal-secret": process.env.CRON_SECRET || "" },
             body: JSON.stringify({ clienteNombre: meta.nombre || clienteEmail.split("@")[0], clienteEmail, plan, orderId: order.id }),
           }).catch(e => console.error("[Drive] Error:", e));
+        }
+
+        // ── Sistema de referidos de clientes ──────────────────────────────
+        // El código de referido del CLIENTE llega en meta.client_ref
+        // (distinto de agenteCodigo que viene de client_reference_id para agentes)
+        const clientRef = meta.client_ref;
+        if (clientRef && clienteEmail && stripeCustomerId) {
+          try {
+            const referrer = await lookupRefCode(clientRef);
+            if (referrer) {
+              const { referral, suspicious } = await registerReferral({
+                referrerStripeCustomerId: referrer.stripe_customer_id,
+                referrerEmail: referrer.email,
+                referredEmail: clienteEmail,
+                referredStripeCustomerId: stripeCustomerId,
+                stripeSessionId: session.id,
+                orderId: order?.id,
+                amountPaid: importe,
+              });
+              // Emails de referido (no bloquean el webhook)
+              await Promise.allSettled([
+                sendEmail(
+                  () => enviarEmailReferidoRegistrado({ referrerEmail: referrer.email, referredEmail: clienteEmail, creditAmount: referral.credit_amount ?? 0 }),
+                  referrer.email, "referido_registrado", event.type
+                ),
+                sendEmail(
+                  () => enviarEmailAdminNuevoReferido({ referrerEmail: referrer.email, referredEmail: clienteEmail, amountPaid: importe, creditAmount: referral.credit_amount ?? 0, isSuspicious: suspicious, suspiciousReason: referral.suspicious_reason }),
+                  process.env.ADMIN_EMAIL!, "admin_nuevo_referido", event.type
+                ),
+              ]);
+              await log("referido_registrado", `${referrer.email} → ${clienteEmail} · crédito €${referral.credit_amount}${suspicious ? " ⚠️ sospechoso" : ""}`);
+            }
+          } catch (refErr) {
+            // Nunca fallar el webhook por error de referidos
+            console.error("[Referral] Error en checkout:", refErr);
+            await log("referral_error", String(refErr));
+          }
         }
 
         await log("venta_registrada", `${clienteEmail} · €${importe} · agente:${agenteCodigo || "directo"}${sospechoso ? " ⚠️" : ""}`);
@@ -130,12 +173,32 @@ export async function POST(req: NextRequest) {
         const clienteEmail = invoice.customer_email || "";
         const importe = (invoice.amount_paid || 0) / 100;
         const periodo = invoice.period_end ? new Date(invoice.period_end * 1000).toLocaleDateString("es-ES") : "";
+
+        let orderRenovado = null;
         if (invoice.subscription) {
-          await supabase.from("orders")
+          const { data } = await supabase.from("orders")
             .update({ estado: "esperando_material", revisiones_usadas: 0 })
             .eq("stripe_subscription_id", String(invoice.subscription))
-            .neq("estado", "cancelado");
+            .neq("estado", "cancelado")
+            .select("id, stripe_customer_id, cliente_nombre").single();
+          orderRenovado = data;
         }
+
+        // Pedir reseña en renovaciones (si no se ha pedido antes y REVIEW_URL configurado)
+        if (orderRenovado?.stripe_customer_id && clienteEmail) {
+          try {
+            const shouldAsk = await maybeRequestReview(orderRenovado.stripe_customer_id, clienteEmail, orderRenovado.id);
+            if (shouldAsk && process.env.NEXT_PUBLIC_REVIEW_URL) {
+              await sendEmail(
+                () => enviarEmailPedirResena({ email: clienteEmail, nombre: orderRenovado.cliente_nombre, reviewUrl: process.env.NEXT_PUBLIC_REVIEW_URL! }),
+                clienteEmail, "pedir_resena", event.type
+              );
+            }
+          } catch (revErr) {
+            console.error("[Review] Error en renovación:", revErr);
+          }
+        }
+
         await log("renovacion", `${clienteEmail} · €${importe}`);
         await sendEmail(() => enviarEmailClienteRenovacion({ email: clienteEmail, plan: "Plan VitalSoft", importe, periodo }), clienteEmail, "cliente_renovacion", event.type);
         break;
@@ -145,19 +208,13 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated": {
         const sub = event.data.object as Stripe.Subscription;
         const prevSub = event.data.previous_attributes as any;
-
-        // Solo procesar si cambió el precio (cambio de plan real)
         if (!prevSub?.items) break;
-
         const item = sub.items.data[0];
         const nuevoImporte = item?.price?.unit_amount ? item.price.unit_amount / 100 : null;
-
         if (nuevoImporte && sub.id) {
           await supabase.from("orders")
             .update({ importe: nuevoImporte, actualizado_at: new Date().toISOString() })
-            .eq("stripe_subscription_id", sub.id)
-            .neq("estado", "cancelado");
-
+            .eq("stripe_subscription_id", sub.id).neq("estado", "cancelado");
           await log("cambio_plan", `Sub ${sub.id} · nuevo importe: €${nuevoImporte}`);
         }
         break;
@@ -202,12 +259,10 @@ export async function POST(req: NextRequest) {
         const clienteEmail = charge.billing_details?.email || charge.receipt_email || "";
         const importe = (charge.amount_refunded || 0) / 100;
 
-        // CRÍTICO: invalidar comisión del agente si existe venta pendiente
-        // Buscar por stripe_customer_id o email del cliente
+        // Invalidar comisión de agente si existe
         if (clienteEmail) {
           const { data: ventasPendientes } = await supabase
-            .from("ventas")
-            .select("id, agente_codigo")
+            .from("ventas").select("id, agente_codigo")
             .eq("cliente_email", clienteEmail)
             .in("estado", ["pendiente_validacion", "disponible"]);
 
@@ -218,6 +273,25 @@ export async function POST(req: NextRequest) {
                 .eq("id", venta.id);
               await log("comision_invalidada_refund", `Venta ${venta.id} · agente ${venta.agente_codigo || "directo"} · refund €${importe}`, "venta");
             }
+          }
+        }
+
+        // Invalidar crédito de referido si existe para esta sesión
+        // Buscamos por customer email ya que charge no siempre tiene session_id directo
+        if (clienteEmail) {
+          try {
+            const { data: referralPorEmail } = await supabase.from("client_referrals")
+              .select("id, status").eq("referred_email", clienteEmail.toLowerCase())
+              .in("status", ["pendiente_validacion", "disponible"]).limit(1);
+            if (referralPorEmail && referralPorEmail.length > 0) {
+              await supabase.from("client_referrals").update({
+                status: "reembolsado",
+                notes: `Crédito cancelado por refund de €${importe}`,
+              }).eq("id", referralPorEmail[0].id);
+              await log("referido_credito_cancelado_refund", `Referido de ${clienteEmail} · €${importe}`);
+            }
+          } catch (refErr) {
+            console.error("[Referral] Error en refund:", refErr);
           }
         }
 

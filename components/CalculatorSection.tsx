@@ -21,11 +21,15 @@ export default function CalculatorSection({ refCode }: Props) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [urlRef, setUrlRef] = useState(refCode || "");
+  const [clientRef, setClientRef] = useState(""); // código de referido de cliente
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const r = params.get("ref");
     if (r) setUrlRef(r);
+    // Leer client_ref de la URL (link de referido de cliente)
+    const cr = params.get("client_ref");
+    if (cr) setClientRef(cr);
   }, []);
 
   const price = calcPrice(videos);
@@ -50,7 +54,7 @@ export default function CalculatorSection({ refCode }: Props) {
       await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef }),
+        body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef, client_ref: clientRef }),
       });
 
       if (planKey) {
@@ -66,7 +70,7 @@ export default function CalculatorSection({ refCode }: Props) {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef }),
+        body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef, client_ref: clientRef }),
       });
       const data = await res.json();
       if (data.url) {

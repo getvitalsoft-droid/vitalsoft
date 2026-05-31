@@ -4,47 +4,38 @@
 // ARQUITECTURA:
 //   Stripe → webhook → /api/webhook → aquí → Resend → email final
 //
-// MAPA COMPLETO DE EMAILS:
+// MAPA COMPLETO DE EMAILS (21 total):
 // ─────────────────────────────────────────────────────────────────────────
-// STRIPE (desactivado para clientes — solo genera PDFs/facturas internas):
-//   ✓ Genera PDF de factura (compliance fiscal) → NO envía email
-//   ✓ Genera recibo interno → NO envía email
-//   ✓ Registra eventos via webhook → nuestro backend procesa
+// CLIENTE:
+//   enviarEmailClientePagoRealizado   ← checkout.session.completed
+//   enviarEmailClienteRenovacion      ← invoice.paid (no primer pago)
+//   enviarEmailClientePagoFallido     ← invoice.payment_failed
+//   enviarEmailClienteCancelacion     ← customer.subscription.deleted
+//   enviarEmailClienteReembolso       ← charge.refunded
 //
-// RESEND (todos los emails visibles):
+// AGENTES:
+//   enviarEmailBienvenidaAgente       ← PATCH /api/agentes (aprobar)
+//   enviarEmailAgente                 ← checkout.session.completed
+//   enviarEmailAgenteComisionDisp     ← cron/manual cuando pasan 7 días
+//   enviarEmailAgenteComisionPagada   ← PATCH /api/agentes (marcar_pagado)
+//   enviarEmailAgenteBloqueo          ← PATCH /api/agentes (bloquear)
 //
-//   CLIENTE:
-//     enviarEmailClientePagoRealizado   ← checkout.session.completed
-//     enviarEmailClienteRenovacion      ← invoice.paid (no primer pago)
-//     enviarEmailClientePagoFallido     ← invoice.payment_failed
-//     enviarEmailClienteCancelacion     ← customer.subscription.deleted
-//     enviarEmailClienteReembolso       ← charge.refunded
+// ADMIN:
+//   enviarEmailAdmin                  ← checkout.session.completed
+//   enviarEmailAdminPagoFallido       ← invoice.payment_failed
+//   enviarEmailAdminCancelacion       ← customer.subscription.deleted
+//   enviarEmailAdminReembolso         ← charge.refunded
+//   enviarEmailAdminNuevoPendiente    ← POST /api/agentes (nuevo registro)
 //
-//   AGENTES:
-//     enviarEmailBienvenidaAgente       ← PATCH /api/agentes (aprobar)
-//     enviarEmailAgente                 ← checkout.session.completed
-//     enviarEmailAgenteComisionDisp     ← cron/manual cuando pasan 7 días
-//     enviarEmailAgenteComisionPagada   ← PATCH /api/agentes (marcar_pagado)
-//     enviarEmailAgenteBloqueo          ← PATCH /api/agentes (bloquear)
+// REFERIDOS DE CLIENTES (nuevos):
+//   enviarEmailReferidoRegistrado     ← checkout.session.completed (cuando hay client_ref)
+//   enviarEmailCreditoDisponible      ← PATCH /api/admin/referrals (release_credit)
+//   enviarEmailCreditoAplicado        ← PATCH /api/admin/referrals (apply_credit)
+//   enviarEmailAdminNuevoReferido     ← checkout.session.completed (cuando hay client_ref)
+//   enviarEmailAdminCreditoListo      ← PATCH /api/admin/referrals (release_credit)
 //
-//   ADMIN:
-//     enviarEmailAdmin                  ← checkout.session.completed
-//     enviarEmailAdminPagoFallido       ← invoice.payment_failed
-//     enviarEmailAdminCancelacion       ← customer.subscription.deleted
-//     enviarEmailAdminReembolso         ← charge.refunded
-//     enviarEmailAdminNuevoPendiente    ← POST /api/agentes (nuevo registro)
-//
-// RIESGO DOBLE ENVÍO:
-//   ✗ Stripe emails desactivados → sin duplicados
-//   ✓ Webhook idempotente → stripe_session_id como clave única en DB
-//   ✓ Si Resend falla → error logueado en activity_logs, Stripe no envía nada
-//   ✓ Retry: Stripe reintenta webhooks hasta 3 días si recibe error != 2xx
-//
-// LO QUE STRIPE SIGUE HACIENDO INTERNAMENTE (no emails):
-//   ✓ PDF de factura descargable desde portal del cliente de Stripe
-//   ✓ Registro fiscal/contable de cada transacción
-//   ✓ Generación de IVA si está configurado
-//   ✓ Gestión de disputas/chargebacks
+// RESEÑAS EXTERNAS (nuevo):
+//   enviarEmailPedirResena            ← cuando order pasa a completado
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { Resend } from "resend";
@@ -98,17 +89,17 @@ export async function enviarEmailClientePagoRealizado({
     </p>
     ${onboardingUrl ? BTN("Configurar mi proyecto →", onboardingUrl) : ""}
     <p style="font-size:12px;color:#444;margin-top:16px">
-      Puedes cancelar en cualquier momento desde Stripe sin penalización.
+      ¿Tienes dudas? Responde a este email o escríbenos a <a href="mailto:${ADMIN_EMAIL}" style="color:#d4f53c">${ADMIN_EMAIL}</a>
     </p>`;
 
   return await resend.emails.send({
     from: FROM, to: email,
-    subject: `✅ Suscripción activada — Configura tu proyecto`,
-    html: WRAP(HEADER("¡Suscripción activada!", nombre ? `Hola ${nombre}, ya estás dentro.` : "Ya estás dentro.", "✅"), body),
+    subject: `✅ Pago confirmado — Bienvenido a VitalSoft`,
+    html: WRAP(HEADER("¡Bienvenido a VitalSoft!", `Hola${nombre ? ` ${nombre}` : ""}, tu suscripción está activa.`, "✅"), body),
   });
 }
 
-/** Disparado por: invoice.paid (renovaciones mensuales, NO primer pago) */
+/** Disparado por: invoice.paid (renovaciones) */
 export async function enviarEmailClienteRenovacion({
   email, plan, importe, periodo,
 }: {
@@ -117,39 +108,39 @@ export async function enviarEmailClienteRenovacion({
   const body = `
     ${CARD(`
       ${ROW("Plan", plan)}
-      ${ROW("Importe renovado", `€${importe}`, true)}
-      ${ROW("Período", periodo)}
+      ${ROW("Renovado hasta", periodo)}
+      ${ROW("Importe", `€${importe}`, true)}
     `)}
-    <p style="font-size:13px;color:#888">Tu suscripción se ha renovado correctamente. Puedes subir nuevo contenido a tu Drive cuando quieras.</p>`;
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Tu suscripción se ha renovado correctamente. Puedes subir nuevo material a tu carpeta Drive en cualquier momento.
+    </p>`;
 
   return await resend.emails.send({
     from: FROM, to: email,
-    subject: `🔄 Renovación mensual — €${importe}`,
-    html: WRAP(HEADER("Renovación mensual", "Tu plan se ha renovado correctamente.", "🔄"), body),
+    subject: `🔄 Suscripción renovada — VitalSoft`,
+    html: WRAP(HEADER("Suscripción renovada", `Siguiente período hasta ${periodo}.`, "🔄"), body),
   });
 }
 
 /** Disparado por: invoice.payment_failed */
 export async function enviarEmailClientePagoFallido({
-  email, plan, importe, intentoUrl,
+  email, plan, importe,
 }: {
-  email: string; plan: string; importe: number; intentoUrl?: string;
+  email: string; plan: string; importe: number;
 }) {
   const body = `
-    ${ALERTA("⚠️ No hemos podido cobrar tu suscripción este mes.", "warn")}
-    ${CARD(`
-      ${ROW("Plan", plan)}
-      ${ROW("Importe pendiente", `€${importe}`, true)}
-    `)}
+    ${ALERTA("No hemos podido procesar tu pago de este mes.")}
+    ${CARD(`${ROW("Plan", plan)}${ROW("Importe pendiente", `€${importe}`, true)}`)}
     <p style="font-size:13px;color:#888;line-height:1.7">
-      Stripe lo reintentará automáticamente en los próximos días. Si el problema persiste, actualiza tu método de pago para mantener el servicio activo.
+      Stripe intentará el cobro de nuevo en los próximos días. 
+      Si el problema persiste, actualiza tu método de pago desde el portal de Stripe.
     </p>
-    ${intentoUrl ? BTN("Actualizar método de pago", intentoUrl) : ""}`;
+    ${BTN("Actualizar método de pago", "https://billing.stripe.com")}`;
 
   return await resend.emails.send({
     from: FROM, to: email,
-    subject: `⚠️ Pago fallido — Acción requerida`,
-    html: WRAP(HEADER("Pago fallido", "Necesitamos que actualices tu método de pago.", "⚠️"), body),
+    subject: `⚠️ Problema con tu pago — VitalSoft`,
+    html: WRAP(HEADER("Pago fallido", "No pudimos procesar tu suscripción.", "⚠️"), body),
   });
 }
 
@@ -160,41 +151,36 @@ export async function enviarEmailClienteCancelacion({
   email: string; plan: string; fechaFin: string;
 }) {
   const body = `
-    ${CARD(`
-      ${ROW("Plan cancelado", plan)}
-      ${ROW("Acceso hasta", fechaFin)}
-    `)}
+    ${CARD(`${ROW("Plan cancelado", plan)}${ROW("Acceso hasta", fechaFin)}`)}
     <p style="font-size:13px;color:#888;line-height:1.7">
-      Tu suscripción ha sido cancelada. Seguirás teniendo acceso hasta el final del período ya pagado.
-      Si quieres volver en el futuro, puedes reactivarla desde la web.
+      Lamentamos que te vayas. Sigues teniendo acceso hasta el ${fechaFin}. 
+      Si cambias de opinión, puedes reactivar en cualquier momento.
     </p>
-    ${BTN("Volver a VitalSoft", SITE)}`;
+    ${BTN("Volver a contratar", SITE)}`;
 
   return await resend.emails.send({
     from: FROM, to: email,
-    subject: `Suscripción cancelada — ${plan}`,
-    html: WRAP(HEADER("Suscripción cancelada", "Sentimos verte marchar.", "👋"), body),
+    subject: `Suscripción cancelada — VitalSoft`,
+    html: WRAP(HEADER("Suscripción cancelada", "Esperamos verte pronto.", "👋"), body),
   });
 }
 
 /** Disparado por: charge.refunded */
 export async function enviarEmailClienteReembolso({
-  email, importe, motivo,
+  email, importe,
 }: {
-  email: string; importe: number; motivo?: string;
+  email: string; importe: number;
 }) {
   const body = `
-    ${CARD(`
-      ${ROW("Importe reembolsado", `€${importe}`, true)}
-      ${motivo ? ROW("Motivo", motivo) : ""}
-      ${ROW("Plazo", "3–5 días hábiles en tu cuenta")}
-    `)}
-    <p style="font-size:13px;color:#888">El reembolso ha sido procesado. Puede tardar unos días en aparecer en tu cuenta según tu banco.</p>`;
+    ${CARD(`${ROW("Importe reembolsado", `€${importe}`, true)}${ROW("Plazo", "3-10 días hábiles")}`)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Hemos procesado tu reembolso. El tiempo de acreditación depende de tu banco.
+    </p>`;
 
   return await resend.emails.send({
     from: FROM, to: email,
     subject: `💳 Reembolso procesado — €${importe}`,
-    html: WRAP(HEADER("Reembolso procesado", "Hemos procesado tu devolución.", "💳"), body),
+    html: WRAP(HEADER("Reembolso procesado", "Tu dinero está de vuelta.", "💳"), body),
   });
 }
 
@@ -204,33 +190,22 @@ export async function enviarEmailClienteReembolso({
 
 /** Disparado por: PATCH /api/agentes accion=aprobar */
 export async function enviarEmailBienvenidaAgente({
-  agente, links,
+  agente,
 }: {
-  agente: Agente; links: Record<string, string>;
+  agente: Agente;
 }) {
   const body = `
-    <p style="font-size:14px;color:#aaa;margin-bottom:16px">Hola <strong>${agente.nombre}</strong>, tu cuenta ha sido aprobada. Ya puedes compartir tu link y ganar comisiones.</p>
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">Hola <strong>${agente.nombre}</strong>, tu cuenta ha sido activada.</p>
     ${CARD(`
-      <p style="margin:0 0 10px;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:2px;font-weight:700">Tu código</p>
-      <p style="color:#d4f53c;font-size:30px;font-weight:800;margin:0 0 14px;letter-spacing:3px">${agente.codigo}</p>
-      <p style="margin:0 0 4px;font-size:12px;color:#666">Tu link principal:</p>
-      <a href="${links.general}" style="color:#d4f53c;font-size:13px">${links.general}</a>
+      ${ROW("Tu código de referido", agente.codigo, true)}
+      ${ROW("Comisión por venta", "20% del primer pago")}
+      ${ROW("Retención de seguridad", "7 días")}
     `)}
-    ${CARD(`
-      <p style="margin:0 0 10px;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:2px;font-weight:700">Cómo funciona</p>
-      <p style="margin:4px 0;font-size:13px;color:#888">1. Comparte tu link con creadores, podcasters o marcas.</p>
-      <p style="margin:4px 0;font-size:13px;color:#888">2. Cuando alguien contrata, la venta queda registrada con tu código.</p>
-      <p style="margin:4px 0;font-size:13px;color:#888">3. Ganas el <strong style="color:#d4f53c">20% del primer pago</strong> de cada cliente.</p>
-      <p style="margin:4px 0;font-size:13px;color:#888">4. Tras 7 días de validación, la comisión queda disponible para cobrar.</p>
-    `)}
-    ${CARD(`
-      <p style="margin:0 0 10px;font-size:12px;color:#666;text-transform:uppercase;letter-spacing:2px;font-weight:700">Qué tipo de cliente buscar</p>
-      <p style="font-size:13px;color:#888;margin:4px 0">✓ Podcasters con episodios regulares</p>
-      <p style="font-size:13px;color:#888;margin:4px 0">✓ Creadores de YouTube que quieran distribuir en TikTok/Reels</p>
-      <p style="font-size:13px;color:#888;margin:4px 0">✓ Negocios o marcas que graben contenido largo</p>
-      <p style="font-size:13px;color:#888;margin:4px 0">✗ No prometer viralidad ni crecimiento garantizado</p>
-    `)}
-    ${BTN("Ver mi panel", `${SITE}/agentes`)}`;
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Comparte tu link de referido y gana comisión por cada cliente que contrate.
+      Tu link: <strong style="color:#d4f53c">${SITE}?ref=${agente.codigo}</strong>
+    </p>
+    ${BTN("Ver mi panel de agente", `${SITE}/agentes`)}`;
 
   return await resend.emails.send({
     from: FROM, to: agente.email,
@@ -429,5 +404,164 @@ export async function enviarEmailAdminNuevoPendiente({
     from: FROM, to: ADMIN_EMAIL,
     subject: `👤 Nuevo agente pendiente — ${nombre}`,
     html: WRAP(HEADER("Nuevo agente pendiente", `${nombre} quiere unirse al programa.`, "👤"), body),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAILS REFERIDOS DE CLIENTES
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Disparado por: checkout.session.completed cuando hay client_ref en metadata */
+export async function enviarEmailReferidoRegistrado({
+  referrerEmail, referredEmail, creditAmount,
+}: {
+  referrerEmail: string; referredEmail: string; creditAmount: number;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      <strong style="color:#f0f0f0">${referredEmail}</strong> acaba de contratar VitalSoft gracias a tu recomendación.
+    </p>
+    ${CARD(`
+      ${ROW("Crédito generado", `€${creditAmount.toFixed(2)}`, true)}
+      ${ROW("Estado", "Pendiente de validación")}
+      ${ROW("Disponible en", "7–14 días")}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Tu crédito se activa una vez confirmado el pago. Si hay algún problema con el pago del referido,
+      el crédito se cancela automáticamente. Te avisaremos cuando esté listo para descontar de tu próxima mensualidad.
+    </p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: referrerEmail,
+    subject: `🎉 Tu referido ha comprado — crédito de €${creditAmount.toFixed(2)} pendiente`,
+    html: WRAP(HEADER("¡Tu referido ha comprado!", "Crédito generado, pendiente de validación.", "🎉"), body),
+  });
+}
+
+/** Disparado por: admin libera crédito */
+export async function enviarEmailCreditoDisponible({
+  referrerEmail, creditAmount,
+}: {
+  referrerEmail: string; creditAmount: number;
+}) {
+  const body = `
+    ${CARD(`
+      ${ROW("Crédito disponible", `€${creditAmount.toFixed(2)}`, true)}
+      ${ROW("Aplicación", "Próximo ciclo de facturación")}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Nuestro equipo lo aplicará automáticamente como descuento en tu siguiente mes. No tienes que hacer nada.
+    </p>
+    <p style="font-size:12px;color:#555;margin-top:16px">¿Tienes dudas? Responde a este email.</p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: referrerEmail,
+    subject: `✅ Tu crédito de €${creditAmount.toFixed(2)} ya está disponible`,
+    html: WRAP(HEADER("Crédito disponible", "Tu crédito por referido está validado.", "✅"), body),
+  });
+}
+
+/** Disparado por: admin marca crédito como aplicado */
+export async function enviarEmailCreditoAplicado({
+  referrerEmail, creditAmount,
+}: {
+  referrerEmail: string; creditAmount: number;
+}) {
+  const body = `
+    ${CARD(`
+      ${ROW("Crédito aplicado", `€${creditAmount.toFixed(2)}`, true)}
+      ${ROW("Fecha", new Date().toLocaleDateString("es-ES"))}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Hemos aplicado el descuento a tu factura de este mes.
+      Si en los próximos días no lo ves reflejado, responde a este email.
+    </p>
+    <p style="font-size:13px;color:#888;margin-top:12px">
+      ¿Conoces a otro creador que publique contenido largo? Puedes seguir refiriendo y acumulando créditos.
+    </p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: referrerEmail,
+    subject: `💳 Tu crédito de €${creditAmount.toFixed(2)} ha sido aplicado`,
+    html: WRAP(HEADER("Crédito aplicado", "El descuento ya está en tu factura.", "💳"), body),
+  });
+}
+
+/** Disparado por: checkout.session.completed (admin — nuevo referido) */
+export async function enviarEmailAdminNuevoReferido({
+  referrerEmail, referredEmail, amountPaid, creditAmount, isSuspicious, suspiciousReason,
+}: {
+  referrerEmail: string; referredEmail: string; amountPaid: number;
+  creditAmount: number; isSuspicious: boolean; suspiciousReason?: string | null;
+}) {
+  const alertaHtml = isSuspicious
+    ? ALERTA(`⚠️ REFERIDO SOSPECHOSO: ${suspiciousReason || "revisar manualmente"}`, "error")
+    : "";
+
+  const body = `
+    ${alertaHtml}
+    ${CARD(`
+      ${ROW("Referrer", referrerEmail)}
+      ${ROW("Referido", referredEmail)}
+      ${ROW("Importe pagado", `€${amountPaid.toFixed(2)}`)}
+      ${ROW("Crédito generado", `€${creditAmount.toFixed(2)}`, true)}
+    `)}
+    ${BTN("Gestionar en admin", `${SITE}/admin/referrals`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `${isSuspicious ? "⚠️ SOSPECHOSO — " : ""}🔔 Nuevo referido: ${referrerEmail}`,
+    html: WRAP(HEADER("Nuevo referido de cliente", `${referrerEmail} ha referido a ${referredEmail}.`, "🔔"), body),
+  });
+}
+
+/** Disparado por: admin libera crédito (notificación al admin también) */
+export async function enviarEmailAdminCreditoListo({
+  referrerEmail, creditAmount,
+}: {
+  referrerEmail: string; creditAmount: number;
+}) {
+  const body = `
+    ${CARD(`
+      ${ROW("Cliente", referrerEmail)}
+      ${ROW("Crédito a aplicar", `€${creditAmount.toFixed(2)}`, true)}
+    `)}
+    <p style="font-size:13px;color:#888">Aplica el descuento manualmente en Stripe o marca como aplicado desde el panel.</p>
+    ${BTN("Ir a referidos", `${SITE}/admin/referrals`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `💳 Crédito listo para aplicar — €${creditAmount.toFixed(2)} · ${referrerEmail}`,
+    html: WRAP(HEADER("Crédito listo para aplicar", "Acción requerida en el panel.", "💳"), body),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAIL RESEÑAS EXTERNAS
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Disparado por: order completado (si NEXT_PUBLIC_REVIEW_URL está configurado) */
+export async function enviarEmailPedirResena({
+  email, nombre, reviewUrl,
+}: {
+  email: string; nombre?: string; reviewUrl: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""}, llevas un tiempo trabajando con VitalSoft y tu opinión nos importa mucho.
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Si el servicio te ha funcionado bien, ¿podrías dejarnos una reseña honesta?
+      <strong style="color:#f0f0f0">Tarda menos de 1 minuto</strong> y ayuda a otros creadores a tomar su decisión.
+    </p>
+    ${BTN("Dejar reseña →", reviewUrl)}
+    <p style="font-size:12px;color:#444;margin-top:20px">
+      Si prefieres no hacerlo, no pasa nada. Puedes ignorar este email sin problema.
+    </p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `¿Nos dejas una reseña rápida? (menos de 1 minuto)`,
+    html: WRAP(HEADER("¿Nos dejas una opinión?", "Tu experiencia ayuda a otros creadores.", "⭐"), body),
   });
 }
