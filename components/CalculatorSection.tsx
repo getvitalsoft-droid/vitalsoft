@@ -30,9 +30,19 @@ export default function CalculatorSection({ refCode }: Props) {
     const params = new URLSearchParams(window.location.search);
     const r = params.get("ref");
     if (r) setUrlRef(r);
-    // Leer client_ref de la URL (link de referido de cliente)
     const cr = params.get("client_ref");
     if (cr) setClientRef(cr);
+    // Preseleccionar plan si viene desde la sección de precios
+    const clips = params.get("clips");
+    if (clips) setVideos(Number(clips));
+
+    // Escuchar evento de PricingSection para preseleccionar plan
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.videos) setVideos(detail.videos);
+    };
+    window.addEventListener("vs:selectPlan", handler);
+    return () => window.removeEventListener("vs:selectPlan", handler);
   }, []);
 
   const price = calcPrice(videos);

@@ -1,14 +1,27 @@
 "use client";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
-import { PRICING_PLANS, buildStripeUrl } from "@/lib/stripe";
+import { PRICING_PLANS } from "@/lib/stripe";
 
 interface Props { refCode?: string }
 
 export default function PricingSection({ refCode }: Props) {
-  const handlePlan = (planKey: string) => {
-    const url = buildStripeUrl(planKey as any, refCode);
-    window.open(url, "_blank");
+  const handlePlan = (videos: number) => {
+    // Scroll a la calculadora con el plan preseleccionado
+    // Pasamos el volumen via URL param para que la calculadora lo lea
+    const params = new URLSearchParams(window.location.search);
+    params.set("clips", String(videos));
+    const search = params.toString();
+    const url = `/#calculadora${search ? "?" + search : ""}`;
+    // Scroll suave a la calculadora
+    const el = document.getElementById("calculadora");
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth" });
+      // Disparar evento para que CalculatorSection actualice el slider
+      window.dispatchEvent(new CustomEvent("vs:selectPlan", { detail: { videos } }));
+    } else {
+      window.location.href = url;
+    }
   };
 
   return (
@@ -37,7 +50,7 @@ export default function PricingSection({ refCode }: Props) {
                 <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{plan.revisions}</li>
                 <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{plan.turnaround}</li>
               </ul>
-              <button onClick={() => handlePlan(plan.key)}
+              <button onClick={() => handlePlan(plan.videos)}
                 className={`w-full py-3 rounded-xl font-display font-bold text-sm transition-all duration-200 ${plan.featured ? "bg-accent hover:bg-accent-2 text-[#080808]" : "border border-white/10 hover:border-white/25 hover:bg-white/[0.04] text-white"}`}>
                 Empezar con {plan.name}
               </button>
@@ -45,7 +58,6 @@ export default function PricingSection({ refCode }: Props) {
           ))}
         </div>
 
-        {/* Notas importantes */}
         <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-2">
           <p className="text-white/25 text-xs text-center">
             La mayoría de clips se entregan entre 20 y 90 segundos dependiendo del contenido y la plataforma.

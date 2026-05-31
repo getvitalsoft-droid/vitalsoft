@@ -1,6 +1,10 @@
 import { redirect } from "next/navigation";
+
+// Redirige a la calculadora con el plan preseleccionado
+// en lugar de ir directamente a un Payment Link de Stripe
 export default function Page({ searchParams }: { searchParams: { ref?: string } }) {
-  const base = process.env.NEXT_PUBLIC_STRIPE_STARTER_LINK ?? "/";
-  const url = searchParams.ref ? `${base}?client_reference_id=ref_${searchParams.ref}` : base;
-  redirect(url);
+  const params = new URLSearchParams();
+  params.set("clips", "10");
+  if (searchParams.ref) params.set("ref", searchParams.ref);
+  redirect(`/?${params.toString()}#calculadora`);
 }

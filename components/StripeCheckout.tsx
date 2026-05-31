@@ -67,7 +67,7 @@ function CheckoutForm({ price, onSuccess }: { price: number; onSuccess: () => vo
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="mb-6">
+      <div className="mb-5">
         <PaymentElement
           options={{
             layout: "tabs",
@@ -77,7 +77,7 @@ function CheckoutForm({ price, onSuccess }: { price: number; onSuccess: () => vo
       </div>
 
       {error && (
-        <div className="mb-4 text-red-400 text-sm bg-red-400/10 border border-red-400/20 rounded-lg px-4 py-3">
+        <div className="mb-3 text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2">
           {error}
         </div>
       )}
@@ -85,19 +85,14 @@ function CheckoutForm({ price, onSuccess }: { price: number; onSuccess: () => vo
       <button
         type="submit"
         disabled={!stripe || loading}
-        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black text-base py-4 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_rgba(232,255,71,0.35)] disabled:opacity-60"
+        className="w-full flex items-center justify-center gap-2 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black text-base py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_40px_rgba(232,255,71,0.35)] disabled:opacity-60"
       >
-        {loading ? (
-          "Procesando..."
-        ) : (
-          <>
-            <span>Pagar €{price.toLocaleString("es-ES")}/mes</span>
-            <ArrowRight size={18} />
-          </>
+        {loading ? "Procesando..." : (
+          <><span>Pagar €{price.toLocaleString("es-ES")}/mes</span><ArrowRight size={18} /></>
         )}
       </button>
 
-      <div className="flex items-center justify-center gap-2 mt-4 text-white/25 text-xs">
+      <div className="flex items-center justify-center gap-2 mt-3 text-white/25 text-xs">
         <Lock size={11} />
         Pago cifrado con Stripe · Sin permanencia · Cancela cuando quieras
       </div>
@@ -195,6 +190,14 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
         </div>
       )}
 
+      {/* Botón volver — siempre visible, encima del formulario */}
+      <button
+        onClick={onBack}
+        className="flex items-center gap-1 text-white/25 text-xs mb-4 hover:text-white/50 transition-colors"
+      >
+        <ChevronLeft size={12} /> Volver al formulario
+      </button>
+
       {clientSecret && (
         <Elements
           stripe={stripePromise}
@@ -203,13 +206,6 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
           <CheckoutForm price={data.price} onSuccess={onSuccess} />
         </Elements>
       )}
-
-      <button
-        onClick={onBack}
-        className="flex items-center gap-1 text-white/25 text-xs mt-4 hover:text-white/50 transition-colors"
-      >
-        <ChevronLeft size={12} /> Volver al formulario
-      </button>
     </div>
   );
 }
