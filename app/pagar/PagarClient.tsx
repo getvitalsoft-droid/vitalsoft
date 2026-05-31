@@ -8,9 +8,9 @@ import { X, ArrowRight, ChevronLeft, Lock } from "lucide-react";
 import { calcPrice } from "@/lib/stripe";
 import StripeCheckout from "@/components/StripeCheckout";
 
-interface Props { ref: string; clips: number }
+interface Props { agentRef: string; clips: number }
 
-export default function PagarClient({ ref: refCode, clips }: Props) {
+export default function PagarClient({ agentRef, clips }: Props) {
   const price = calcPrice(clips);
 
   const [name, setName] = useState("");
@@ -79,9 +79,9 @@ export default function PagarClient({ ref: refCode, clips }: Props) {
                 <div className="text-white/20 text-xs">Cancela cuando quieras</div>
               </div>
             </div>
-            {refCode && (
+            {agentRef && (
               <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-center gap-1.5 text-xs text-white/35">
-                🤝 Referido por <strong className="text-accent/80 ml-0.5">{refCode}</strong>
+                🤝 Referido por <strong className="text-accent/80 ml-0.5">{agentRef}</strong>
               </div>
             )}
           </div>
@@ -114,7 +114,7 @@ export default function PagarClient({ ref: refCode, clips }: Props) {
               </form>
             ) : (
               <StripeCheckout
-                data={{ name, email, social, notes: "", videos: clips, price, ref: refCode || undefined }}
+                data={{ name, email, social, notes: "", videos: clips, price, ref: agentRef || undefined }}
                 onBack={() => setStep("form")}
                 onSuccess={() => setSuccess(true)}
               />
