@@ -31,9 +31,19 @@ export default function AgentesPage() {
       const saved = localStorage.getItem("vs_agente");
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.agente && parsed.links) {
+        if (parsed.agente) {
           setAgente(parsed.agente);
-          setLinks(parsed.links);
+          // Regenerar links desde el codigo en lugar de usar los cacheados
+          // para garantizar que siempre tienen el formato /pagar actualizado
+          const codigo = parsed.agente.codigo;
+          const base = "https://vitalsoft.pro";
+          setLinks({
+            general: `${base}?ref=${codigo}`,
+            starter: `${base}/pagar?ref=${codigo}&clips=10`,
+            growth:  `${base}/pagar?ref=${codigo}&clips=20`,
+            scale:   `${base}/pagar?ref=${codigo}&clips=30`,
+            pro:     `${base}/pagar?ref=${codigo}&clips=40`,
+          });
           setStep("dashboard");
         }
       }

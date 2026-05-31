@@ -10,7 +10,7 @@ import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
 // "ref" es palabra reservada en React — usamos "refCode" internamente
-export default function Home({ searchParams }: { searchParams: { ref?: string; pago?: string } }) {
+export default function Home({ searchParams }: { searchParams: { ref?: string; clips?: string; pago?: string } }) {
   const refCode = searchParams.ref;
   return (
     <main>

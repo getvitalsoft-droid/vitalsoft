@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { PRICING_PLANS, calcPrice } from "@/lib/stripe";
@@ -27,6 +27,42 @@ export default function PricingSection({ refCode }: Props) {
   const [checkoutData, setCheckoutData] = useState<CheckoutState | null>(null);
   const [success, setSuccess] = useState(false);
   const [formError, setFormError] = useState("");
+
+  // Auto-abrir popup si viene ref+clips en la URL (link de agente a la landing)
+  // Equivalente a pulsar el plan correspondiente manualmente
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlRef = params.get("ref");
+    const urlClips = Number(params.get("clips"));
+    if (!urlRef || !urlClips) return;
+
+    // Buscar el plan que coincide con los clips, o crear uno personalizado
+    const planFijo = PRICING_PLANS.find(p => p.videos === urlClips);
+    if (planFijo) {
+      // Es un plan fijo: abrir popup directamente
+      setTimeout(() => {
+        setSelected(planFijo);
+        setStep("form");
+        setSuccess(false);
+      }, 300); // pequeño delay para que la página cargue primero
+    } else {
+      // Es un volumen personalizado: abrir popup con datos custom
+      setTimeout(() => {
+        setSelected({
+          key: "custom" as any,
+          name: `${urlClips} clips`,
+          price: calcPrice(urlClips),
+          videos: urlClips,
+          featured: false,
+          features: [],
+          turnaround: "",
+          revisions: "",
+        });
+        setStep("form");
+        setSuccess(false);
+      }, 300);
+    }
+  }, []);
 
   const openPlan = (plan: typeof PRICING_PLANS[0]) => {
     setSelected(plan);
