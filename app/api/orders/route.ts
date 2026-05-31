@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import {
+  enviarEmailClientePausada, enviarEmailClienteReactivada,
+  enviarEmailAdminClientePausado,
+} from "@/lib/emails";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,5 +133,70 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, order: data });
   }
 
+  // ── Pausar suscripción ─────────────────────────────────────────────────
+  if (accion === "pausar") {
+    const pauseDays = 30;
+    const pauseUntil = new Date(Date.now() + pauseDays * 86400000);
+    const pauseUntilStr = pauseUntil.toLocaleDateString("es-ES");
+
+    const { data, error } = await supabaseAdmin.from("orders")
+      .update({
+        is_paused: true,
+        paused_at: new Date().toISOString(),
+        pause_until: pauseUntil.toISOString(),
+        pause_reason: motivo || null,
+        estado: "pausado",
+      })
+      .eq("id", order_id)
+      .not("estado", "eq", "cancelado")
+      .select().single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await log("suscripcion_pausada", `Hasta ${pauseUntilStr}. Motivo: ${motivo || "sin motivo"}`);
+
+    await Promise.allSettled([
+      enviarEmailClientePausada({
+        email: data.cliente_email,
+        nombre: data.cliente_nombre,
+        pauseUntil: pauseUntilStr,
+        motivo,
+      }),
+      enviarEmailAdminClientePausado({
+        clienteEmail: data.cliente_email,
+        pauseUntil: pauseUntilStr,
+        motivo,
+      }),
+    ]);
+
+    return NextResponse.json({ success: true, order: data });
+  }
+
+  // ── Reactivar suscripción manualmente ──────────────────────────────────
+  if (accion === "reactivar") {
+    const { data, error } = await supabaseAdmin.from("orders")
+      .update({
+        is_paused: false,
+        paused_at: null,
+        pause_until: null,
+        pause_reason: null,
+        estado: "esperando_material",
+      })
+      .eq("id", order_id)
+      .eq("is_paused", true)
+      .select().single();
+
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await log("suscripcion_reactivada", "Reactivación manual por admin");
+
+    await enviarEmailClienteReactivada({
+      email: data.cliente_email,
+      nombre: data.cliente_nombre,
+    }).catch(console.error);
+
+    return NextResponse.json({ success: true, order: data });
+  }
+
+  // ── Otorgar crédito por error (service credit) ──────────────────────────
+  // Delegamos a /api/admin/credits para mantener separación de concerns
   return NextResponse.json({ error: "Acción no reconocida" }, { status: 400 });
 }

@@ -12,6 +12,9 @@ interface Agente { id: string; nombre: string; email: string; codigo: string; cr
 interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; }
 interface Referral { id: string; referrer_email: string; referred_email: string; amount_paid: number; credit_amount: number; status: string; is_suspicious: boolean; suspicious_reason: string | null; notes: string | null; created_at: string; available_at: string | null; applied_at: string | null; }
 interface ReferralStats { pendiente_validacion: { count: number; total: number }; disponible: { count: number; total: number }; aplicado: { count: number; total: number }; invalido: { count: number }; suspicious: { count: number }; }
+interface LoyaltyCredit { id: string; customer_email: string; milestone: string; amount: number; status: string; created_at: string; applied_at: string | null; notes: string | null; }
+interface ServiceCredit { id: string; customer_email: string; amount: number; reason: string; status: string; created_at: string; applied_at: string | null; notes: string | null; order_id: string; }
+interface CreditStats { pendiente: { count: number; total: number }; aplicado: { count: number; total: number }; }
 
 const COMISION = 0.20;
 const ESTADO_VENTA_COLORS: Record<string, string> = { pendiente_validacion: "bg-yellow-400/10 text-yellow-400", disponible: "bg-blue-400/10 text-blue-400", pagada: "bg-green-400/10 text-green-400", invalida: "bg-red-400/10 text-red-400", cancelada: "bg-white/5 text-white/25", reembolsada: "bg-orange-400/10 text-orange-400" };
@@ -28,7 +31,7 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [agentes, setAgentes] = useState<Agente[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [mainTab, setMainTab] = useState<"agentes"|"orders"|"referidos">("agentes");
+  const [mainTab, setMainTab] = useState<"agentes"|"orders"|"referidos"|"retencion">("agentes");
   const [agentesTab, setAgentesTab] = useState<"pendientes"|"activos"|"sospechas"|"todos">("pendientes");
   const [ordersTab, setOrdersTab] = useState<"todos"|"onboarding_pendiente"|"esperando_material"|"material_invalido"|"en_edicion">("todos");
   const [referrals, setReferrals] = useState<Referral[]>([]);
@@ -36,6 +39,14 @@ export default function AdminPage() {
   const [referralsTab, setReferralsTab] = useState<"todos"|"pendiente_validacion"|"disponible"|"aplicado"|"invalido">("todos");
   const [referralModal, setReferralModal] = useState<{referral: Referral; accion: string} | null>(null);
   const [referralNota, setReferralNota] = useState("");
+  const [loyaltyCredits, setLoyaltyCredits] = useState<LoyaltyCredit[]>([]);
+  const [serviceCredits, setServiceCredits] = useState<ServiceCredit[]>([]);
+  const [creditStats, setCreditStats] = useState<{loyalty: CreditStats; service: CreditStats} | null>(null);
+  const [retencionTab, setRetencionTab] = useState<"pausas"|"cancelados"|"loyalty"|"service">("pausas");
+  const [pausaModal, setPausaModal] = useState<{order: Order; accion: "pausar"|"reactivar"} | null>(null);
+  const [pausaMotivo, setPausaMotivo] = useState("");
+  const [creditModal, setCreditModal] = useState<{type: "new_service"|"apply"|"cancel"; orderId?: string; creditId?: string; creditType?: string} | null>(null);
+  const [creditForm, setCreditForm] = useState({ amount: "", reason: "", notes: "" });
   const [saving, setSaving] = useState("");
   const [modal, setModal] = useState<{tipo: string; id: string; id2?: string} | null>(null);
   const [motivo, setMotivo] = useState("");
@@ -67,6 +78,10 @@ export default function AdminPage() {
     if (o.orders) setOrders(o.orders);
     if (r.referrals) setReferrals(r.referrals);
     if (r.stats) setReferralStats(r.stats);
+    const cr = await fetch("/api/admin/credits", { headers }).then(r => r.json()).catch(() => ({}));
+    if (cr.loyalty) setLoyaltyCredits(cr.loyalty);
+    if (cr.service) setServiceCredits(cr.service);
+    if (cr.stats) setCreditStats(cr.stats);
   };
 
   const accionAgente = async (body: Record<string, string>) => {
@@ -81,6 +96,22 @@ export default function AdminPage() {
     const data = await res.json();
     if (!res.ok) { alert(data.error || "Error"); setSaving(""); return; }
     await cargarTodo(); setSaving(""); setReferralModal(null); setReferralNota("");
+  };
+
+  const accionPausa = async (orderId: string, accion: "pausar"|"reactivar", motivo?: string) => {
+    setSaving(orderId);
+    const res = await fetch("/api/orders", { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` }, body: JSON.stringify({ accion, order_id: orderId, motivo }) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || "Error"); setSaving(""); return; }
+    await cargarTodo(); setSaving(""); setPausaModal(null); setPausaMotivo("");
+  };
+
+  const accionCredit = async (url: string, method: string, body: object) => {
+    setSaving("credit");
+    const res = await fetch(url, { method, headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (!res.ok) { alert(data.error || "Error"); setSaving(""); return; }
+    await cargarTodo(); setSaving(""); setCreditModal(null); setCreditForm({ amount: "", reason: "", notes: "" });
   };
 
   const accionOrder = async (body: Record<string, any>) => {
@@ -166,7 +197,7 @@ export default function AdminPage() {
 
         {/* Main tabs */}
         <div className="flex gap-2 mb-5 flex-wrap">
-          {([["agentes","Agentes"],["orders",`Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`],["referidos",`Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`]] as const).map(([t,l]) => (
+          {([["agentes","Agentes"],["orders",`Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`],["referidos",`Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`],["retencion",`Retención${orders.filter(o => o.is_paused).length ? ` (${orders.filter((o: any) => o.is_paused).length} ⏸)` : ""}`]] as const).map(([t,l]) => (
             <button key={t} onClick={() => setMainTab(t)} className={`px-5 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all ${mainTab === t ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
           ))}
         </div>
@@ -351,6 +382,214 @@ export default function AdminPage() {
           </>
         )}
       </div>
+
+
+        {/* RETENCIÓN */}
+        {mainTab === "retencion" && (
+          <>
+            {/* Sub-tabs */}
+            <div className="flex gap-2 mb-5 flex-wrap">
+              {([["pausas","Pausas"], ["cancelados","Recuperación"], ["service","Créditos error"], ["loyalty","Créditos antigüedad"]] as const).map(([k,l]) => (
+                <button key={k} onClick={() => setRetencionTab(k)} className={`px-4 py-2 rounded-lg text-xs font-display font-bold uppercase transition-all ${retencionTab===k ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
+              ))}
+            </div>
+
+            {/* ── Pausas ── */}
+            {retencionTab === "pausas" && (
+              <div className="space-y-3">
+                <p className="text-white/30 text-xs mb-3">Suscripciones activas — puedes pausar 30 días sin facturación.</p>
+                {orders.filter(o => !["cancelado"].includes(o.estado)).length === 0 && (
+                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">Sin orders activos.</div>
+                )}
+                {orders.filter(o => !["cancelado"].includes(o.estado)).map(o => (
+                  <div key={o.id} className={`bg-white/[0.02] border rounded-2xl p-4 flex items-center justify-between gap-4 flex-wrap ${(o as any).is_paused ? "border-yellow-400/30" : "border-white/[0.06]"}`}>
+                    <div>
+                      <div className="text-sm font-medium text-white/80">{o.cliente_email}</div>
+                      <div className="flex gap-3 text-xs text-white/30 mt-0.5 flex-wrap">
+                        <span>{o.plan}</span>
+                        <span>€{Number(o.importe).toFixed(0)}/mes</span>
+                        {(o as any).is_paused && (
+                          <span className="text-yellow-400 font-bold">⏸ Pausada hasta {(o as any).pause_until ? new Date((o as any).pause_until).toLocaleDateString("es-ES") : "—"}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      {!(o as any).is_paused && o.estado !== "cancelado" && (
+                        <button onClick={() => setPausaModal({order: o, accion: "pausar"})} disabled={saving===o.id} className="px-3 py-1.5 bg-yellow-400/10 text-yellow-400 border border-yellow-400/20 rounded-lg text-xs font-bold hover:bg-yellow-400/20 disabled:opacity-40">Pausar 30d</button>
+                      )}
+                      {(o as any).is_paused && (
+                        <button onClick={() => accionPausa(o.id, "reactivar")} disabled={saving===o.id} className="px-3 py-1.5 bg-green-400/10 text-green-400 border border-green-400/20 rounded-lg text-xs font-bold hover:bg-green-400/20 disabled:opacity-40">Reactivar</button>
+                      )}
+                      <button onClick={() => setCreditModal({type: "new_service", orderId: o.id})} disabled={saving==="credit"} className="px-3 py-1.5 bg-blue-400/10 text-blue-400 border border-blue-400/20 rounded-lg text-xs font-bold hover:bg-blue-400/20 disabled:opacity-40">+ Crédito error</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Recuperación cancelados ── */}
+            {retencionTab === "cancelados" && (
+              <div className="space-y-3">
+                <p className="text-white/30 text-xs mb-3">El cron semanal (lunes 10h) envía hasta 3 emails a cancelados de 30–180 días.</p>
+                {orders.filter(o => o.estado === "cancelado").length === 0 && (
+                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">Sin clientes cancelados.</div>
+                )}
+                {orders.filter(o => o.estado === "cancelado").map(o => (
+                  <div key={o.id} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4">
+                    <div className="flex items-center justify-between gap-4 flex-wrap">
+                      <div>
+                        <div className="text-sm font-medium text-white/80">{o.cliente_email}</div>
+                        <div className="flex gap-3 text-xs text-white/30 mt-0.5 flex-wrap">
+                          <span>{o.plan}</span>
+                          <span className="text-orange-400">Intentos enviados: {(o as any).recovery_attempts ?? 0}/3</span>
+                          {(o as any).recovery_email_sent_at && <span>Último: {new Date((o as any).recovery_email_sent_at).toLocaleDateString("es-ES")}</span>}
+                        </div>
+                      </div>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${(o as any).recovery_attempts >= 3 ? "bg-white/5 text-white/20" : "bg-orange-400/10 text-orange-400"}`}>
+                        {(o as any).recovery_attempts >= 3 ? "Completado" : "Pendiente"}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* ── Service credits ── */}
+            {retencionTab === "service" && (
+              <div>
+                {creditStats && (
+                  <div className="grid grid-cols-2 gap-3 mb-5">
+                    <div className="border border-blue-400/20 bg-blue-400/5 rounded-xl p-3 text-center">
+                      <div className="font-display font-black text-xl text-blue-400">{creditStats.service.pendiente.count}</div>
+                      <div className="text-white/25 text-xs">Disponibles</div>
+                      <div className="text-xs text-blue-400/70">€{creditStats.service.pendiente.total.toFixed(2)}</div>
+                    </div>
+                    <div className="border border-green-400/20 bg-green-400/5 rounded-xl p-3 text-center">
+                      <div className="font-display font-black text-xl text-green-400">{creditStats.service.aplicado.count}</div>
+                      <div className="text-white/25 text-xs">Aplicados</div>
+                      <div className="text-xs text-green-400/70">€{creditStats.service.aplicado.total.toFixed(2)}</div>
+                    </div>
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {serviceCredits.length === 0 && <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">Sin créditos por error.</div>}
+                  {serviceCredits.map(c => (
+                    <div key={c.id} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 flex items-start justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-medium text-white/80">{c.customer_email}</div>
+                        <div className="text-xs text-white/30 mt-0.5">{c.reason}</div>
+                        {c.notes && <div className="text-xs text-white/20 mt-0.5 italic">{c.notes}</div>}
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[#d4f53c] font-bold text-sm">€{Number(c.amount).toFixed(0)}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c.status==="aplicado"?"bg-green-400/10 text-green-400":c.status==="cancelado"?"bg-white/5 text-white/20":"bg-blue-400/10 text-blue-400"}`}>{c.status}</span>
+                        {c.status === "disponible" && (
+                          <button onClick={() => setCreditModal({type:"apply", creditId: c.id, creditType:"service"})} className="px-2 py-0.5 border border-green-400/20 text-green-400 rounded text-xs hover:bg-green-400/10">Aplicar</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ── Loyalty credits ── */}
+            {retencionTab === "loyalty" && (
+              <div>
+                {creditStats && (
+                  <div className="grid grid-cols-3 gap-3 mb-5">
+                    {([["3 meses","10€"],["6 meses","25€"],["12 meses","50€"]] as const).map(([l,a]) => (
+                      <div key={l} className="border border-[#d4f53c]/20 bg-[#d4f53c]/5 rounded-xl p-3 text-center">
+                        <div className="text-[#d4f53c] font-bold text-sm">{a}</div>
+                        <div className="text-white/25 text-xs mt-0.5">{l}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-3">
+                  {loyaltyCredits.length === 0 && <div className="bg-white/[0.02] border border-white/[0.05] rounded-2xl p-10 text-center text-white/20 text-sm">Sin créditos de antigüedad generados aún.</div>}
+                  {loyaltyCredits.map(c => (
+                    <div key={c.id} className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-4 flex items-center justify-between gap-3 flex-wrap">
+                      <div>
+                        <div className="text-sm font-medium text-white/80">{c.customer_email}</div>
+                        <div className="text-xs text-white/30 mt-0.5">{c.milestone.replace("_"," ")} · {new Date(c.created_at).toLocaleDateString("es-ES")}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#d4f53c] font-bold">€{Number(c.amount).toFixed(0)}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${c.status==="aplicado"?"bg-green-400/10 text-green-400":c.status==="cancelado"?"bg-white/5 text-white/20":"bg-yellow-400/10 text-yellow-400"}`}>{c.status}</span>
+                        {c.status === "disponible" && (
+                          <button onClick={() => setCreditModal({type:"apply", creditId: c.id, creditType:"loyalty"})} className="px-2 py-0.5 border border-green-400/20 text-green-400 rounded text-xs hover:bg-green-400/10">Aplicar</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+
+      {/* Modal pausa */}
+      {pausaModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="font-display font-bold mb-1">
+              {pausaModal.accion === "pausar" ? "Pausar suscripción 30 días" : "Reactivar suscripción"}
+            </h3>
+            <p className="text-white/40 text-xs mb-4">{pausaModal.order.cliente_email} · {pausaModal.order.plan}</p>
+            {pausaModal.accion === "pausar" && (
+              <textarea
+                rows={2}
+                placeholder="Motivo de la pausa (opcional)"
+                value={pausaMotivo}
+                onChange={e => setPausaMotivo(e.target.value)}
+                className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none"
+              />
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => { setPausaModal(null); setPausaMotivo(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button>
+              <button onClick={() => accionPausa(pausaModal.order.id, pausaModal.accion, pausaMotivo)} disabled={saving===pausaModal.order.id} className="flex-1 py-2 bg-[#d4f53c] text-[#080808] rounded-lg font-bold text-sm disabled:opacity-40">Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal créditos */}
+      {creditModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 px-4">
+          <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm">
+            <h3 className="font-display font-bold mb-4">
+              {creditModal.type === "new_service" ? "Otorgar crédito por error" : creditModal.type === "apply" ? "Marcar crédito como aplicado" : "Cancelar crédito"}
+            </h3>
+            {creditModal.type === "new_service" && (
+              <>
+                <input type="number" min="1" max="500" placeholder="Importe (€)" value={creditForm.amount} onChange={e => setCreditForm(f => ({...f, amount: e.target.value}))} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-3" />
+                <input type="text" placeholder="Motivo (obligatorio)" value={creditForm.reason} onChange={e => setCreditForm(f => ({...f, reason: e.target.value}))} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-3" />
+                <textarea rows={2} placeholder="Nota interna (opcional)" value={creditForm.notes} onChange={e => setCreditForm(f => ({...f, notes: e.target.value}))} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none" />
+              </>
+            )}
+            {(creditModal.type === "apply" || creditModal.type === "cancel") && (
+              <input type="text" placeholder={creditModal.type === "apply" ? "Nota de aplicación (obligatoria)" : "Motivo de cancelación (obligatorio)"} value={creditForm.notes} onChange={e => setCreditForm(f => ({...f, notes: e.target.value}))} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4" />
+            )}
+            <div className="flex gap-2">
+              <button onClick={() => { setCreditModal(null); setCreditForm({amount:"",reason:"",notes:""}); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button>
+              <button
+                disabled={saving==="credit" || (creditModal.type==="new_service" && (!creditForm.amount || !creditForm.reason.trim())) || ((creditModal.type==="apply"||creditModal.type==="cancel") && !creditForm.notes.trim())}
+                onClick={() => {
+                  if (creditModal.type === "new_service") {
+                    accionCredit("/api/admin/credits", "POST", { order_id: creditModal.orderId, amount: Number(creditForm.amount), reason: creditForm.reason, notes: creditForm.notes });
+                  } else {
+                    accionCredit("/api/admin/credits", "PATCH", { accion: creditModal.type === "apply" ? "marcar_aplicado" : "cancelar", credit_id: creditModal.creditId, credit_type: creditModal.creditType, notes: creditForm.notes });
+                  }
+                }}
+                className="flex-1 py-2 bg-[#d4f53c] text-[#080808] rounded-lg font-bold text-sm disabled:opacity-40"
+              >Confirmar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal referidos */}
       {referralModal && (

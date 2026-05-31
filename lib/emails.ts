@@ -576,3 +576,242 @@ export async function enviarEmailPedirResena({
     html: WRAP(HEADER("¿Nos dejas una opinión?", "Tu experiencia ayuda a otros creadores.", "⭐"), body),
   });
 }
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAILS PAUSA DE SUSCRIPCIÓN
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Cliente: suscripción pausada */
+export async function enviarEmailClientePausada({
+  email, nombre, pauseUntil, motivo,
+}: {
+  email: string; nombre?: string; pauseUntil: string; motivo?: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""}, tu suscripción ha sido pausada correctamente.
+    </p>
+    ${CARD(`
+      ${ROW("Estado", "Pausada")}
+      ${ROW("Pausada hasta", pauseUntil, true)}
+      ${ROW("Facturación", "Suspendida durante la pausa")}
+      ${motivo ? ROW("Motivo", motivo) : ""}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      No se generarán nuevas entregas ni se procesarán cobros mientras la suscripción esté pausada.
+      El <strong style="color:#f0f0f0">${pauseUntil}</strong> tu suscripción se reactivará automáticamente.
+    </p>
+    <p style="font-size:12px;color:#555;margin-top:16px">Si quieres reactivarla antes, contacta con nosotros.</p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `⏸ Tu suscripción VitalSoft está pausada hasta el ${pauseUntil}`,
+    html: WRAP(HEADER("Suscripción pausada", "Sin cobros ni entregas durante la pausa.", "⏸"), body),
+  });
+}
+
+/** Cliente: suscripción reactivada tras pausa */
+export async function enviarEmailClienteReactivada({
+  email, nombre,
+}: {
+  email: string; nombre?: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""}, tu suscripción ya está activa de nuevo.
+    </p>
+    ${CARD(`
+      ${ROW("Estado", "Activa", true)}
+      ${ROW("Próxima facturación", "Ciclo normal reanudado")}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Ya puedes subir material a tu carpeta Drive cuando quieras. El equipo lo procesará en las próximas 24–48h.
+    </p>
+    ${BTN("Ir a mi Drive →", "https://drive.google.com")}`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `▶ Tu suscripción VitalSoft está activa de nuevo`,
+    html: WRAP(HEADER("¡De vuelta!", "Tu suscripción se ha reactivado.", "▶"), body),
+  });
+}
+
+/** Admin: cliente ha pausado */
+export async function enviarEmailAdminClientePausado({
+  clienteEmail, pauseUntil, motivo,
+}: {
+  clienteEmail: string; pauseUntil: string; motivo?: string;
+}) {
+  const body = `
+    ${CARD(`
+      ${ROW("Cliente", clienteEmail)}
+      ${ROW("Pausada hasta", pauseUntil, true)}
+      ${motivo ? ROW("Motivo", motivo) : ""}
+    `)}
+    ${BTN("Ver en admin →", `${SITE}/admin`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `⏸ Cliente pausado — ${clienteEmail}`,
+    html: WRAP(HEADER("Cliente ha pausado su suscripción", `Pausa hasta ${pauseUntil}.`, "⏸"), body),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAILS RECUPERACIÓN DE CLIENTES CANCELADOS
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Intento 1 de recuperación */
+export async function enviarEmailRecuperacion1({
+  email, nombre,
+}: {
+  email: string; nombre?: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""},
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Hace un tiempo cancelaste tu suscripción a VitalSoft. 
+      Queríamos preguntarte: <strong style="color:#f0f0f0">¿sigues creando contenido largo?</strong>
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Si volviste a grabar, tu sistema de clips sigue aquí, listo para arrancar cuando quieras.
+      Puedes retomarlo en cualquier momento sin complicaciones.
+    </p>
+    ${BTN("Ver planes →", SITE)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `¿Sigues creando contenido? — VitalSoft`,
+    html: WRAP(HEADER("¿Sigues creando?", "Tu sistema de clips te espera.", "👋"), body),
+  });
+}
+
+/** Intento 2 de recuperación */
+export async function enviarEmailRecuperacion2({
+  email, nombre,
+}: {
+  email: string; nombre?: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""},
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Tenemos huecos disponibles este mes para nuevos proyectos.
+      Si estás grabando de nuevo, ahora mismo podemos incorporarte sin lista de espera.
+    </p>
+    ${CARD(`
+      ${ROW("Entrega", "24–48h desde que sube el material")}
+      ${ROW("Revisiones incluidas", "Hasta 4 según plan")}
+      ${ROW("Drive automático", "Carpeta lista desde el primer día")}
+    `)}
+    ${BTN("Volver a VitalSoft →", SITE)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `Volvemos a tener huecos disponibles — VitalSoft`,
+    html: WRAP(HEADER("Huecos disponibles", "Sin lista de espera este mes.", "🟢"), body),
+  });
+}
+
+/** Intento 3 de recuperación */
+export async function enviarEmailRecuperacion3({
+  email, nombre,
+}: {
+  email: string; nombre?: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""},
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Es la última vez que te escribimos para esto, lo prometemos.
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Tu sistema de clips en VitalSoft <strong style="color:#f0f0f0">sigue listo cuando quieras volver</strong>.
+      Si en algún momento retomas la creación de contenido largo, aquí estaremos.
+    </p>
+    ${BTN("Volver cuando quieras →", SITE)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `Tu sistema de clips sigue listo — VitalSoft`,
+    html: WRAP(HEADER("Seguimos aquí.", "Sin presión, sin lista de espera.", "✌"), body),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAILS CRÉDITOS POR ANTIGÜEDAD
+// ════════════════════════════════════════════════════════════════════════════
+
+const MILESTONE_LABELS: Record<string, string> = {
+  "3_meses": "3 meses activo",
+  "6_meses": "6 meses activo",
+  "12_meses": "1 año activo",
+};
+
+/** Cliente: ha desbloqueado crédito de antigüedad */
+export async function enviarEmailLoyaltyCredit({
+  email, nombre, milestone, amount,
+}: {
+  email: string; nombre?: string; milestone: string; amount: number;
+}) {
+  const label = MILESTONE_LABELS[milestone] || milestone;
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""},
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Llevas <strong style="color:#f0f0f0">${label}</strong> con VitalSoft y queremos agradecerlo.
+    </p>
+    <div style="background:#111827;color:#fff;border-radius:8px;padding:20px;text-align:center;margin:20px 0">
+      <div style="font-size:36px;font-weight:800;color:#d4f53c">+${amount.toFixed(0)}€</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px">Crédito por antigüedad · ${label}</div>
+    </div>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Nuestro equipo aplicará este descuento en tu próxima factura. No tienes que hacer nada.
+    </p>
+    <p style="font-size:11px;color:#444;margin-top:16px">El crédito no es retirable ni convertible en efectivo. Solo válido como descuento en VitalSoft.</p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `🎖 Has desbloqueado ${amount.toFixed(0)}€ de crédito — ${label}`,
+    html: WRAP(HEADER("¡Crédito por antigüedad!", `Gracias por ${label} con nosotros.`, "🎖"), body),
+  });
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// EMAILS CRÉDITOS POR ERROR / SERVICIO
+// ════════════════════════════════════════════════════════════════════════════
+
+/** Cliente: se le ha otorgado un crédito por incidencia */
+export async function enviarEmailServiceCredit({
+  email, nombre, amount, reason,
+}: {
+  email: string; nombre?: string; amount: number; reason: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""},
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Hemos añadido un crédito a tu cuenta como compensación.
+    </p>
+    <div style="background:#111827;color:#fff;border-radius:8px;padding:20px;text-align:center;margin:20px 0">
+      <div style="font-size:36px;font-weight:800;color:#d4f53c">+${amount.toFixed(0)}€</div>
+      <div style="font-size:12px;color:#9ca3af;margin-top:4px">Crédito aplicable a tu próxima factura</div>
+    </div>
+    ${CARD(ROW("Motivo", reason))}
+    <p style="font-size:13px;color:#888;line-height:1.7">
+      Nuestro equipo lo descontará automáticamente en tu próximo ciclo. Si tienes dudas, responde a este email.
+    </p>
+    <p style="font-size:11px;color:#444;margin-top:16px">El crédito no es retirable ni convertible en efectivo.</p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `💳 Hemos añadido ${amount.toFixed(0)}€ de crédito a tu cuenta`,
+    html: WRAP(HEADER("Crédito añadido", "Como compensación por la incidencia.", "💳"), body),
+  });
+}

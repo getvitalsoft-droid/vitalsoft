@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { enviarEmailAgenteComisionDisponible } from "@/lib/emails";
+import { enviarEmailAgenteComisionDisponible, enviarEmailClienteReactivada } from "@/lib/emails";
 import { Resend } from "resend";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const resultados: Record<string, number> = {
     comisiones_liberadas: 0, comisiones_bloqueadas: 0, recordatorios_onboarding: 0,
-    errores: 0,
+    pausas_reactivadas: 0, errores: 0,
   };
 
   // ── 1. Liberar comisiones cuyo hold venció ────────────────────────────────
@@ -129,6 +129,44 @@ export async function GET(req: NextRequest) {
       }
     }
   } catch (err) { console.error("[Cron] Error onboarding check:", err); }
+
+
+  // ── 3. Reactivar pausas vencidas ─────────────────────────────────────────
+  try {
+    const { data: pausadas } = await supabase
+      .from("orders")
+      .select("id, cliente_email, cliente_nombre")
+      .eq("is_paused", true)
+      .lte("pause_until", new Date().toISOString());
+
+    if (pausadas) {
+      for (const order of pausadas) {
+        try {
+          await supabase.from("orders").update({
+            is_paused: false,
+            paused_at: null,
+            pause_until: null,
+            pause_reason: null,
+            estado: "esperando_material",
+          }).eq("id", order.id);
+
+          await supabase.from("activity_logs").insert({
+            admin: "cron", accion: "pausa_reactivada_automaticamente",
+            objetivo_tipo: "order", objetivo_id: order.id,
+            detalle: `Pausa de 30 días vencida · ${order.cliente_email}`,
+          });
+
+          await enviarEmailClienteReactivada({
+            email: order.cliente_email,
+            nombre: order.cliente_nombre,
+          }).catch(e => console.error("[Cron] Email reactivacion:", e));
+        } catch (err) {
+          console.error(`[Cron] Error reactivando pausa ${order.id}:`, err);
+          resultados.errores++;
+        }
+      }
+    }
+  } catch (err) { console.error("[Cron] Error check pausas:", err); }
 
   return NextResponse.json(resultados);
 }
