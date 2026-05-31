@@ -70,7 +70,7 @@ export default function CalculatorSection({ refCode }: Props) {
 
   return (
     <>
-    <section id="calculadora" className="py-24 px-6 bg-[#0f0f0f]">
+      <section id="calculadora" className="py-24 px-6 bg-[#0f0f0f]">
       <div className="max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Plan Personalizado</span>
@@ -137,5 +137,76 @@ export default function CalculatorSection({ refCode }: Props) {
         </motion.div>
       </div>
     </section>
+
+    {/* Overlay de pago embebido */}
+    <AnimatePresence>
+      {showCheckout && !checkoutSuccess && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/90 px-4 backdrop-blur-sm"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 12, scale: 0.97 }}
+            className="w-full max-w-md bg-[#111] border border-white/10 rounded-2xl p-8 shadow-2xl"
+          >
+            <div className="font-display font-black text-lg mb-1">
+              <span className="text-accent">Vital</span>Soft
+            </div>
+            <p className="text-white/30 text-xs mb-6">Datos de pago seguros</p>
+            <StripeCheckout
+              data={{
+                name, email, social,
+                notes: [
+                  tipoContenido && `Tipo: ${tipoContenido}`,
+                  duracionMedia && `Duración media: ${duracionMedia}`,
+                  plataformas && `Plataformas: ${plataformas}`,
+                  notas,
+                ].filter(Boolean).join(" | "),
+                videos, price,
+                ref: urlRef || undefined,
+                client_ref: clientRef || undefined,
+              }}
+              onBack={() => setShowCheckout(false)}
+              onSuccess={() => { setCheckoutSuccess(true); setShowCheckout(false); }}
+            />
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {/* Confirmación de pago */}
+    <AnimatePresence>
+      {checkoutSuccess && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#080808]/90 px-4"
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-center max-w-sm"
+          >
+            <div className="text-6xl mb-6">✅</div>
+            <h2 className="font-display font-black text-2xl mb-3">¡Pago confirmado!</h2>
+            <p className="text-white/40 text-sm mb-6">
+              Recibirás un email con el acceso a tu proyecto.<br/>
+              El equipo empieza en cuanto completes la configuración.
+            </p>
+            <button
+              onClick={() => window.location.href = "/"}
+              className="text-accent font-bold text-sm hover:underline"
+            >
+              Volver al inicio →
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+    </>
   );
 }
