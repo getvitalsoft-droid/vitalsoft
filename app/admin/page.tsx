@@ -386,7 +386,6 @@ export default function AdminPage() {
             </div>
           </>
         )}
-      </div>
 
 
         {/* RETENCIÓN */}
@@ -533,6 +532,8 @@ export default function AdminPage() {
             )}
           </>
         )}
+
+
       </div>
 
 
