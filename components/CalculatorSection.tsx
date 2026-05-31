@@ -32,9 +32,15 @@ export default function CalculatorSection({ refCode }: Props) {
     if (r) setUrlRef(r);
     const cr = params.get("client_ref");
     if (cr) setClientRef(cr);
-    // Preseleccionar plan si viene desde la sección de precios
     const clips = params.get("clips");
     if (clips) setVideos(Number(clips));
+
+    // Si hay ref (agente) + clips en la URL → abrir popup directo
+    // El agente envía un link con ambos parámetros para que el cliente llegue al checkout
+    if (r && clips) {
+      // Small delay so the page renders first
+      setTimeout(() => setShowCheckout(true), 400);
+    }
 
     // Escuchar evento de PricingSection para preseleccionar plan
     const handler = (e: Event) => {

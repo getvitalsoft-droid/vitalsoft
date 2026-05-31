@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { calcPrice } from "@/lib/stripe";
 
 interface Venta {
   plan: string; importe: number; creado_at: string; estado: string; cliente_email?: string;
@@ -20,6 +21,8 @@ export default function AgentesPage() {
   const [links, setLinks] = useState<Links | null>(null);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState("");
+  const [customClips, setCustomClips] = useState(10);
+  const [customLinkCopied, setCustomLinkCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -149,6 +152,45 @@ export default function AgentesPage() {
             <div className="text-green-400/60 text-xs mt-1">Comisiones ya pagadas</div>
           </div>
         </div>
+
+        {/* Generador de link personalizado */}
+        {agente && (
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 mb-6">
+            <h2 className="font-display font-bold text-sm mb-1">Generar link personalizado</h2>
+            <p className="text-white/30 text-xs mb-4">Pon el número de clips que quiere tu cliente y copia el link. Se abre directamente con el precio calculado y listo para pagar.</p>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="flex-1">
+                <label className="block text-xs text-white/40 mb-1.5">Clips mensuales</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={customClips}
+                  onChange={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value))))}
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-[rgba(212,245,60,0.4)] transition-colors"
+                />
+              </div>
+              <div className="text-right pt-5">
+                <div className="font-display font-black text-xl text-[#d4f53c]">€{calcPrice(customClips)}</div>
+                <div className="text-white/30 text-xs">/mes</div>
+              </div>
+            </div>
+            <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 mb-3 text-white/30 text-xs font-mono truncate">
+              https://vitalsoft.pro?ref={agente.codigo}&clips={customClips}#calculadora
+            </div>
+            <button
+              onClick={() => {
+                const url = `https://vitalsoft.pro?ref=${agente.codigo}&clips=${customClips}#calculadora`;
+                navigator.clipboard.writeText(url).catch(() => {});
+                setCustomLinkCopied(true);
+                setTimeout(() => setCustomLinkCopied(false), 2000);
+              }}
+              className="w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black text-sm rounded-xl transition-all"
+            >
+              {customLinkCopied ? "✓ Link copiado" : `Copiar link — ${customClips} clips · €${calcPrice(customClips)}/mes`}
+            </button>
+          </div>
+        )}
 
         {/* Links */}
         {links && (
