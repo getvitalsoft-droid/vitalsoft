@@ -191,9 +191,19 @@ export async function enviarEmailClienteReembolso({
 /** Disparado por: PATCH /api/agentes accion=aprobar */
 export async function enviarEmailBienvenidaAgente({
   agente,
+  links,
 }: {
   agente: Agente;
+  links?: { general: string; starter: string; growth: string; scale: string; pro: string };
 }) {
+  const refLink = links?.general || `${SITE}?ref=${agente.codigo}`;
+  const linksHtml = links ? CARD(`
+    ${ROW("Link general", links.general)}
+    ${ROW("Starter", links.starter)}
+    ${ROW("Growth", links.growth)}
+    ${ROW("Scale", links.scale)}
+    ${ROW("Pro", links.pro)}
+  `) : "";
   const body = `
     <p style="font-size:14px;color:#aaa;margin-bottom:16px">Hola <strong>${agente.nombre}</strong>, tu cuenta ha sido activada.</p>
     ${CARD(`
@@ -203,8 +213,9 @@ export async function enviarEmailBienvenidaAgente({
     `)}
     <p style="font-size:13px;color:#888;line-height:1.7">
       Comparte tu link de referido y gana comisión por cada cliente que contrate.
-      Tu link: <strong style="color:#d4f53c">${SITE}?ref=${agente.codigo}</strong>
+      Tu link: <strong style="color:#d4f53c">${refLink}</strong>
     </p>
+    ${linksHtml}
     ${BTN("Ver mi panel de agente", `${SITE}/agentes`)}`;
 
   return await resend.emails.send({
