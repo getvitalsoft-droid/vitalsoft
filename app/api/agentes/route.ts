@@ -10,10 +10,10 @@ function buildLinks(codigo: string) {
   const base = "https://vitalsoft.pro";
   return {
     general: `${base}?ref=${codigo}`,
-    starter: `${base}?ref=${codigo}&clips=10#calculadora`,
-    growth: `${base}?ref=${codigo}&clips=20#calculadora`,
-    scale: `${base}?ref=${codigo}&clips=30#calculadora`,
-    pro: `${base}?ref=${codigo}&clips=40#calculadora`,
+    starter: `${base}/pagar?ref=${codigo}&clips=10`,
+    growth:  `${base}/pagar?ref=${codigo}&clips=20`,
+    scale:   `${base}/pagar?ref=${codigo}&clips=30`,
+    pro:     `${base}/pagar?ref=${codigo}&clips=40`,
   };
 }
 

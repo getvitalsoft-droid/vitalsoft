@@ -108,11 +108,25 @@ export default function CalculatorSection({ refCode }: Props) {
             ))}
           </div>
 
-          {/* Slider */}
+          {/* Slider + input de teclado */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
               <span className="font-display font-bold text-base">Clips mensuales</span>
-              <span className="font-display font-extrabold text-4xl text-accent">{videos}</span>
+              <input
+                type="number"
+                min={1}
+                max={100}
+                value={videos}
+                onChange={e => {
+                  const v = Math.min(100, Math.max(1, Number(e.target.value) || 1));
+                  setVideos(v);
+                }}
+                onBlur={e => {
+                  const v = Math.min(100, Math.max(1, Number(e.target.value) || 1));
+                  setVideos(v);
+                }}
+                className="font-display font-extrabold text-4xl text-accent bg-transparent border-b-2 border-accent/40 focus:border-accent outline-none w-20 text-right"
+              />
             </div>
             <input type="range" min={1} max={100} step={1} value={videos} onChange={(e) => setVideos(Number(e.target.value))} className="w-full" />
             <div className="flex justify-between mt-2 text-white/20 text-xs"><span>1 clip</span><span>100 clips</span></div>

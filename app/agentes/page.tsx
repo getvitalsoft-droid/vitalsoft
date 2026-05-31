@@ -194,31 +194,41 @@ export default function AgentesPage() {
             </div>
 
             {/* Generador personalizado */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="flex-1">
-                <label className="block text-xs text-white/40 mb-1.5">Clips mensuales</label>
-                <input
-                  type="range"
-                  min={1}
-                  max={100}
-                  value={customClips}
-                  onChange={e => setCustomClips(Number(e.target.value))}
-                  className="w-full"
-                />
-                <div className="flex justify-between text-white/20 text-xs mt-1"><span>1</span><span>100</span></div>
+            <div className="mb-3">
+              <div className="flex justify-between items-center mb-2">
+                <label className="text-xs text-white/40">Clips mensuales</label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={customClips}
+                    onChange={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
+                    onBlur={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
+                    className="font-display font-black text-2xl text-[#d4f53c] bg-transparent border-b border-[rgba(212,245,60,0.4)] focus:border-[#d4f53c] outline-none w-14 text-right"
+                  />
+                  <div className="text-right">
+                    <div className="text-white/30 text-xs">clips</div>
+                    <div className="font-bold text-white/70 text-sm">€{calcPrice(customClips)}</div>
+                  </div>
+                </div>
               </div>
-              <div className="text-right flex-shrink-0 w-20">
-                <div className="font-display font-black text-xl text-[#d4f53c]">{customClips}</div>
-                <div className="text-white/30 text-xs">clips</div>
-                <div className="font-bold text-white/70 text-sm">€{calcPrice(customClips)}</div>
-              </div>
+              <input
+                type="range"
+                min={1}
+                max={100}
+                value={customClips}
+                onChange={e => setCustomClips(Number(e.target.value))}
+                className="w-full"
+              />
+              <div className="flex justify-between text-white/20 text-xs mt-1"><span>1</span><span>100</span></div>
             </div>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 mb-3 text-white/30 text-xs font-mono truncate">
-              https://vitalsoft.pro?ref={agente.codigo}&clips={customClips}#calculadora
+              https://vitalsoft.pro/pagar?ref={agente.codigo}&clips={customClips}
             </div>
             <button
               onClick={() => {
-                const url = `https://vitalsoft.pro?ref=${agente.codigo}&clips=${customClips}#calculadora`;
+                const url = `https://vitalsoft.pro/pagar?ref=${agente.codigo}&clips=${customClips}`;
                 navigator.clipboard.writeText(url).catch(() => {});
                 setCustomLinkCopied(true);
                 setTimeout(() => setCustomLinkCopied(false), 2000);
