@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ArrowRight } from "lucide-react";
-import { calcPrice, savings, buildStripeUrl } from "@/lib/stripe";
+import { calcPrice, savings } from "@/lib/stripe";
+import StripeCheckout from "@/components/StripeCheckout";
 
 const PLAN_ANCHORS: Record<number, string> = { 10: "Starter", 20: "Growth", 30: "Scale", 40: "Pro" };
 const PLAN_KEYS: Record<number, string> = { 10: "starter", 20: "growth", 30: "scale", 40: "pro" };
@@ -21,6 +22,8 @@ export default function CalculatorSection({ refCode }: Props) {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [urlRef, setUrlRef] = useState(refCode || "");
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [checkoutSuccess, setCheckoutSuccess] = useState(false);
   const [clientRef, setClientRef] = useState(""); // código de referido de cliente
 
   useEffect(() => {
@@ -50,45 +53,23 @@ export default function CalculatorSection({ refCode }: Props) {
       notas && `Notas: ${notas}`,
     ].filter(Boolean).join(" | ");
 
+    // Guardar contacto
     try {
       await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef, client_ref: clientRef }),
       });
+    } catch { /* no crítico */ }
 
-      if (planKey) {
-        // buildStripeUrl ya incluye ?client_reference_id=ref_X si hay ref
-        const base = buildStripeUrl(planKey as any, urlRef || undefined);
-        const sep = base.includes("?") ? "&" : "?";
-        const url = `${base}${sep}prefilled_email=${encodeURIComponent(email)}`;
-        setSubmitted(true);
-        setTimeout(() => window.open(url, "_blank"), 600);
-        return;
-      }
-
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, social, notes: notasCompletas, videos, price, ref: urlRef, client_ref: clientRef }),
-      });
-      const data = await res.json();
-      if (data.url) {
-        setSubmitted(true);
-        setTimeout(() => { window.location.href = data.url; }, 600);
-      } else {
-        alert("Error al crear el pago. Inténtalo de nuevo.");
-        setLoading(false);
-      }
-    } catch {
-      alert("Error de conexión.");
-      setLoading(false);
-    }
+    setLoading(false);
+    setShowCheckout(true); // Mostrar formulario de tarjeta embebido
   };
 
   const inp = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm font-body outline-none transition-all duration-200 placeholder:text-white/20 focus:border-[rgba(232,255,71,0.4)]";
 
   return (
+    <>
     <section id="calculadora" className="py-24 px-6 bg-[#0f0f0f]">
       <div className="max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>

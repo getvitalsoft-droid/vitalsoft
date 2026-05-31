@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { enviarEmailAgenteComisionDisponible, enviarEmailClienteReactivada } from "@/lib/emails";
 import { Resend } from "resend";
+import Stripe from "stripe";
 
 export const dynamic = "force-dynamic";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "VitalSoft <notificaciones@vitalsoft.pro>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "getvitalsoft@gmail.com";
 const SITE = "https://vitalsoft.pro";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 
 export async function GET(req: NextRequest) {
   const secret = req.headers.get("x-cron-secret") || req.nextUrl.searchParams.get("secret");
@@ -131,7 +133,98 @@ export async function GET(req: NextRequest) {
   } catch (err) { console.error("[Cron] Error onboarding check:", err); }
 
 
-  // ── 3. Reactivar pausas vencidas ─────────────────────────────────────────
+  // ── 3. Liberar créditos de referidos validados (>14 días sin reembolso) ─────
+  try {
+    const hace14dias = new Date(Date.now() - 14 * 86400000).toISOString();
+    const { data: referidosPendientes } = await supabase
+      .from("client_referrals")
+      .select("id, referrer_email, referred_email, credit_amount, referrer_stripe_customer_id")
+      .eq("status", "pendiente_validacion")
+      .eq("is_suspicious", false)
+      .lt("created_at", hace14dias);
+
+    for (const ref of referidosPendientes || []) {
+      try {
+        // Verificar que no hay reembolso reciente del referido
+        const { data: order } = await supabase
+          .from("orders")
+          .select("id, estado")
+          .eq("cliente_email", ref.referred_email)
+          .single();
+
+        if (order?.estado === "cancelado") {
+          await supabase.from("client_referrals").update({
+            status: "invalido",
+            notes: "Referido canceló antes de los 14 días",
+          }).eq("id", ref.id);
+          continue;
+        }
+
+        // Aplicar automáticamente al Customer Balance de Stripe
+        if (ref.referrer_stripe_customer_id && ref.credit_amount > 0) {
+          await stripe.customers.createBalanceTransaction(ref.referrer_stripe_customer_id, {
+            amount: -Math.round(Number(ref.credit_amount) * 100),
+            currency: "eur",
+            description: `Crédito referido - ${ref.referred_email}`,
+          });
+        }
+
+        await supabase.from("client_referrals").update({
+          status: "aplicado",
+          available_at: new Date().toISOString(),
+          applied_at: new Date().toISOString(),
+          notes: "Aplicado automáticamente tras 14 días sin reembolso",
+        }).eq("id", ref.id);
+
+        await supabase.from("activity_logs").insert({
+          admin: "cron",
+          accion: "referido_credito_auto_aplicado",
+          objetivo_tipo: "referral",
+          objetivo_id: ref.id,
+          detalle: `€${ref.credit_amount} → ${ref.referrer_email}`,
+        });
+      } catch (err) {
+        console.error(`[Cron] Error aplicando crédito referido ${ref.id}:`, err);
+      }
+    }
+  } catch (err) { console.error("[Cron] Error créditos referidos:", err); }
+
+  // ── 4. Aplicar créditos de antigüedad automáticamente ────────────────────
+  try {
+    const { data: loyaltyPendientes } = await supabase
+      .from("loyalty_credits")
+      .select("id, stripe_customer_id, customer_email, amount, milestone")
+      .eq("status", "disponible")
+      .not("stripe_customer_id", "is", null);
+
+    for (const lc of loyaltyPendientes || []) {
+      try {
+        await stripe.customers.createBalanceTransaction(lc.stripe_customer_id, {
+          amount: -Math.round(Number(lc.amount) * 100),
+          currency: "eur",
+          description: `Crédito antigüedad ${lc.milestone.replace("_", " ")} - VitalSoft`,
+        });
+
+        await supabase.from("loyalty_credits").update({
+          status: "aplicado",
+          applied_at: new Date().toISOString(),
+          notes: "Aplicado automáticamente por cron",
+        }).eq("id", lc.id);
+
+        await supabase.from("activity_logs").insert({
+          admin: "cron",
+          accion: "loyalty_credito_auto_aplicado",
+          objetivo_tipo: "loyalty",
+          objetivo_id: lc.id,
+          detalle: `€${lc.amount} (${lc.milestone}) → ${lc.customer_email}`,
+        });
+      } catch (err) {
+        console.error(`[Cron] Error aplicando loyalty ${lc.id}:`, err);
+      }
+    }
+  } catch (err) { console.error("[Cron] Error loyalty créditos:", err); }
+
+  // ── 5. Reactivar pausas vencidas ─────────────────────────────────────────
   try {
     const { data: pausadas } = await supabase
       .from("orders")
