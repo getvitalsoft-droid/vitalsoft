@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const resultados: Record<string, number> = {
     comisiones_liberadas: 0, comisiones_bloqueadas: 0, recordatorios_onboarding: 0,
-    pausas_reactivadas: 0, errores: 0,
+    errores: 0,
   };
 
   // ── 1. Liberar comisiones cuyo hold venció ────────────────────────────────

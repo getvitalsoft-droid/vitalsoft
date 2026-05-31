@@ -9,7 +9,7 @@ const supabase = createClient(
 
 interface Venta { id: string; plan: string; importe: number; creado_at: string; estado: string; cliente_email: string; notas_admin?: string; sospechoso?: boolean; sospechoso_motivo?: string; disponible_at?: string; }
 interface Agente { id: string; nombre: string; email: string; codigo: string; creado_at: string; aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; ventas: Venta[]; }
-interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; }
+interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; is_paused?: boolean; paused_at?: string | null; pause_until?: string | null; pause_reason?: string | null; recovery_attempts?: number; recovery_email_sent_at?: string | null; }
 interface Referral { id: string; referrer_email: string; referred_email: string; amount_paid: number; credit_amount: number; status: string; is_suspicious: boolean; suspicious_reason: string | null; notes: string | null; created_at: string; available_at: string | null; applied_at: string | null; }
 interface ReferralStats { pendiente_validacion: { count: number; total: number }; disponible: { count: number; total: number }; aplicado: { count: number; total: number }; invalido: { count: number }; suspicious: { count: number }; }
 interface LoyaltyCredit { id: string; customer_email: string; milestone: string; amount: number; status: string; created_at: string; applied_at: string | null; notes: string | null; }
@@ -197,7 +197,12 @@ export default function AdminPage() {
 
         {/* Main tabs */}
         <div className="flex gap-2 mb-5 flex-wrap">
-          {([["agentes","Agentes"],["orders",`Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`],["referidos",`Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`],["retencion",`Retención${orders.filter(o => o.is_paused).length ? ` (${orders.filter((o: any) => o.is_paused).length} ⏸)` : ""}`]] as const).map(([t,l]) => (
+          {([
+            ["agentes", "Agentes"],
+            ["orders", `Orders (${orders.filter(o => !["cancelado","completado"].includes(o.estado)).length})`],
+            ["referidos", `Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`],
+            ["retencion", `Retención${orders.filter(o => o.is_paused).length ? ` (${orders.filter(o => o.is_paused).length} ⏸)` : ""}`],
+          ] as Array<[typeof mainTab, string]>).map(([t, l]) => (
             <button key={t} onClick={() => setMainTab(t)} className={`px-5 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all ${mainTab === t ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
           ))}
         </div>
