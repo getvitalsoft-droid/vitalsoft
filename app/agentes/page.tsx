@@ -153,26 +153,64 @@ export default function AgentesPage() {
           </div>
         </div>
 
-        {/* Generador de link personalizado */}
-        {agente && (
+        {/* Links de referido */}
+        {agente && links && (
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 mb-6">
-            <h2 className="font-display font-bold text-sm mb-1">Generar link personalizado</h2>
-            <p className="text-white/30 text-xs mb-4">Pon el número de clips que quiere tu cliente y copia el link. Se abre directamente con el precio calculado y listo para pagar.</p>
+            <h2 className="font-display font-bold text-sm mb-1">Tus links de referido</h2>
+            <p className="text-white/30 text-xs mb-4">El cliente llega directamente con el plan preseleccionado y solo tiene que poner su nombre, email y tarjeta.</p>
+
+            {/* 4 planes fijos */}
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {[
+                { key: "starter", label: "Starter", clips: 10, precio: 150 },
+                { key: "growth",  label: "Growth",  clips: 20, precio: 250 },
+                { key: "scale",   label: "Scale",   clips: 30, precio: 350 },
+                { key: "pro",     label: "Pro",     clips: 40, precio: 450 },
+              ].map(plan => {
+                const url = links[plan.key as keyof Links];
+                return (
+                  <div key={plan.key} className="bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+                    <div className="flex items-center justify-between mb-0.5">
+                      <span className="text-[#d4f53c] text-xs font-display font-black uppercase">{plan.label}</span>
+                      <span className="text-white font-bold text-sm">€{plan.precio}</span>
+                    </div>
+                    <div className="text-white/30 text-xs mb-3">{plan.clips} clips/mes</div>
+                    <button
+                      onClick={() => copyLink(url, plan.key)}
+                      className="w-full py-1.5 bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-lg text-xs transition-all"
+                    >
+                      {copied === plan.key ? "✓ Copiado" : "Copiar link"}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Separador */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-white/[0.06]" />
+              <span className="text-white/20 text-xs">o personalizado</span>
+              <div className="flex-1 h-px bg-white/[0.06]" />
+            </div>
+
+            {/* Generador personalizado */}
             <div className="flex items-center gap-3 mb-3">
               <div className="flex-1">
                 <label className="block text-xs text-white/40 mb-1.5">Clips mensuales</label>
                 <input
-                  type="number"
+                  type="range"
                   min={1}
                   max={100}
                   value={customClips}
-                  onChange={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value))))}
-                  className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-4 py-2.5 text-white text-sm outline-none focus:border-[rgba(212,245,60,0.4)] transition-colors"
+                  onChange={e => setCustomClips(Number(e.target.value))}
+                  className="w-full"
                 />
+                <div className="flex justify-between text-white/20 text-xs mt-1"><span>1</span><span>100</span></div>
               </div>
-              <div className="text-right pt-5">
-                <div className="font-display font-black text-xl text-[#d4f53c]">€{calcPrice(customClips)}</div>
-                <div className="text-white/30 text-xs">/mes</div>
+              <div className="text-right flex-shrink-0 w-20">
+                <div className="font-display font-black text-xl text-[#d4f53c]">{customClips}</div>
+                <div className="text-white/30 text-xs">clips</div>
+                <div className="font-bold text-white/70 text-sm">€{calcPrice(customClips)}</div>
               </div>
             </div>
             <div className="bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 mb-3 text-white/30 text-xs font-mono truncate">
@@ -189,26 +227,6 @@ export default function AgentesPage() {
             >
               {customLinkCopied ? "✓ Link copiado" : `Copiar link — ${customClips} clips · €${calcPrice(customClips)}/mes`}
             </button>
-          </div>
-        )}
-
-        {/* Links */}
-        {links && (
-          <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 mb-6">
-            <h2 className="font-display font-bold text-sm mb-4">Tus links de referido</h2>
-            <div className="space-y-2">
-              {Object.entries(links).map(([key, url]) => (
-                <div key={key} className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2.5 gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[#d4f53c] text-xs font-display font-bold uppercase flex-shrink-0">{key}</span>
-                    <span className="text-white/25 text-xs truncate hidden sm:block">{url}</span>
-                  </div>
-                  <button onClick={() => copyLink(url, key)} className="text-xs bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-lg px-3 py-1 transition-all flex-shrink-0">
-                    {copied === key ? "✓ Copiado" : "Copiar"}
-                  </button>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 

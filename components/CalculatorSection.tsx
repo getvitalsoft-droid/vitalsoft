@@ -35,12 +35,8 @@ export default function CalculatorSection({ refCode }: Props) {
     const clips = params.get("clips");
     if (clips) setVideos(Number(clips));
 
-    // Si hay ref (agente) + clips en la URL → abrir popup directo
-    // El agente envía un link con ambos parámetros para que el cliente llegue al checkout
-    if (r && clips) {
-      // Small delay so the page renders first
-      setTimeout(() => setShowCheckout(true), 400);
-    }
+    // Si hay ref + clips → solo preseleccionar, NO abrir checkout automáticamente
+    // El cliente debe rellenar nombre y email primero (paso obligatorio)
 
     // Escuchar evento de PricingSection para preseleccionar plan
     const handler = (e: Event) => {

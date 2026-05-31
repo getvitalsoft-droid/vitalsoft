@@ -166,8 +166,8 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
   return (
     <div>
       {/* Resumen del pedido */}
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 mb-6">
-        <div className="flex items-center justify-between mb-2">
+      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 mb-5">
+        <div className="flex items-center justify-between mb-1.5">
           <span className="text-white/50 text-sm">Plan seleccionado</span>
           <span className="font-display font-bold text-accent text-lg">
             €{data.price.toLocaleString("es-ES")}/mes
@@ -176,6 +176,12 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
         <div className="text-white/30 text-xs">
           {data.videos} clips mensuales · Renovación automática · Cancela cuando quieras
         </div>
+        {data.ref && (
+          <div className="mt-2.5 pt-2.5 border-t border-white/[0.06] flex items-center gap-1.5 text-xs text-white/35">
+            <span>🤝</span>
+            <span>Referido por agente <strong className="text-accent/80">{data.ref}</strong></span>
+          </div>
+        )}
       </div>
 
       {loadingIntent && (

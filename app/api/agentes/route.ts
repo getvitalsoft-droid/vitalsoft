@@ -8,7 +8,13 @@ import {
 
 function buildLinks(codigo: string) {
   const base = "https://vitalsoft.pro";
-  return { general: `${base}?ref=${codigo}`, starter: `${base}/starter?ref=${codigo}`, growth: `${base}/growth?ref=${codigo}`, scale: `${base}/scale?ref=${codigo}`, pro: `${base}/pro?ref=${codigo}` };
+  return {
+    general: `${base}?ref=${codigo}`,
+    starter: `${base}?ref=${codigo}&clips=10#calculadora`,
+    growth: `${base}?ref=${codigo}&clips=20#calculadora`,
+    scale: `${base}?ref=${codigo}&clips=30#calculadora`,
+    pro: `${base}?ref=${codigo}&clips=40#calculadora`,
+  };
 }
 
 async function log(accion: string, objetivo_id?: string, detalle?: string, tipo = "agente") {

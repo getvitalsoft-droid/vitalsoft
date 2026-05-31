@@ -131,6 +131,11 @@ export default function PricingSection({ refCode }: Props) {
                   <div className="text-accent font-bold text-sm mt-0.5">
                     €{selected.price}/mes · {selected.videos} clips
                   </div>
+                  {refCode && (
+                    <div className="text-white/30 text-xs mt-1 flex items-center gap-1">
+                      🤝 Referido por <strong className="text-accent/70 ml-0.5">{refCode}</strong>
+                    </div>
+                  )}
                 </div>
                 <button onClick={closeModal} className="text-white/30 hover:text-white/60 transition-colors p-1">
                   <X size={18} />
