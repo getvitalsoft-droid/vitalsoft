@@ -21,7 +21,10 @@ const MOCK_DATA = {
     stripe_subscription_id: "sub_preview",
     notas_cliente: null,
     fecha_pago: new Date(Date.now() - 45 * 86400000).toISOString(),
+    review_completions: 1,
   },
+  showReviewBanner: true,
+  reviewUrl: "https://www.trustpilot.com/review/vitalsoft.pro",
   creditos: {
     total: 60,
     loyalty: [{ id: "l1", milestone: "3_meses", amount: 10, status: "disponible", created_at: new Date().toISOString() }],
@@ -61,6 +64,7 @@ export default function ClientePreviewClient() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState("");
   const [isPaused, setIsPaused] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
   const [actionDone, setActionDone] = useState("");
 
   const copyRef = () => {
@@ -90,6 +94,32 @@ export default function ClientePreviewClient() {
           </div>
           <a href="/" className="text-white/20 text-xs hover:text-white/40 transition-colors">← Inicio</a>
         </div>
+
+        {/* Banner de reseña */}
+        {data.showReviewBanner && !reviewDismissed && (
+          <div className="mb-4 bg-[#111] border border-accent/25 rounded-2xl p-5 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />
+            <button onClick={() => setReviewDismissed(true)} className="absolute top-3 right-3 text-white/20 hover:text-white/50 transition-colors">✕</button>
+            <div className="relative">
+              <div className="text-xl mb-2">⭐</div>
+              <p className="font-display font-bold text-sm text-white/90 mb-1">
+                {data.order.review_completions === 1 ? "¿Qué tal tu primer mes?" : `¿Qué tal llevas ${data.order.review_completions} meses?`}
+              </p>
+              <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                Si el servicio te está funcionando bien, ¿nos dejas una reseña rápida?<br />
+                Ayuda a otros creadores a tomar su decisión. Tarda menos de 1 minuto.
+              </p>
+              <div className="flex items-center gap-3">
+                <a href={data.reviewUrl} target="_blank" rel="noopener noreferrer" onClick={() => setReviewDismissed(true)} className="flex-1 text-center py-2.5 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black text-xs rounded-xl transition-all">
+                  Dejar reseña →
+                </a>
+                <button onClick={() => setReviewDismissed(true)} className="text-white/25 text-xs hover:text-white/50 transition-colors whitespace-nowrap">
+                  Ahora no
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mensaje de acción */}
         {actionDone && (

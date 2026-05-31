@@ -35,7 +35,7 @@ export async function GET(req: NextRequest) {
   // Obtener el order más reciente no cancelado
   const { data: orders } = await sb
     .from("orders")
-    .select("*")
+    .select("*, review_shown_at, review_completions")
     .eq("cliente_email", email)
     .order("fecha_pago", { ascending: false })
     .limit(5);

@@ -66,7 +66,14 @@ export async function PATCH(req: NextRequest) {
     const updates: Record<string, any> = { estado };
     if (estado === "material_invalido") updates.notas_admin = motivo || "Material no válido";
     if (estado === "en_edicion") updates.fecha_validacion = new Date().toISOString();
-    if (estado === "completado") updates.fecha_entrega = new Date().toISOString();
+    if (estado === "completado") {
+      updates.fecha_entrega = new Date().toISOString();
+      updates.review_shown_at = null; // reset so banner shows again in client portal
+      // Increment completions counter (we read current value first)
+      const { data: current } = await supabaseAdmin
+        .from("orders").select("review_completions").eq("id", order_id).single();
+      updates.review_completions = ((current?.review_completions) || 0) + 1;
+    }
 
     const { data, error } = await supabaseAdmin.from("orders").update(updates).eq("id", order_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });

@@ -38,7 +38,10 @@ interface PortalData {
     stripe_subscription_id: string | null;
     notas_cliente: string | null;
     fecha_pago: string;
+    review_completions: number;
   };
+  showReviewBanner: boolean;
+  reviewUrl: string;
   creditos: {
     total: number;
     loyalty: CreditItem[];
@@ -77,6 +80,7 @@ function ClientePortal({ token }: { token: string }) {
   const [actionLoading, setActionLoading] = useState(false);
   const [actionDone, setActionDone] = useState("");
   const [showCredits, setShowCredits] = useState(false);
+  const [reviewDismissed, setReviewDismissed] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState("");
 
   const headers = { "Content-Type": "application/json", "x-cliente-token": token };
@@ -98,6 +102,15 @@ function ClientePortal({ token }: { token: string }) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const dismissReview = async () => {
+    setReviewDismissed(true);
+    // Mark as shown so it doesn't appear again until next completion
+    await fetch("/api/cliente/review-shown", {
+      method: "POST",
+      headers,
+    }).catch(() => {});
   };
 
   const handlePausa = async (accion: "pausar" | "reactivar") => {
@@ -182,6 +195,50 @@ function ClientePortal({ token }: { token: string }) {
             ← Inicio
           </a>
         </div>
+
+        {/* Banner de reseña */}
+        {data.showReviewBanner && !reviewDismissed && (
+          <div className="mb-4 bg-[#111] border border-accent/25 rounded-2xl p-5 relative overflow-hidden">
+            {/* Fondo decorativo */}
+            <div className="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent pointer-events-none" />
+            <button
+              onClick={dismissReview}
+              className="absolute top-3 right-3 text-white/20 hover:text-white/50 transition-colors"
+              aria-label="Cerrar"
+            >
+              ✕
+            </button>
+            <div className="relative">
+              <div className="text-xl mb-2">⭐</div>
+              <p className="font-display font-bold text-sm text-white/90 mb-1">
+                {order.review_completions === 1
+                  ? "¿Qué tal tu primer mes?"
+                  : `¿Qué tal llevas ${order.review_completions} meses?`}
+              </p>
+              <p className="text-white/40 text-xs mb-4 leading-relaxed">
+                Si el servicio te está funcionando bien, ¿nos dejas una reseña rápida?<br />
+                Ayuda a otros creadores a tomar su decisión. Tarda menos de 1 minuto.
+              </p>
+              <div className="flex items-center gap-3">
+                <a
+                  href={data.reviewUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={dismissReview}
+                  className="flex-1 text-center py-2.5 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black text-xs rounded-xl transition-all"
+                >
+                  Dejar reseña →
+                </a>
+                <button
+                  onClick={dismissReview}
+                  className="text-white/25 text-xs hover:text-white/50 transition-colors whitespace-nowrap"
+                >
+                  Ahora no
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Mensaje de acción */}
         {actionDone && (
