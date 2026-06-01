@@ -277,8 +277,8 @@ export async function POST(req: NextRequest) {
 
           await log("venta_registrada_elements", `${metaEmail} · €${importe} · agente:${agenteCodigo || "directo"}`);
           await sendEmail(() => enviarEmailClientePagoRealizado({ email: metaEmail, nombre, plan, importe, onboardingUrl: `${ONBOARDING_URL}?session=${invoice.id}` }), metaEmail, "cliente_pago_realizado", event.type);
-          await sendEmail(() => enviarEmailAdmin({ clienteEmail: metaEmail, plan, importe, agente, comision, sospechoso }), process.env.ADMIN_EMAIL!, "admin_nueva_venta", event.type);
-          if (agente && !sospechoso) await sendEmail(() => enviarEmailAgente({ agente, clienteEmail: metaEmail, plan, importe, comision }), agente.email, "agente_nueva_comision", event.type);
+          await sendEmail(() => enviarEmailAdmin({ clienteEmail: metaEmail, plan, importe, agente, comision, sospechoso: sospechosoEl }), process.env.ADMIN_EMAIL!, "admin_nueva_venta", event.type);
+          if (agente && !sospechosoEl) await sendEmail(() => enviarEmailAgente({ agente, clienteEmail: metaEmail, plan, importe, comision }), agente.email, "agente_nueva_comision", event.type);
           break;
         }
 
