@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Lock, ArrowRight } from "lucide-react";
 import { calcPrice, savings } from "@/lib/stripe";
 import StripeCheckout from "@/components/StripeCheckout";
+import { getStoredRef } from "@/components/RefPersistence";
 
 const PLAN_ANCHORS: Record<number, string> = { 10: "Starter", 20: "Growth", 30: "Scale", 40: "Pro" };
 const PLAN_KEYS: Record<number, string> = { 10: "starter", 20: "growth", 30: "scale", 40: "pro" };
@@ -28,7 +29,7 @@ export default function CalculatorSection({ refCode }: Props) {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const r = params.get("ref");
+    const r = params.get("ref") || getStoredRef();
     if (r) setUrlRef(r);
     const cr = params.get("client_ref");
     if (cr) setClientRef(cr);
@@ -98,12 +99,12 @@ export default function CalculatorSection({ refCode }: Props) {
           )}
 
           {/* Anclas */}
-          <div className="grid grid-cols-4 gap-2 mb-6">
+          <div className="grid grid-cols-4 gap-1.5 mb-6">
             {[{v:10,n:"Starter",p:150},{v:20,n:"Growth",p:250},{v:30,n:"Scale",p:350},{v:40,n:"Pro",p:450}].map((plan) => (
               <button key={plan.v} onClick={() => setVideos(plan.v)}
-                className={`rounded-xl p-3 border text-center transition-all duration-200 ${videos === plan.v ? "bg-[rgba(232,255,71,0.07)] border-[rgba(232,255,71,0.32)]" : "bg-white/[0.03] border-white/[0.08] hover:border-white/20"}`}>
-                <div className={`font-display font-black text-[10px] uppercase tracking-widest mb-1 ${videos === plan.v ? "text-accent" : "text-white/30"}`}>{plan.n}</div>
-                <div className={`font-display font-extrabold text-sm ${videos === plan.v ? "text-accent" : "text-white/60"}`}>€{plan.p}</div>
+                className={`rounded-xl py-2.5 px-1 border text-center transition-all duration-200 ${videos === plan.v ? "bg-[rgba(232,255,71,0.07)] border-[rgba(232,255,71,0.32)]" : "bg-white/[0.03] border-white/[0.08] hover:border-white/20"}`}>
+                <div className={`font-display font-black text-[9px] uppercase tracking-tight leading-none mb-1 truncate ${videos === plan.v ? "text-accent" : "text-white/30"}`}>{plan.n}</div>
+                <div className={`font-display font-extrabold text-xs leading-none ${videos === plan.v ? "text-accent" : "text-white/60"}`}>€{plan.p}</div>
               </button>
             ))}
           </div>
@@ -134,7 +135,7 @@ export default function CalculatorSection({ refCode }: Props) {
 
           {/* Precio */}
           <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.12)] rounded-xl p-6 text-center mb-6">
-            <div className="font-display font-extrabold text-5xl text-accent leading-none mb-2">€{price.toLocaleString("es-ES")}</div>
+            <div className="font-display font-extrabold text-5xl text-accent leading-none mb-2" style={{ WebkitTextStroke: 0, textShadow: "none" }}>€{price.toLocaleString("es-ES")}</div>
             <div className="text-white/35 text-sm">€{perVid} por clip · sin permanencia · cancela cuando quieras</div>
             <div className="flex items-center justify-center gap-2 flex-wrap mt-3">
               {saved > 0 && <span className="bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">Ahorras €{saved} vs tarifa individual</span>}

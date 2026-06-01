@@ -167,7 +167,26 @@ export default function AgentesPage() {
         {agente && links && (
           <div className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-6 mb-6">
             <h2 className="font-display font-bold text-sm mb-1">Tus links de referido</h2>
-            <p className="text-white/30 text-xs mb-4">El cliente llega directamente con el plan preseleccionado y solo tiene que poner su nombre, email y tarjeta.</p>
+            <p className="text-white/30 text-xs mb-3">El cliente llega directamente con el plan preseleccionado y solo tiene que poner su nombre, email y tarjeta.</p>
+
+            {/* Link para clientes indecisos */}
+            <div className="mb-4 bg-white/[0.03] border border-white/[0.08] rounded-xl p-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <div>
+                  <span className="text-white/60 text-xs font-bold">Link de landing completa</span>
+                  <p className="text-white/30 text-[10px]">Para clientes que todavía no saben qué plan quieren</p>
+                </div>
+                <button
+                  onClick={() => copyLink(links.general, "general")}
+                  className="text-xs bg-white/[0.06] hover:bg-white/10 border border-white/10 rounded-lg px-3 py-1.5 transition-all flex-shrink-0 ml-3"
+                >
+                  {copied === "general" ? "✓ Copiado" : "Copiar"}
+                </button>
+              </div>
+              <div className="text-white/25 text-[10px] font-mono truncate">{links.general}</div>
+            </div>
+
+            <div className="text-white/25 text-[10px] uppercase tracking-widest mb-2 mt-4">Links con plan preseleccionado</div>
 
             {/* 4 planes fijos */}
             <div className="grid grid-cols-2 gap-2 mb-4">

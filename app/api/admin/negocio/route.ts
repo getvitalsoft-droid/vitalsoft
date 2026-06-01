@@ -16,16 +16,25 @@ function isAdmin(req: NextRequest) {
 }
 
 async function verificarAdminNegocio(req: NextRequest): Promise<boolean> {
-  // Opción 1: token de admin (x-admin-token)
+  // Opción 1: token de admin explícito (x-admin-token header)
   const adminToken = req.headers.get("x-admin-token");
   if (adminToken && adminToken === process.env.ADMIN_SECRET_TOKEN) return true;
-  // Opción 2: JWT de Supabase (mismo que usan las otras rutas admin)
+  // Opción 2: JWT de Supabase — usar cliente con anon key para verificar el token del usuario
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!bearer) return false;
-  const { data: { user }, error } = await sb.auth.getUser(bearer);
-  if (error || !user) return false;
-  const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "").split(",").map(e => e.trim().toLowerCase());
-  return adminEmails.includes(user.email?.toLowerCase() || "");
+  try {
+    // Crear cliente temporal con anon key para validar el JWT del usuario autenticado
+    const { createClient: create } = await import("@supabase/supabase-js");
+    const sbAuth = create(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
+    const { data: { user }, error } = await sbAuth.auth.getUser(bearer);
+    if (error || !user) return false;
+    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "getvitalsoft@gmail.com")
+      .split(",").map(e => e.trim().toLowerCase());
+    return adminEmails.includes(user.email?.toLowerCase() || "");
+  } catch { return false; }
 }
 
 export async function GET(req: NextRequest) {

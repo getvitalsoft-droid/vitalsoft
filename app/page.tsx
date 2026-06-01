@@ -1,4 +1,5 @@
 import Navbar from "@/components/Navbar";
+import RefPersistence from "@/components/RefPersistence";
 import HeroSection from "@/components/HeroSection";
 import StatsBar from "@/components/StatsBar";
 import TestimonialsSection from "@/components/TestimonialsSection";
@@ -16,6 +17,7 @@ export default function Home({ searchParams }: { searchParams: { ref?: string; c
   return (
     <main>
       <Navbar />
+      <RefPersistence refCode={refCode} />
       <HeroSection />
       <StatsBar />
       <TestimonialsSection />

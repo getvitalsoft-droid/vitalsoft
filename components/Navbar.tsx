@@ -23,7 +23,11 @@ export default function Navbar() {
 
   const handleScroll = (href: string) => {
     setMobileOpen(false);
-    document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    if (href.startsWith("/")) {
+      window.location.href = href;
+    } else {
+      document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (

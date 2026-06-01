@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X } from "lucide-react";
 import { PRICING_PLANS, calcPrice } from "@/lib/stripe";
+import { getStoredRef } from "@/components/RefPersistence";
 import StripeCheckout from "@/components/StripeCheckout";
 
 interface Props { refCode?: string }
@@ -32,7 +33,7 @@ export default function PricingSection({ refCode }: Props) {
   // Equivalente a pulsar el plan correspondiente manualmente
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const urlRef = params.get("ref");
+    const urlRef = params.get("ref") || getStoredRef();
     const urlClips = Number(params.get("clips"));
     if (!urlRef || !urlClips) return;
 
