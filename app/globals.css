@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Fallback: cargar Syne y DM Sans directamente si Next.js font optimization falla en build */
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
 :root {
   --font-syne: "Syne", sans-serif;
   --font-dm-sans: "DM Sans", sans-serif;
