@@ -18,9 +18,15 @@ export async function POST(req: NextRequest) {
 
     // Buscar order por session_id
     const { data: order, error: orderErr } = await supabase
-      .from("orders").select("id, estado").eq("stripe_session_id", session_id).single();
+      .from("orders").select("id, estado, cliente_email").eq("stripe_session_id", session_id).single();
 
     if (orderErr || !order) return NextResponse.json({ error: "Pedido no encontrado." }, { status: 404 });
+
+    // Verificar que el email coincide con el del order (evita que alguien con una
+    // session_id ajena pueda sobreescribir datos de otro cliente)
+    if (order.cliente_email && order.cliente_email.toLowerCase() !== email.toLowerCase()) {
+      return NextResponse.json({ error: "Email no coincide con el pedido." }, { status: 403 });
+    }
 
     // Guardar onboarding - upsert para evitar duplicados (UNIQUE en order_id)
     const { error: onbErr } = await supabase.from("onboarding").upsert({
@@ -33,12 +39,21 @@ export async function POST(req: NextRequest) {
     });
     if (onbErr) return NextResponse.json({ error: onbErr.message }, { status: 500 });
 
-    // Actualizar estado del order
-    await supabase.from("orders").update({
-      estado: "esperando_material",
-      material_link: drive_link,
-      fecha_onboarding: new Date().toISOString(),
-    }).eq("id", order.id);
+    // Actualizar estado SOLO si el order sigue en onboarding_pendiente
+    // No sobreescribir estados más avanzados (en_edicion, completado, etc.)
+    const ESTADOS_ONBOARDING = ["onboarding_pendiente", "esperando_material"];
+    if (ESTADOS_ONBOARDING.includes(order.estado)) {
+      await supabase.from("orders").update({
+        estado: "esperando_material",
+        material_link: drive_link,
+        fecha_onboarding: new Date().toISOString(),
+      }).eq("id", order.id);
+    } else {
+      // Solo actualizar el material_link, no el estado
+      await supabase.from("orders").update({
+        material_link: drive_link,
+      }).eq("id", order.id);
+    }
 
     await supabase.from("activity_logs").insert({
       admin: "cliente", accion: "onboarding_completado",

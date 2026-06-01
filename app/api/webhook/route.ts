@@ -288,6 +288,13 @@ export async function POST(req: NextRequest) {
           .select("id").eq("accion", "renovacion").eq("detalle", `invoice:${invoice.id}`).single();
         if (invoiceLog) break; // ya procesada
 
+        // Si el importe cobrado es 0 (crédito cubre la factura) no procesar como renovación real
+        // Stripe igualmente dispara invoice.paid pero no hay cobro efectivo
+        if (importe <= 0) {
+          await log("renovacion_credito_cero", `${clienteEmail} · factura cubierta por crédito · invoice:${invoice.id}`);
+          break;
+        }
+
         const periodo = invoice.period_end ? new Date(invoice.period_end * 1000).toLocaleDateString("es-ES") : "";
 
         let orderRenovado = null;
@@ -361,6 +368,12 @@ export async function POST(req: NextRequest) {
       // ── Cancelación ───────────────────────────────────────────────────────
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
+
+        // Idempotencia: si el order ya está cancelado, no enviar emails de nuevo
+        const { data: orderYaCancelado } = await supabase.from("orders")
+          .select("id").eq("stripe_subscription_id", sub.id).eq("estado", "cancelado").single();
+        if (orderYaCancelado) break;
+
         const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
         let clienteEmail = "";
         if (customerId) {
@@ -368,7 +381,7 @@ export async function POST(req: NextRequest) {
           if ("email" in customer && customer.email) clienteEmail = customer.email;
         }
         const fechaFin = sub.current_period_end ? new Date(sub.current_period_end * 1000).toLocaleDateString("es-ES") : "";
-        await supabase.from("orders").update({ estado: "cancelado" }).eq("stripe_subscription_id", sub.id);
+        await supabase.from("orders").update({ estado: "cancelado", cancelled_at: new Date().toISOString() }).eq("stripe_subscription_id", sub.id);
         await log("cancelacion", `${clienteEmail} · sub ${sub.id}`);
         if (clienteEmail) {
           await sendEmail(() => enviarEmailClienteCancelacion({ email: clienteEmail, plan: "Plan VitalSoft", fechaFin }), clienteEmail, "cliente_cancelacion", event.type);
