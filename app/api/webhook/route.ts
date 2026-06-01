@@ -199,7 +199,7 @@ export async function POST(req: NextRequest) {
           const sub = await stripe.subscriptions.retrieve(subId);
           const meta = sub.metadata || {};
           const metaEmail = meta.email || clienteEmail;
-          const nombre = meta.nombre || null;
+          const nombre = meta.nombre || undefined;
           const videos = meta.videos ? parseInt(meta.videos) : null;
           const plan = videos ? `${videos} clips/mes` : "Plan VitalSoft";
           const agenteCodigo = meta.agente_codigo || null;
