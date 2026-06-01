@@ -234,7 +234,7 @@ export default function AgentesPage() {
                     value={customClips}
                     onChange={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
                     onBlur={e => setCustomClips(Math.min(100, Math.max(1, Number(e.target.value) || 1)))}
-                    className="font-display font-black text-2xl text-[#d4f53c] bg-transparent border-b border-[rgba(212,245,60,0.4)] focus:border-[#d4f53c] outline-none w-14 text-right"
+                    className="font-display font-black text-2xl text-[#d4f53c] bg-transparent border-b border-[rgba(212,245,60,0.4)] focus:border-[#d4f53c] outline-none w-16 text-right"
                   />
                   <div className="text-right">
                     <div className="text-white/30 text-xs">clips</div>

@@ -100,19 +100,11 @@ export default function CalculatorSection({ refCode }: Props) {
 
           {/* Anclas */}
           <div className="grid grid-cols-4 gap-1.5 mb-6">
-            {[
-              {v:10,n:"Starter",s:"Start",p:150},
-              {v:20,n:"Growth",s:"Grwth",p:250},
-              {v:30,n:"Scale",s:"Scale",p:350},
-              {v:40,n:"Pro",s:"Pro",p:450}
-            ].map((plan) => (
+            {[{v:10,n:"Starter",p:150},{v:20,n:"Growth",p:250},{v:30,n:"Scale",p:350},{v:40,n:"Pro",p:450}].map((plan) => (
               <button key={plan.v} onClick={() => setVideos(plan.v)}
                 className={`rounded-xl py-2.5 px-1 border text-center transition-all duration-200 ${videos === plan.v ? "bg-[rgba(232,255,71,0.07)] border-[rgba(232,255,71,0.32)]" : "bg-white/[0.03] border-white/[0.08] hover:border-white/20"}`}>
-                <div className={`font-display font-black uppercase leading-none mb-1 ${videos === plan.v ? "text-accent" : "text-white/30"}`}>
-                  <span className="hidden sm:block text-[9px] tracking-tight">{plan.n}</span>
-                  <span className="sm:hidden text-[9px] tracking-tighter">{plan.s}</span>
-                </div>
-                <div className={`font-display font-extrabold text-xs leading-none ${videos === plan.v ? "text-accent" : "text-white/60"}`}>€{plan.p}</div>
+                <div className={`font-display font-black text-[8px] uppercase tracking-tight leading-none mb-1 ${videos === plan.v ? "text-accent" : "text-white/30"}`}>{plan.n}</div>
+                <div className={`font-display font-extrabold text-[11px] leading-none ${videos === plan.v ? "text-accent" : "text-white/60"}`}>€{plan.p}</div>
               </button>
             ))}
           </div>
@@ -134,7 +126,7 @@ export default function CalculatorSection({ refCode }: Props) {
                   const v = Math.min(100, Math.max(1, Number(e.target.value) || 1));
                   setVideos(v);
                 }}
-                className="font-display font-extrabold text-4xl text-accent bg-transparent border-b-2 border-accent/40 focus:border-accent outline-none w-20 text-right"
+                className="font-display font-extrabold text-4xl text-accent bg-transparent border-b-2 border-accent/40 focus:border-accent outline-none w-24 text-right"
               />
             </div>
             <input type="range" min={1} max={100} step={1} value={videos} onChange={(e) => setVideos(Number(e.target.value))} className="w-full" />
