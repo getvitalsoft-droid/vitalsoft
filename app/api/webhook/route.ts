@@ -78,9 +78,18 @@ export async function POST(req: NextRequest) {
           const { data } = await supabase.from("agentes").select("*").eq("codigo", agenteCodigo).single();
           agente = data;
         }
-        const sospechoso = !!(agente && agente.email === clienteEmail);
+        const agenteEsBloqueado = !!(agente && agente.bloqueado);
+        const sospechoso = !!(agente && agente.email === clienteEmail) || agenteEsBloqueado;
+        const sospechosoMotivo = agenteEsBloqueado
+          ? "agente_bloqueado"
+          : (agente && agente.email === clienteEmail ? "mismo email que agente" : null);
+        // Agente bloqueado no genera comisión bajo ningún concepto
         const comision = agente && !sospechoso ? Math.round(importe * 0.20 * 100) / 100 : 0;
         const revisiones = clips && clips <= 10 ? 1 : clips && clips <= 20 ? 2 : clips && clips <= 30 ? 3 : 4;
+
+        if (agenteEsBloqueado) {
+          await log("agente_bloqueado_venta_rechazada", `Agente ${agenteCodigo} bloqueado · cliente ${clienteEmail} · €${importe}`, "venta");
+        }
 
         const { data: order } = await supabase.from("orders").insert({
           cliente_email: clienteEmail,
@@ -98,10 +107,11 @@ export async function POST(req: NextRequest) {
           agente_id: agente?.id || null,
           agente_codigo: agenteCodigo || null,
           cliente_email: clienteEmail, plan, importe,
-          estado: "pendiente_validacion",
+          // Bloqueado → venta inválida sin comisión
+          estado: agenteEsBloqueado ? "invalida" : "pendiente_validacion",
           stripe_session_id: session.id,
-          disponible_at: new Date(Date.now() + HOLD_DIAS * 86400000).toISOString(),
-          sospechoso, sospechoso_motivo: sospechoso ? "mismo email que agente" : null,
+          disponible_at: agenteEsBloqueado ? null : new Date(Date.now() + HOLD_DIAS * 86400000).toISOString(),
+          sospechoso, sospechoso_motivo: sospechosoMotivo,
         });
 
         // Marcar lead como comprado si hay agente con ownership activo
@@ -201,15 +211,23 @@ export async function POST(req: NextRequest) {
             const { data } = await supabase.from("agentes").select("*").eq("codigo", agenteCodigo).single();
             agente = data;
           }
-          const sospechoso = !!(agente && agente.email === metaEmail);
-          const comision = agente && !sospechoso ? Math.round(importe * 0.20 * 100) / 100 : 0;
+          const agenteEsBloqueadoEl = !!(agente && agente.bloqueado);
+          const sospechosoEl = !!(agente && agente.email === metaEmail) || agenteEsBloqueadoEl;
+          const sospechosoMotivoEl = agenteEsBloqueadoEl
+            ? "agente_bloqueado"
+            : (agente && agente.email === metaEmail ? "mismo email que agente" : null);
+          const comision = agente && !sospechosoEl ? Math.round(importe * 0.20 * 100) / 100 : 0;
+
+          if (agenteEsBloqueadoEl) {
+            await log("agente_bloqueado_venta_rechazada_elements", `Agente ${agenteCodigo} bloqueado · cliente ${metaEmail} · €${importe}`, "venta");
+          }
 
           const { data: order } = await supabase.from("orders").insert({
             cliente_email: metaEmail,
             cliente_nombre: nombre,
             stripe_customer_id: customerId || null,
             stripe_subscription_id: subId,
-            stripe_session_id: invoice.id, // usamos invoice.id como session_id único
+            stripe_session_id: invoice.id,
             plan, clips_mensuales: videos, importe,
             estado: "onboarding_pendiente",
             agente_codigo: agenteCodigo || null,
@@ -220,10 +238,10 @@ export async function POST(req: NextRequest) {
             agente_id: agente?.id || null,
             agente_codigo: agenteCodigo || null,
             cliente_email: metaEmail, plan, importe,
-            estado: "pendiente_validacion",
+            estado: agenteEsBloqueadoEl ? "invalida" : "pendiente_validacion",
             stripe_session_id: invoice.id,
-            disponible_at: new Date(Date.now() + HOLD_DIAS * 86400000).toISOString(),
-            sospechoso, sospechoso_motivo: sospechoso ? "mismo email que agente" : null,
+            disponible_at: agenteEsBloqueadoEl ? null : new Date(Date.now() + HOLD_DIAS * 86400000).toISOString(),
+            sospechoso: sospechosoEl, sospechoso_motivo: sospechosoMotivoEl,
           });
 
           // Drive — no bloqueante
