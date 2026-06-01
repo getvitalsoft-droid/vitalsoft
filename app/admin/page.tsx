@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import NegocioTab from "@/components/NegocioTab";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
