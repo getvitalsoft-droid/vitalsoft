@@ -556,9 +556,9 @@ function ClienteLogin() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50"
+            className="w-full py-3 px-4 bg-accent hover:bg-accent-2 text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50 whitespace-nowrap overflow-hidden text-ellipsis"
           >
-            {loading ? "Enviando..." : <span className="whitespace-nowrap">Enviar enlace de acceso →</span>}
+            {loading ? "Enviando..." : "Enviar enlace de acceso →"}
           </button>
           <p className="text-white/20 text-xs text-center">
             Sin contraseña. Te enviamos un enlace directo.
