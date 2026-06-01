@@ -16,7 +16,7 @@ export default function HeroSection() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(232,255,71,0.07)_0%,transparent_70%)] pointer-events-none" />
       <div className="relative z-10 text-center max-w-4xl mx-auto">
 
-        <motion.h1 {...fadeUp(0.1)} className="font-display font-extrabold text-[clamp(2.8rem,6vw,5rem)] leading-[1.05] tracking-[-0.03em] mb-6">
+        <motion.h1 {...fadeUp(0.1)} className="font-display font-extrabold text-[clamp(2.4rem,5.2vw,4.4rem)] leading-[1.0] tracking-[-0.03em] mb-6">
           <span className="text-gradient">Graba una vez.</span>
           <br />
           <span className="text-accent">Publica todo el mes.</span>
