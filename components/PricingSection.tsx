@@ -15,6 +15,8 @@ const PLAN_META: Record<string, { forWho: string; freq: string }> = {
 
 
 
+interface Props { refCode?: string }
+
 interface CheckoutState {
   name: string;
   email: string;
