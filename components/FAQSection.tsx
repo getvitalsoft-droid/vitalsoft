@@ -40,6 +40,22 @@ const faqs = [
     q: "¿Trabajáis con empresas o agencias?",
     a: "Sí. Trabajamos con creadores, podcasters, negocios y marcas que generan contenido largo y quieren distribución constante. Para volúmenes superiores a 50 clips/mes usa la calculadora o escríbenos directamente.",
   },
+  {
+    q: "¿Los clips los genera una IA?",
+    a: "Utilizamos herramientas de IA dentro del proceso de producción, pero cada entrega pasa por revisión y edición humana. Nos aseguramos de que el resultado tenga coherencia, ritmo y calidad antes de entregarlo.",
+  },
+  {
+    q: "¿Y si no me gusta algún clip?",
+    a: "Cada plan incluye ajustes por clip. Si algo no encaja con tu estilo o referencias, nos lo indicas y lo corregimos. Los ajustes cubren cambios razonables sobre el clip entregado, no rehacerlo desde cero.",
+  },
+  {
+    q: "¿Puedo cambiar de plan o reducir volumen?",
+    a: "Sí. Puedes cambiar de plan al final de tu ciclo mensual. Si un mes necesitas menos clips, puedes pausar hasta 30 días o cancelar sin penalización. Sin permanencia en ningún plan.",
+  },
+  {
+    q: "¿Por qué no contratar un editor freelance?",
+    a: "Un freelance puede ser una buena opción. VitalSoft es para quienes prefieren un sistema predecible: capacidad fija, tiempos definidos, entrega consistente y sin necesidad de gestionar personas. La diferencia no es calidad — es previsibilidad.",
+  },
 ];
 
 export default function FAQSection() {

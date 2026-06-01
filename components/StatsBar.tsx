@@ -2,10 +2,10 @@
 import { motion } from "framer-motion";
 
 const pasos = [
-  { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu Drive compartido asignado." },
+  { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu carpeta compartida de Google Drive — sin apps nuevas, sin aprender nada." },
   { num: "02", title: "Encontramos los mejores momentos", desc: "Seleccionamos los clips con más potencial para formato corto. Tú no tienes que marcar nada." },
   { num: "03", title: "Editamos y adaptamos", desc: "Subtítulos animados, ritmo, formato vertical 9:16 y optimización para cada plataforma." },
-  { num: "04", title: "Recibes los clips listos", desc: "En tu Drive en 24–48h. Revisas, pides ajustes si necesitas y publicas cuando quieras." },
+  { num: "04", title: "Recibes los clips en 24–48h", desc: "De vuelta en tu Drive. Revisas, pides ajustes si necesitas, y publicas cuando quieras en cualquier plataforma." },
 ];
 
 const requisitos = [
@@ -24,7 +24,7 @@ export default function StatsBar() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-3">Cómo funciona</span>
-            <h2 className="font-display font-extrabold text-2xl tracking-tight">Flujo de trabajo claro y predecible</h2>
+            <h2 className="font-display font-extrabold text-2xl tracking-tight">De tu grabación a clips listos en 4 pasos</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {pasos.map((p, i) => (

@@ -17,10 +17,10 @@ const INPUT = {
 const OUTPUT = {
   label: "Lo que recibes",
   items: [
-    { icon: "📱", text: "10–40 clips de 30–90 segundos", accent: true },
+    { icon: "📱", text: "Desde 10 hasta 100 clips de 30–90 segundos", accent: true },
     { icon: "↕️", text: "Formato 9:16 listo para TikTok y Reels" },
     { icon: "◻️", text: "Formato 1:1 para Instagram feed" },
-    { icon: "▶️", text: "Formato 16:9 para YouTube Shorts" },
+    { icon: "▶️", text: "Formato 16:9 para YouTube horizontal" },
     { icon: "✍️", text: "Subtítulos animados en todos los clips" },
     { icon: "📁", text: "En tu Drive en 24–48h" },
   ],
@@ -147,8 +147,8 @@ export default function TransformationFlow() {
         {/* Stat bottom */}
         <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="text-center text-white/25 text-xs mt-8">
-          Un episodio de 60 minutos suele generar entre 8 y 15 clips publicables según el contenido.
-          Los resultados varían en función del material.
+          El número de clips depende del plan contratado y del material. Desde 10 hasta 100 clips al mes.
+          Los resultados varían en función del contenido.
         </motion.p>
 
       </div>

@@ -126,11 +126,11 @@ export default function CalculatorSection({ refCode }: Props) {
                   const v = Math.min(100, Math.max(1, Number(e.target.value) || 1));
                   setVideos(v);
                 }}
-                className="font-display font-extrabold text-4xl text-accent bg-transparent border-b-2 border-accent/40 focus:border-accent outline-none w-24 text-right"
+                className="font-display font-extrabold text-4xl text-accent bg-transparent border-b-2 border-accent/40 focus:border-accent outline-none w-28 text-right"
               />
             </div>
             <input type="range" min={1} max={100} step={1} value={videos} onChange={(e) => setVideos(Number(e.target.value))} className="w-full" />
-            <div className="flex justify-between mt-2 text-white/20 text-xs"><span>1 clip</span><span>100 clips</span></div>
+            <div className="flex justify-between mt-2 text-white/20 text-xs"><span>1 clip</span><span>100 clips · <a href="mailto:hola@vitalsoft.pro" className="hover:text-white/40 transition-colors underline">¿Necesitas más?</a></span></div>
           </div>
 
           {/* Precio */}

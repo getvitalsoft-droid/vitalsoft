@@ -31,7 +31,7 @@ export default function Footer() {
             </div>
             <div className="space-y-2">
               <div className="text-white/25 text-[10px] uppercase tracking-widest font-semibold mb-2">Contacto</div>
-              <a href="mailto:getvitalsoft@gmail.com" className="block text-white/40 text-xs hover:text-accent transition-colors">getvitalsoft@gmail.com</a>
+              <a href="mailto:hola@vitalsoft.pro" className="block text-white/40 text-xs hover:text-accent transition-colors">hola@vitalsoft.pro</a>
             </div>
           </div>
         </div>

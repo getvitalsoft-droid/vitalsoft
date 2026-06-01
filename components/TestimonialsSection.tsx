@@ -2,12 +2,12 @@
 import { motion } from "framer-motion";
 
 const aptoPara = [
-  { icon: "🎙️", title: "Podcasters", desc: "Tienes episodios pero no tiempo de reeditar. Conviertes cada episodio en semanas de contenido para redes sin tocar el editor." },
-  { icon: "▶️", title: "YouTubers", desc: "Grabas vídeos largos y quieres extraerles más rendimiento. Cada vídeo se convierte en clips para TikTok, Reels y Shorts." },
-  { icon: "🎮", title: "Streamers", desc: "Tus directos están llenos de momentos destacables. Los convertimos en clips editados y publicables sin que pares de crear." },
-  { icon: "🎓", title: "Creadores educativos", desc: "Tienes formaciones, clases o webinars. Les damos una segunda vida en formato corto y los pones a trabajar en redes." },
-  { icon: "🏢", title: "Marcas y negocios", desc: "Tienes contenido corporativo o eventos y quieres distribución constante sin contratar un equipo de edición." },
-  { icon: "🎤", title: "Speakers y formadores", desc: "Tienes charlas y ponencias. Las convertimos en fragmentos de valor que trabajan por ti en redes cada semana." },
+  { icon: "🎙️", title: "Podcasters", benefit: "Más frecuencia de publicación", desc: "Cada episodio se convierte en semanas de contenido para redes sin que toques el editor." },
+  { icon: "▶️", title: "YouTubers", benefit: "Más rendimiento por vídeo", desc: "Cada vídeo largo genera clips para TikTok, Reels y Shorts. Más alcance con el mismo esfuerzo." },
+  { icon: "🎮", title: "Streamers", benefit: "Aprovecha cada directo", desc: "Tus directos están llenos de momentos publicables. Los extraemos y editan sin que pares de crear." },
+  { icon: "🎓", title: "Creadores educativos", benefit: "Reutiliza tu conocimiento", desc: "Formaciones, clases y webinars cobran nueva vida en formato corto. El mismo contenido, más canales." },
+  { icon: "🏢", title: "Marcas y agencias", benefit: "Presencia constante en redes", desc: "Eventos, entrevistas o contenido corporativo convertido en clips listos para publicar cada mes." },
+  { icon: "🎤", title: "Speakers y formadores", benefit: "Multiplica el alcance de cada charla", desc: "Una ponencia produce semanas de contenido de valor. Cada intervención trabaja por ti mucho más allá del evento." },
 ];
 
 const noApto = [
@@ -23,8 +23,8 @@ export default function TestimonialsSection() {
       <div className="max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Para quién es</span>
-          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">¿Encaja contigo?</h2>
-          <p className="text-white/40 text-base font-light mb-10 max-w-md">VitalSoft es un sistema de producción, no una agencia de growth. Esto es lo que hacemos y lo que no hacemos.</p>
+          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Si grabas contenido largo, probablemente encajes aquí</h2>
+          <p className="text-white/50 text-base font-light mb-10 max-w-lg">Funciona mejor cuando ya grabas de forma regular y quieres convertir ese contenido en semanas de publicaciones sin contratar un editor.</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
@@ -32,8 +32,9 @@ export default function TestimonialsSection() {
             <motion.div key={item.title} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
               className="glass rounded-2xl p-6 hover:border-[rgba(232,255,71,0.15)] transition-all">
               <div className="text-2xl mb-3">{item.icon}</div>
-              <div className="font-display font-bold text-sm mb-2">{item.title}</div>
-              <p className="text-white/45 text-sm font-light leading-relaxed">{item.desc}</p>
+              <div className="font-display font-bold text-sm mb-0.5">{item.title}</div>
+              <div className="text-accent text-xs font-semibold mb-2">{item.benefit}</div>
+              <p className="text-white/50 text-sm font-light leading-relaxed">{item.desc}</p>
             </motion.div>
           ))}
         </div>

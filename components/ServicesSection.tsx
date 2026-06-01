@@ -11,7 +11,7 @@ const servicios = [
   {
     icon: "📐",
     title: "Tres formatos en un solo envío",
-    desc: "Cada clip en 9:16 para TikTok y Reels, 1:1 para Instagram y 16:9 para YouTube. Subes el material una vez y lo tienes listo para todas las plataformas.",
+    desc: "Cada clip en 9:16 para TikTok y Reels, 1:1 para Instagram y 16:9 para YouTube horizontal. Subes el material una vez y lo tienes listo para todas las plataformas.",
     tags: ["9:16 vertical", "1:1 cuadrado", "16:9 horizontal"],
   },
   {
@@ -21,10 +21,10 @@ const servicios = [
     tags: ["Subtítulos animados", "Alta retención", "Accesibilidad"],
   },
   {
-    icon: "📁",
-    title: "Entrega en Drive compartido",
-    desc: "Cada mes subes tu material a tu Drive. Validamos el contenido, producimos los clips y los dejamos listos. Tú publicas cuando quieras, sin esperas ni correos.",
-    tags: ["Google Drive", "Flujo organizado", "Sin correos"],
+    icon: "✅",
+    title: "Revisiones incluidas en cada plan",
+    desc: "Cada clip entregado viene con ajustes incluidos. Si algo no encaja con tu estilo o referencias, lo ajustamos. Sin coste extra dentro del alcance de tu plan.",
+    tags: ["Ajustes por clip", "Respuesta en 24h", "Sin coste extra"],
   },
 ];
 
@@ -44,7 +44,7 @@ const vsEditor = [
       "Buscar y filtrar candidatos",
       "Explicar tu estilo desde cero",
       "Gestionar plazos y correos",
-      "Sustituirlo si desaparece",
+      "Riesgo de disponibilidad variable",
       "Formación continua",
     ],
     bad: true,
@@ -70,7 +70,7 @@ export default function ServicesSection() {
         {/* Servicios */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Servicios</span>
-          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Lo que hacemos. Nada más.</h2>
+          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Todo lo que recibes cada mes</h2>
           <p className="text-white/50 text-base font-light mb-10 max-w-md">Producción de clips por suscripción. No una agencia de crecimiento, no consultores de estrategia.</p>
         </motion.div>
 
@@ -103,7 +103,7 @@ export default function ServicesSection() {
 
         {/* VitalSoft vs editor freelance */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="font-display font-extrabold text-[clamp(1.6rem,3vw,2.2rem)] tracking-tight mb-2">¿Por qué no contratar un editor?</h2>
+          <h2 className="font-display font-extrabold text-[clamp(1.6rem,3vw,2.2rem)] tracking-tight mb-2">La diferencia entre contratar una persona y contratar un sistema</h2>
           <p className="text-white/45 text-sm font-light mb-8 max-w-lg">
             Un buen editor es una persona. VitalSoft es un sistema. La diferencia no es calidad — es previsibilidad.
           </p>
