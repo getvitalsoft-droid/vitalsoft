@@ -1,72 +1,79 @@
 "use client";
 // components/VersionChecker.tsx
-// Banner de nueva versión disponible.
-// Se monta en el layout raíz y comprueba /api/version cada 10 minutos.
-// No recarga automáticamente, no interrumpe pagos, solo avisa.
+// Avisa al usuario si hay una nueva versión disponible.
+// No recarga automáticamente. No interrumpe pagos.
 
 import { useState, useEffect, useRef } from "react";
 import { RefreshCw, X } from "lucide-react";
 
-const CHECK_INTERVAL = 10 * 60 * 1000; // 10 minutos
+const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
 
 export default function VersionChecker() {
   const [showBanner, setShowBanner] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
   const initialVersion = useRef<string | null>(null);
-  // Track if a checkout is in progress to delay showing the banner
   const checkoutActive = useRef(false);
-  const pendingUpdate = useRef(false);
+  const pendingShow = useRef(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  async function fetchVersion(): Promise<string | null> {
+    try {
+      const res = await fetch("/api/version?t=" + Date.now(), {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache" },
+      });
+      if (!res.ok) return null;
+      const { version } = await res.json();
+      return version as string;
+    } catch {
+      return null;
+    }
+  }
+
+  function maybeShow() {
+    if (checkoutActive.current) {
+      pendingShow.current = true;
+    } else {
+      setShowBanner(true);
+    }
+  }
 
   useEffect(() => {
-    // Listen for checkout state from StripeCheckout component
-    const onCheckoutStart = () => { checkoutActive.current = true; };
-    const onCheckoutEnd = () => {
+    // Checkout lifecycle listeners
+    const onStart = () => { checkoutActive.current = true; };
+    const onEnd = () => {
       checkoutActive.current = false;
-      if (pendingUpdate.current) {
-        setShowBanner(true);
-        pendingUpdate.current = false;
-      }
-    };
-    window.addEventListener("vs:checkout:start", onCheckoutStart);
-    window.addEventListener("vs:checkout:end", onCheckoutEnd);
-
-    // Fetch initial version
-    const fetchVersion = async () => {
-      try {
-        const res = await fetch("/api/version", { cache: "no-store" });
-        const { version } = await res.json();
-        return version as string;
-      } catch {
-        return null;
-      }
-    };
-
-    // Store initial version
-    fetchVersion().then(v => { if (v) initialVersion.current = v; });
-
-    // Check periodically
-    const interval = setInterval(async () => {
-      if (!initialVersion.current) return;
-      const current = await fetchVersion();
-      if (!current || current === initialVersion.current) return;
-
-      // New version detected
-      if (checkoutActive.current) {
-        // Delay until checkout finishes
-        pendingUpdate.current = true;
-      } else {
+      if (pendingShow.current) {
+        pendingShow.current = false;
         setShowBanner(true);
       }
-    }, CHECK_INTERVAL);
+    };
+    window.addEventListener("vs:checkout:start", onStart);
+    window.addEventListener("vs:checkout:end", onEnd);
+
+    // Get initial version first, THEN start polling
+    fetchVersion().then(v => {
+      if (!v) return;
+      initialVersion.current = v;
+
+      // Start polling only after initial version is set
+      intervalRef.current = setInterval(async () => {
+        const current = await fetchVersion();
+        if (!current || !initialVersion.current) return;
+        if (current !== initialVersion.current) {
+          clearInterval(intervalRef.current!);
+          maybeShow();
+        }
+      }, CHECK_INTERVAL);
+    });
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener("vs:checkout:start", onCheckoutStart);
-      window.removeEventListener("vs:checkout:end", onCheckoutEnd);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      window.removeEventListener("vs:checkout:start", onStart);
+      window.removeEventListener("vs:checkout:end", onEnd);
     };
   }, []);
 
-  if (!showBanner || dismissed) return null;
+  if (!showBanner) return null;
 
   return (
     <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-sm px-4">
@@ -88,7 +95,7 @@ export default function VersionChecker() {
             Actualizar
           </button>
           <button
-            onClick={() => setDismissed(true)}
+            onClick={() => setShowBanner(false)}
             className="text-white/25 hover:text-white/50 transition-colors p-1"
             aria-label="Cerrar"
           >

@@ -33,6 +33,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="es" className={`${syne.variable} ${dmSans.variable}`}>
       <head>
+        {/* Preconnect y carga directa de fuentes — garantiza Syne/DM Sans aunque next/font falle en build */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" />
         {/* Google Consent Mode v2 — denegado por defecto hasta que el usuario acepte */}
         <Script id="google-consent-default" strategy="beforeInteractive">{`
           window.dataLayer = window.dataLayer || [];
