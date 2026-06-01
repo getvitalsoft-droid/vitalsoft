@@ -68,6 +68,16 @@ export default function AdminPage() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const loadNegocio = async () => {
+    setNegocioLoading(true);
+    try {
+      const res = await fetch("/api/admin/negocio");
+      const data = await res.json();
+      setNegocio(data);
+    } catch (e) { console.error(e); }
+    setNegocioLoading(false);
+  };
+
   const cargarTodo = async (token?: string) => {
     const t = token || adminToken;
     if (!t) return;
