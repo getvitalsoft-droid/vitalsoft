@@ -54,6 +54,16 @@ export default function CalculatorSection({ refCode }: Props) {
   const planMatch = PLAN_ANCHORS[videos];
   const planKey = PLAN_KEYS[videos];
 
+  function freqLabel(v: number): string {
+    if (v <= 5)  return `≈ ${v} publicaciones esta semana`;
+    if (v <= 10) return "≈ 2–3 publicaciones por semana";
+    if (v <= 15) return "≈ 3–4 publicaciones por semana";
+    if (v <= 20) return "≈ 5 publicaciones por semana";
+    if (v <= 30) return "Presencia diaria en redes";
+    if (v <= 50) return "Volumen alto · múltiples canales";
+    return "Volumen máximo · varios canales activos";
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) return;
@@ -87,7 +97,7 @@ export default function CalculatorSection({ refCode }: Props) {
       <div className="max-w-5xl mx-auto">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Plan Personalizado</span>
-          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Calcula tu volumen mensual</h2>
+          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Encuentra el plan que encaja con tu ritmo de publicación</h2>
           <p className="text-white/40 text-base font-light mb-10 max-w-md">Selecciona cuántos clips necesitas al mes. Los precios cuadran exactamente con los planes fijos.</p>
         </motion.div>
 
@@ -137,6 +147,7 @@ export default function CalculatorSection({ refCode }: Props) {
           <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.12)] rounded-xl p-6 text-center mb-6">
             <div className="font-body font-bold text-5xl text-accent leading-none mb-2 tabular-nums" style={{ WebkitTextStroke: "0px", letterSpacing: "-0.02em" }}>€{price.toLocaleString("es-ES")}</div>
             <div className="text-white/35 text-sm">€{perVid} por clip · sin permanencia · cancela cuando quieras</div>
+            <div className="text-white/50 text-xs mt-1 font-medium">{freqLabel(videos)}</div>
             <div className="flex items-center justify-center gap-2 flex-wrap mt-3">
               {saved > 0 && <span className="bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">Ahorras €{saved} vs tarifa individual</span>}
               {planMatch && <span className="bg-[rgba(232,255,71,0.12)] border border-[rgba(232,255,71,0.25)] text-accent font-display text-xs font-bold px-3 py-1 rounded-full">= Plan {planMatch}</span>}

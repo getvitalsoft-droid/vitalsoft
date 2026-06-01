@@ -19,7 +19,7 @@ export default function HeroSection() {
         <motion.h1 {...fadeUp(0.1)} className="font-display font-extrabold text-[clamp(2.4rem,5.2vw,4.4rem)] leading-[1.0] tracking-[-0.03em] mb-6">
           <span className="text-gradient">Graba una vez.</span>
           <br />
-          <span className="text-accent">Publica todo el mes.</span>
+          <span className="text-accent">Distribuye durante semanas.</span>
         </motion.h1>
 
         <motion.p {...fadeUp(0.2)} className="text-white/60 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
@@ -28,7 +28,7 @@ export default function HeroSection() {
         </motion.p>
 
         <motion.p {...fadeUp(0.25)} className="text-white/50 text-sm max-w-md mx-auto mb-10 font-light">
-          Sin viralidad prometida. Sin gestión de redes. Solo producción constante y consistente, cada mes.
+          Sin promesas de viralidad. Sin gestión de redes. Solo clips listos para publicar.
         </motion.p>
 
         <motion.div {...fadeUp(0.28)} className="flex items-center justify-center gap-6 mb-10 flex-wrap">

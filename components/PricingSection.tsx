@@ -6,7 +6,14 @@ import { PRICING_PLANS, calcPrice } from "@/lib/stripe";
 import { getStoredRef } from "@/components/RefPersistence";
 import StripeCheckout from "@/components/StripeCheckout";
 
-interface Props { refCode?: string }
+const PLAN_META: Record<string, { forWho: string; freq: string }> = {
+  starter: { forWho: "Para creadores que empiezan a publicar con regularidad", freq: "≈ 2–3 publicaciones por semana" },
+  growth:  { forWho: "Para creadores activos con contenido semanal", freq: "≈ 5 publicaciones por semana" },
+  scale:   { forWho: "Para marcas y podcasts con producción constante", freq: "Presencia diaria en redes" },
+  pro:     { forWho: "Para equipos con alto volumen en varios canales", freq: "Volumen alto y múltiples canales" },
+};
+
+
 
 interface CheckoutState {
   name: string;
@@ -117,12 +124,14 @@ export default function PricingSection({ refCode }: Props) {
               className={`relative rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-1 ${plan.featured ? "bg-[rgba(232,255,71,0.05)] border-[rgba(232,255,71,0.35)]" : "glass hover:border-white/15"}`}>
               {plan.featured && <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-accent text-[#080808] font-display font-black text-[10px] tracking-widest uppercase px-4 py-1 rounded-b-lg">Más Popular</div>}
               <div className="text-white/40 font-display font-black text-xs tracking-widest uppercase mb-2">{plan.name}</div>
+              <div className="text-white/30 text-[11px] font-light mb-3 leading-snug min-h-[2.5rem]">{PLAN_META[plan.key]?.forWho}</div>
               <div className="flex items-start gap-0.5 mb-0.5">
                 <span className="text-white/50 text-lg font-display mt-1">€</span>
                 <span className="font-display font-extrabold text-5xl tracking-tight leading-none">{plan.price}</span>
               </div>
               <div className="text-white/30 text-xs mb-1">/mes</div>
-              <div className="text-accent font-semibold text-sm mb-5 pb-5 border-b border-white/5">{plan.videos} clips al mes</div>
+              <div className="text-accent font-semibold text-sm mb-1">{plan.videos} clips al mes</div>
+              <div className="text-white/30 text-xs mb-5 pb-5 border-b border-white/5">{PLAN_META[plan.key]?.freq}</div>
               <ul className="space-y-2.5 mb-6">
                 {plan.features.map(f => <li key={f} className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{f}</li>)}
                 <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{plan.revisions}</li>
@@ -140,6 +149,14 @@ export default function PricingSection({ refCode }: Props) {
           <p className="text-white/25 text-xs text-center">La mayoría de clips se entregan entre 20 y 90 segundos dependiendo del contenido y la plataforma.</p>
           <p className="text-white/25 text-xs text-center">Los ajustes cubren cambios razonables sobre el contenido entregado. Re-ediciones completas o cambios de estilo se presupuestan aparte.</p>
           <p className="text-white/20 text-xs text-center italic">Los plazos de entrega empiezan cuando recibimos tu contenido, no desde el pago.</p>
+          <p className="text-white/35 text-xs text-center pt-2">
+            ¿Necesitas más de 40 clips?{" "}
+            <a href="#calculadora" onClick={(e) => { e.preventDefault(); document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" }); }}
+              className="text-accent hover:underline font-semibold">
+              Usa la calculadora ↓
+            </a>{" "}
+            — escala hasta 100 clips/mes.
+          </p>
         </motion.div>
       </div>
 

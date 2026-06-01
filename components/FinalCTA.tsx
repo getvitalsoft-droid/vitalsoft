@@ -8,10 +8,10 @@ export default function FinalCTA() {
       <motion.div initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.6 }} className="relative z-10 max-w-2xl mx-auto">
         <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-6">Empieza hoy</span>
         <h2 className="font-display font-extrabold text-[clamp(2.2rem,5vw,3.5rem)] tracking-tight mb-5 leading-[1.1]">
-          Deja de editar.<br /><span className="text-accent">Empieza a distribuir.</span>
+          Tu próximo mes de contenido<br /><span className="text-accent">ya está grabado.</span>
         </h2>
         <p className="text-white/40 text-base font-light mb-6 leading-relaxed max-w-lg mx-auto">
-          Convierte cada grabación en semanas de contenido listo para publicar, sin contratar editores ni gestionar procesos.
+          Sube un episodio. Nosotros lo convertimos en semanas de publicaciones listas para TikTok, Reels y Shorts.
         </p>
         <p className="text-white/20 text-xs mb-10 max-w-md mx-auto">
           Empieza este mes y recibe tus primeros clips en 24–48h desde que subas tu material.

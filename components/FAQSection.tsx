@@ -37,8 +37,16 @@ const faqs = [
     a: "Sí. Puedes pausar hasta 30 días o cancelar en cualquier momento desde tu portal de cliente. Sin permanencia. Si cancelas, sigues activo hasta el final del período ya pagado.",
   },
   {
-    q: "¿Trabajáis con empresas o agencias?",
-    a: "Sí. Trabajamos con creadores, podcasters, negocios y marcas que generan contenido largo y quieren distribución constante. Para volúmenes superiores a 50 clips/mes usa la calculadora o escríbenos directamente.",
+    q: "¿VitalSoft es solo para creadores?",
+    a: "No. Trabajamos con creadores, podcasters, coaches, marcas y empresas que generan contenido largo de forma recurrente. Si grabas de forma regular y quieres distribución constante, encajas. Para volúmenes superiores a 50 clips/mes usa la calculadora o escríbenos directamente.",
+  },
+  {
+    q: "¿Qué pasa si no uso todos mis clips ese mes?",
+    a: "Los clips no utilizados no se acumulan ni se trasladan al mes siguiente. Cada ciclo mensual empieza desde cero con la capacidad de tu plan. Si un mes tienes menos material del habitual, puedes pausar la suscripción hasta 30 días desde tu portal de cliente.",
+  },
+  {
+    q: "¿Cuántos clips salen de un episodio?",
+    a: "Depende del contenido. Un episodio puede generar muy pocos clips si tiene poco valor reutilizable, o decenas si está lleno de momentos útiles, frases con gancho o historias. Por eso hablamos de capacidad mensual y no de una cantidad fija por vídeo. Lo que importa es el volumen de material que produces al mes.",
   },
   {
     q: "¿Los clips los genera una IA?",

@@ -17,44 +17,44 @@ const INPUT = {
 const OUTPUT = {
   label: "Lo que recibes",
   items: [
-    { icon: "📱", text: "Desde 10 hasta 100 clips de 30–90 segundos", accent: true },
+    { icon: "📱", text: "De 10 a 100 clips de 30–90 segundos según el plan contratado", accent: true },
     { icon: "↕️", text: "Formato 9:16 listo para TikTok y Reels" },
     { icon: "◻️", text: "Formato 1:1 para Instagram feed" },
     { icon: "▶️", text: "Formato 16:9 para YouTube horizontal" },
     { icon: "✍️", text: "Subtítulos animados en todos los clips" },
-    { icon: "📁", text: "En tu Drive en 24–48h" },
+    { icon: "📁", text: "Entrega en tu Drive en 24–48h" },
   ],
 };
 
 const PASOS = [
   {
     n: "01",
-    titulo: "Grabas como siempre",
-    desc: "Tu episodio, entrevista o clase. Sin cambiar nada de lo que ya haces.",
-    color: "text-white/60",
+    titulo: "Acceso a tu Drive compartido",
+    desc: "En minutos recibes acceso a una carpeta de Google Drive exclusiva para ti. Ahí recibirás todos los clips y tendrás el historial permanente.",
+    color: "text-accent",
   },
   {
     n: "02",
-    titulo: "Subes a tu Drive",
-    desc: "Un Drive compartido exclusivo para ti. Lo subes una vez y ya.",
-    color: "text-white/60",
+    titulo: "Onboarding breve",
+    desc: "Un formulario donde nos indicas tu canal, estilo, referencias visuales y preferencias. Solo la primera vez. Lo guardamos para todos los ciclos.",
+    color: "text-accent",
   },
   {
     n: "03",
-    titulo: "Seleccionamos los mejores momentos",
-    desc: "Identificamos fragmentos con gancho, valor o capacidad de retención. Tú no marcas nada.",
-    color: "text-accent",
+    titulo: "Subes tu primer contenido",
+    desc: "Podcast, vídeo, entrevista o clase. Lo subes al Drive una vez y listo. Sin formatos especiales, sin instrucciones complicadas.",
+    color: "text-white/60",
   },
   {
     n: "04",
-    titulo: "Editamos y adaptamos cada clip",
-    desc: "Subtítulos, ritmo, formato vertical, música de fondo si aplica. Identidad visual que nos indiques.",
-    color: "text-accent",
+    titulo: "Producimos y entregamos",
+    desc: "Seleccionamos momentos, editamos, añadimos subtítulos y formateamos. Los clips aparecen en tu Drive en 24–48h desde la validación.",
+    color: "text-white/60",
   },
   {
     n: "05",
-    titulo: "Recibes los clips listos",
-    desc: "En tu Drive en 24–48h. Revisas, pides ajustes si necesitas, y publicas cuando quieras.",
+    titulo: "Revisas y publicas cuando quieras",
+    desc: "Los clips son tuyos. Puedes publicarlos, programarlos o guardarlos. Si necesitas ajustes, los tienes incluidos en tu plan.",
     color: "text-white/60",
   },
 ];
@@ -121,7 +121,7 @@ export default function TransformationFlow() {
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="border border-white/[0.07] rounded-2xl overflow-hidden">
           <div className="px-6 py-4 border-b border-white/[0.06] bg-white/[0.02]">
-            <div className="text-white/40 text-xs font-semibold uppercase tracking-widest">Paso a paso</div>
+            <div className="text-white/40 text-xs font-semibold uppercase tracking-widest">Después de contratar</div>
           </div>
           <div className="divide-y divide-white/[0.05]">
             {PASOS.map((paso, i) => (
@@ -134,7 +134,7 @@ export default function TransformationFlow() {
                   <div className="font-display font-bold text-sm text-white/85 mb-1">{paso.titulo}</div>
                   <div className="text-white/45 text-xs leading-relaxed font-light">{paso.desc}</div>
                 </div>
-                {(i === 2 || i === 3) && (
+                {(i === 0 || i === 1) && (
                   <div className="flex-shrink-0 bg-accent/10 border border-accent/20 text-accent text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wide">
                     VitalSoft
                   </div>
@@ -147,8 +147,7 @@ export default function TransformationFlow() {
         {/* Stat bottom */}
         <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }}
           className="text-center text-white/25 text-xs mt-8">
-          El número de clips depende del plan contratado y del material. Desde 10 hasta 100 clips al mes.
-          Los resultados varían en función del contenido.
+          El número de clips depende del plan contratado y del material. De 10 a 100 clips al mes según el plan elegido.
         </motion.p>
 
       </div>

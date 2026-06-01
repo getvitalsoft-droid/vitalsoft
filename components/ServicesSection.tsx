@@ -3,27 +3,33 @@ import { motion } from "framer-motion";
 
 const servicios = [
   {
-    icon: "✂️",
-    title: "Conversión de contenido largo en clips",
-    desc: "Tomamos tu episodio, entrevista o vídeo y seleccionamos los mejores momentos. Los convertimos en clips de 30–90 segundos, listos para publicar. Tú no tocas el editor.",
+    icon: "⏸️",
+    title: "No vuelves a tocar el editor",
+    desc: "Grabas, subes el material y recibes los clips listos. Seleccionamos los mejores momentos, editamos y entregamos. Tú no abres el editor nunca.",
     tags: ["Podcast", "Entrevistas", "YouTube", "Webinars"],
   },
   {
+    icon: "✂️",
+    title: "Convierte una grabación en semanas de contenido",
+    desc: "Tomamos tu episodio, entrevista o vídeo e identificamos los momentos con más potencial. Los convertimos en clips de 30–90 segundos listos para publicar.",
+    tags: ["Selección humana", "30–90 segundos", "Sin marcar nada"],
+  },
+  {
     icon: "📐",
-    title: "Tres formatos en un solo envío",
-    desc: "Cada clip en 9:16 para TikTok y Reels, 1:1 para Instagram y 16:9 para YouTube horizontal. Subes el material una vez y lo tienes listo para todas las plataformas.",
+    title: "Listo para todas las plataformas en un solo envío",
+    desc: "Cada clip en 9:16 para TikTok y Reels, 1:1 para Instagram y 16:9 para YouTube horizontal. Subes el material una vez y lo tienes todo.",
     tags: ["9:16 vertical", "1:1 cuadrado", "16:9 horizontal"],
   },
   {
     icon: "✍️",
-    title: "Subtítulos animados incluidos",
-    desc: "Subtítulos precisos y bien diseñados en todos los clips. Aumentan la retención y hacen el contenido accesible, sin trabajo extra de tu parte.",
+    title: "Subtítulos que aumentan la retención",
+    desc: "Subtítulos precisos y bien diseñados en todos los clips. Hacen el contenido accesible y mejoran el tiempo de visualización, sin trabajo extra de tu parte.",
     tags: ["Subtítulos animados", "Alta retención", "Accesibilidad"],
   },
   {
     icon: "✅",
-    title: "Revisiones incluidas en cada plan",
-    desc: "Cada clip entregado viene con ajustes incluidos. Si algo no encaja con tu estilo o referencias, lo ajustamos. Sin coste extra dentro del alcance de tu plan.",
+    title: "Ajustes hasta que quede como quieres",
+    desc: "Cada clip entregado incluye ajustes. Si algo no encaja con tu estilo o referencias, lo corregimos. Sin coste extra dentro del alcance de tu plan.",
     tags: ["Ajustes por clip", "Respuesta en 24h", "Sin coste extra"],
   },
 ];
@@ -39,7 +45,7 @@ const noHacemos = [
 
 const vsEditor = [
   {
-    label: "Editor freelance",
+    label: "Gestión manual",
     items: [
       "Buscar y filtrar candidatos",
       "Explicar tu estilo desde cero",
@@ -71,13 +77,13 @@ export default function ServicesSection() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Servicios</span>
           <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Todo lo que recibes cada mes</h2>
-          <p className="text-white/50 text-base font-light mb-10 max-w-md">Producción de clips por suscripción. No una agencia de crecimiento, no consultores de estrategia.</p>
+          <p className="text-white/50 text-base font-light mb-10 max-w-md">Recibes clips listos para publicar, adaptados a cada plataforma y entregados de forma constante cada mes.</p>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
           {servicios.map((s, i) => (
             <motion.div key={s.title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.08 }}
-              className="glass rounded-2xl p-7 border hover:border-white/15 transition-all duration-300 hover:-translate-y-1">
+              className={`glass rounded-2xl p-7 border hover:border-white/15 transition-all duration-300 hover:-translate-y-1 ${i === 4 ? "md:col-span-2" : ""}`}>
               <div className="w-12 h-12 bg-[rgba(232,255,71,0.08)] rounded-xl flex items-center justify-center text-2xl mb-5">{s.icon}</div>
               <h3 className="font-display font-bold text-base mb-2">{s.title}</h3>
               <p className="text-white/50 text-sm leading-relaxed font-light mb-4">{s.desc}</p>
@@ -105,7 +111,7 @@ export default function ServicesSection() {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="font-display font-extrabold text-[clamp(1.6rem,3vw,2.2rem)] tracking-tight mb-2">La diferencia entre contratar una persona y contratar un sistema</h2>
           <p className="text-white/45 text-sm font-light mb-8 max-w-lg">
-            Un buen editor es una persona. VitalSoft es un sistema. La diferencia no es calidad — es previsibilidad.
+            La gestión manual tiene sus ventajas. VitalSoft es para quien prefiere un sistema. La diferencia no es calidad — es previsibilidad.
           </p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {vsEditor.map((col) => (

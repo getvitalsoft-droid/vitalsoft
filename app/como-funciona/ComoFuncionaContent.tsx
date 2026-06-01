@@ -31,7 +31,7 @@ const CICLO_MENSUAL = [
   {
     titulo: "Seleccionamos los mejores momentos",
     desc: "Identificamos los fragmentos con más potencial: momentos de valor, opiniones fuertes, remates, historias o frases con gancho. Tú no tienes que marcar nada.",
-    nota: "Un episodio de 60 minutos suele generar entre 8 y 15 clips publicables.",
+    nota: "Un episodio de 60 minutos suele generar entre 8 y 15 clips publicables. Recomendado: 15 minutos o más por grabación (cuanto más contenido, más oportunidades de clip).",
   },
   {
     titulo: "Producción de clips",
