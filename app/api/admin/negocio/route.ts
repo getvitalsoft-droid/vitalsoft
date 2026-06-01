@@ -28,31 +28,6 @@ export async function GET(req: NextRequest) {
   const hace365 = new Date(now.getTime() - 365 * 86400000).toISOString();
   const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
-  const [
-    resumenRes,
-    retencionRes,
-    churnMensualRes,
-    cancelacionesMesRes,
-    cancelacionesTipoRes,
-    pausasRes,
-    pausaResultadoRes,
-    agentesRes,
-    referidosClienteRes,
-    creditosRes,
-    embudoRes,
-    operacionRes,
-    topClientesRes,
-    alertasRes,
-    historicoPorMesRes,
-  ] = await Promise.all([
-
-    // ── RESUMEN GENERAL ──────────────────────────────────────────
-    sb.rpc("exec_sql", {}).catch(() => null), // fallback — usamos queries directas
-
-    // placeholder — ver abajo
-    null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-  ]);
-
   // Queries directas con supabase-js
   const [
     ordersActivos,
