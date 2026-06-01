@@ -60,7 +60,8 @@ function CheckoutForm({ price, onSuccess }: { price: number; onSuccess: () => vo
       return;
     }
 
-    // Pago confirmado sin redirección
+    // Pago confirmado — notificar que el checkout terminó
+    window.dispatchEvent(new Event("vs:checkout:end"));
     onSuccess();
     setLoading(false);
   };
@@ -107,6 +108,8 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
   const [intentError, setIntentError] = useState("");
 
   useEffect(() => {
+    // Notify VersionChecker that checkout is active
+    window.dispatchEvent(new Event("vs:checkout:start"));
     const init = async () => {
       try {
         const res = await fetch("/api/checkout-elements", {
@@ -126,6 +129,10 @@ export default function StripeCheckout({ data, onBack, onSuccess }: Props) {
       setLoadingIntent(false);
     };
     init();
+    return () => {
+      // Notify VersionChecker that checkout ended (unmount = user left checkout)
+      window.dispatchEvent(new Event("vs:checkout:end"));
+    };
   }, []);
 
   const appearance = {

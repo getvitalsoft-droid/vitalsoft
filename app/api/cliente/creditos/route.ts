@@ -55,6 +55,11 @@ export async function POST(req: NextRequest) {
 
   if (!credit) return NextResponse.json({ error: "Crédito no encontrado" }, { status: 404 });
 
+  // Idempotencia: si ya está aplicado, no aplicar dos veces
+  if (credit.status === "aplicado") {
+    return NextResponse.json({ error: "Este crédito ya fue aplicado" }, { status: 409 });
+  }
+
   const amount = credit_type === "referral" ? credit.credit_amount : credit.amount;
   const customerEmail = credit_type === "referral" ? credit.referrer_email : credit.customer_email;
 

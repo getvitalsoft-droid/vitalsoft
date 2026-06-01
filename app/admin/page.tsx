@@ -71,7 +71,10 @@ export default function AdminPage() {
   const loadNegocio = async () => {
     setNegocioLoading(true);
     try {
-      const res = await fetch("/api/admin/negocio");
+      const res = await fetch("/api/admin/negocio", {
+        headers: adminToken ? { "Authorization": `Bearer ${adminToken}` } : {},
+      });
+      if (!res.ok) { console.error("[Negocio] HTTP", res.status); setNegocioLoading(false); return; }
       const data = await res.json();
       setNegocio(data);
     } catch (e) { console.error(e); }

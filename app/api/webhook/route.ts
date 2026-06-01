@@ -166,12 +166,110 @@ export async function POST(req: NextRequest) {
         break;
       }
 
-      // ── Renovación ────────────────────────────────────────────────────────
+      // ── Primer pago (Elements) + Renovaciones ─────────────────────────────
       case "invoice.paid": {
         const invoice = event.data.object as Stripe.Invoice;
-        if ((invoice as any).billing_reason === "subscription_create") break;
+        const billingReason = (invoice as any).billing_reason;
         const clienteEmail = invoice.customer_email || "";
         const importe = (invoice.amount_paid || 0) / 100;
+
+        // ── Primer pago via Stripe Elements ─────────────────────────────────
+        // checkout.session.completed solo se dispara en Checkout hosted.
+        // Elements crea suscripciones directamente → primer pago llega aquí.
+        if (billingReason === "subscription_create" && invoice.subscription) {
+          const subId = String(invoice.subscription);
+          const customerId = typeof invoice.customer === "string" ? invoice.customer : (invoice.customer as any)?.id;
+
+          // Idempotencia: si ya existe un order con esta suscripción, no duplicar
+          const { data: existingOrder } = await supabase.from("orders")
+            .select("id").eq("stripe_subscription_id", subId).single();
+          if (existingOrder) break;
+
+          // Obtener metadata de la suscripción (nombre, email, videos, ref...)
+          const sub = await stripe.subscriptions.retrieve(subId);
+          const meta = sub.metadata || {};
+          const metaEmail = meta.email || clienteEmail;
+          const nombre = meta.nombre || null;
+          const videos = meta.videos ? parseInt(meta.videos) : null;
+          const plan = videos ? `${videos} clips/mes` : "Plan VitalSoft";
+          const agenteCodigo = meta.agente_codigo || null;
+          const clientRef = meta.client_ref || null;
+          const revisiones = videos && videos <= 10 ? 1 : videos && videos <= 20 ? 2 : videos && videos <= 30 ? 3 : 4;
+
+          let agente = null;
+          if (agenteCodigo) {
+            const { data } = await supabase.from("agentes").select("*").eq("codigo", agenteCodigo).single();
+            agente = data;
+          }
+          const sospechoso = !!(agente && agente.email === metaEmail);
+          const comision = agente && !sospechoso ? Math.round(importe * 0.20 * 100) / 100 : 0;
+
+          const { data: order } = await supabase.from("orders").insert({
+            cliente_email: metaEmail,
+            cliente_nombre: nombre,
+            stripe_customer_id: customerId || null,
+            stripe_subscription_id: subId,
+            stripe_session_id: invoice.id, // usamos invoice.id como session_id único
+            plan, clips_mensuales: videos, importe,
+            estado: "onboarding_pendiente",
+            agente_codigo: agenteCodigo || null,
+            revisiones_incluidas: revisiones,
+          }).select().single();
+
+          await supabase.from("ventas").insert({
+            agente_id: agente?.id || null,
+            agente_codigo: agenteCodigo || null,
+            cliente_email: metaEmail, plan, importe,
+            estado: "pendiente_validacion",
+            stripe_session_id: invoice.id,
+            disponible_at: new Date(Date.now() + HOLD_DIAS * 86400000).toISOString(),
+            sospechoso, sospechoso_motivo: sospechoso ? "mismo email que agente" : null,
+          });
+
+          // Drive — no bloqueante
+          if (order?.id) {
+            fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/drive`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", "x-internal-secret": process.env.CRON_SECRET || "" },
+              body: JSON.stringify({ clienteNombre: nombre || metaEmail.split("@")[0], clienteEmail: metaEmail, plan, orderId: order.id }),
+            }).catch(e => console.error("[Drive] Error:", e));
+          }
+
+          // Referido de cliente
+          if (clientRef && metaEmail && customerId) {
+            try {
+              const referrer = await lookupRefCode(clientRef);
+              if (referrer) {
+                const { referral, suspicious } = await registerReferral({
+                  referrerStripeCustomerId: referrer.stripe_customer_id,
+                  referrerEmail: referrer.email,
+                  referredEmail: metaEmail,
+                  referredStripeCustomerId: customerId,
+                  stripeSessionId: invoice.id,
+                  orderId: order?.id,
+                  amountPaid: importe,
+                });
+                await Promise.allSettled([
+                  sendEmail(() => enviarEmailReferidoRegistrado({ referrerEmail: referrer.email, referredEmail: metaEmail, creditAmount: referral.credit_amount ?? 0 }), referrer.email, "referido_registrado", event.type),
+                  sendEmail(() => enviarEmailAdminNuevoReferido({ referrerEmail: referrer.email, referredEmail: metaEmail, amountPaid: importe, creditAmount: referral.credit_amount ?? 0, isSuspicious: suspicious, suspiciousReason: referral.suspicious_reason }), process.env.ADMIN_EMAIL!, "admin_nuevo_referido", event.type),
+                ]);
+              }
+            } catch (refErr) { console.error("[Referral] Elements:", refErr); }
+          }
+
+          await log("venta_registrada_elements", `${metaEmail} · €${importe} · agente:${agenteCodigo || "directo"}`);
+          await sendEmail(() => enviarEmailClientePagoRealizado({ email: metaEmail, nombre, plan, importe, onboardingUrl: `${ONBOARDING_URL}?session=${invoice.id}` }), metaEmail, "cliente_pago_realizado", event.type);
+          await sendEmail(() => enviarEmailAdmin({ clienteEmail: metaEmail, plan, importe, agente, comision, sospechoso }), process.env.ADMIN_EMAIL!, "admin_nueva_venta", event.type);
+          if (agente && !sospechoso) await sendEmail(() => enviarEmailAgente({ agente, clienteEmail: metaEmail, plan, importe, comision }), agente.email, "agente_nueva_comision", event.type);
+          break;
+        }
+
+        // ── Renovación mensual ───────────────────────────────────────────────
+        // Idempotencia: evitar procesar la misma factura dos veces
+        const { data: invoiceLog } = await supabase.from("activity_logs")
+          .select("id").eq("accion", "renovacion").eq("detalle", `invoice:${invoice.id}`).single();
+        if (invoiceLog) break; // ya procesada
+
         const periodo = invoice.period_end ? new Date(invoice.period_end * 1000).toLocaleDateString("es-ES") : "";
 
         let orderRenovado = null;
@@ -199,7 +297,8 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        await log("renovacion", `${clienteEmail} · €${importe}`);
+        await log("renovacion", `invoice:${invoice.id}`, "invoice");
+        await log("renovacion_cliente", `${clienteEmail} · €${importe}`);
         await sendEmail(() => enviarEmailClienteRenovacion({ email: clienteEmail, plan: "Plan VitalSoft", importe, periodo }), clienteEmail, "cliente_renovacion", event.type);
         break;
       }
@@ -225,8 +324,15 @@ export async function POST(req: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice;
         const clienteEmail = invoice.customer_email || "";
         const importe = (invoice.amount_due || 0) / 100;
+        const failedBillingReason = (invoice as any).billing_reason;
         if (invoice.subscription) {
-          await supabase.from("orders").update({ estado: "pausado" }).eq("stripe_subscription_id", String(invoice.subscription));
+          // Primera suscripción fallida → no marcar como pausado (nunca estuvo activo)
+          // Renovación fallida → sí marcar como pausado
+          const nuevoEstado = failedBillingReason === "subscription_create" ? "pago_fallido" : "pausado";
+          await supabase.from("orders")
+            .update({ estado: nuevoEstado })
+            .eq("stripe_subscription_id", String(invoice.subscription))
+            .neq("estado", "cancelado");
         }
         await log("pago_fallido", `${clienteEmail} · €${importe}`);
         await sendEmail(() => enviarEmailClientePagoFallido({ email: clienteEmail, plan: "Plan VitalSoft", importe }), clienteEmail, "cliente_pago_fallido", event.type);
@@ -256,7 +362,15 @@ export async function POST(req: NextRequest) {
       // ── Reembolso ─────────────────────────────────────────────────────────
       case "charge.refunded": {
         const charge = event.data.object as Stripe.Charge;
-        const clienteEmail = charge.billing_details?.email || charge.receipt_email || "";
+        // billing_details.email is often null for subscription charges - look up by customer
+        let clienteEmail = charge.billing_details?.email || charge.receipt_email || "";
+        if (!clienteEmail && charge.customer) {
+          try {
+            const customerId = typeof charge.customer === "string" ? charge.customer : (charge.customer as any).id;
+            const customer = await stripe.customers.retrieve(customerId);
+            if ("email" in customer && customer.email) clienteEmail = customer.email;
+          } catch (e) { console.error("[Refund] customer lookup failed:", e); }
+        }
         const importe = (charge.amount_refunded || 0) / 100;
 
         // Invalidar comisión de agente si existe

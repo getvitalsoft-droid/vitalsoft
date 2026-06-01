@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Syne, DM_Sans } from "next/font/google";
 import Script from "next/script";
 import CookieBanner from "@/components/CookieBanner";
+import VersionChecker from "@/components/VersionChecker";
 import "./globals.css";
 
 const syne = Syne({ subsets: ["latin"], weight: ["400", "600", "700", "800"], variable: "--font-syne", display: "swap" });
@@ -58,6 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="bg-[#080808] text-[#f0f0f0] font-body antialiased overflow-x-hidden">
         {children}
         <CookieBanner />
+        <VersionChecker />
       </body>
     </html>
   );

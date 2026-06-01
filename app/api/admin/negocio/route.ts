@@ -15,10 +15,23 @@ function isAdmin(req: NextRequest) {
   return token === process.env.ADMIN_SECRET_TOKEN;
 }
 
+async function verificarAdminNegocio(req: NextRequest): Promise<boolean> {
+  // Opción 1: token de admin (x-admin-token)
+  const adminToken = req.headers.get("x-admin-token");
+  if (adminToken && adminToken === process.env.ADMIN_SECRET_TOKEN) return true;
+  // Opción 2: JWT de Supabase (mismo que usan las otras rutas admin)
+  const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
+  if (!bearer) return false;
+  const { data: { user }, error } = await sb.auth.getUser(bearer);
+  if (error || !user) return false;
+  const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "").split(",").map(e => e.trim().toLowerCase());
+  return adminEmails.includes(user.email?.toLowerCase() || "");
+}
+
 export async function GET(req: NextRequest) {
-  // Auth via session cookie (same as admin panel — supabase session)
-  // The admin panel already checks auth, we just trust it here via same-origin
-  // Para extra seguridad aceptamos también el token de admin
+  if (!await verificarAdminNegocio(req)) {
+    return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+  }
 
   const now = new Date();
   const hace30 = new Date(now.getTime() - 30 * 86400000).toISOString();
