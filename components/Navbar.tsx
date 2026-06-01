@@ -8,6 +8,7 @@ const links = [
   { href: "#precios", label: "Precios" },
   { href: "#calculadora", label: "Calculadora" },
   { href: "#faq", label: "FAQ" },
+  { href: "/como-funciona", label: "Cómo funciona" },
 ];
 
 export default function Navbar() {

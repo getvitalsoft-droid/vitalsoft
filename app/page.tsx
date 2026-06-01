@@ -6,6 +6,7 @@ import ServicesSection from "@/components/ServicesSection";
 import PricingSection from "@/components/PricingSection";
 import CalculatorSection from "@/components/CalculatorSection";
 import FAQSection from "@/components/FAQSection";
+import TransformationFlow from "@/components/TransformationFlow";
 import FinalCTA from "@/components/FinalCTA";
 import Footer from "@/components/Footer";
 
@@ -19,6 +20,7 @@ export default function Home({ searchParams }: { searchParams: { ref?: string; c
       <StatsBar />
       <TestimonialsSection />
       <ServicesSection />
+      <TransformationFlow />
       <PricingSection refCode={refCode} />
       <CalculatorSection refCode={refCode} />
       <FAQSection />
