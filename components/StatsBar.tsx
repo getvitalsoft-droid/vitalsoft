@@ -2,7 +2,7 @@
 import { motion } from "framer-motion";
 
 const pasos = [
-  { num: "01", title: "Subes el episodio completo", desc: "Podcast, entrevista, stream o vídeo largo. Lo subimos a tu Drive compartido asignado." },
+  { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu Drive compartido asignado." },
   { num: "02", title: "Encontramos los mejores momentos", desc: "Seleccionamos los clips con más potencial para formato corto. Tú no tienes que marcar nada." },
   { num: "03", title: "Editamos y adaptamos", desc: "Subtítulos animados, ritmo, formato vertical 9:16 y optimización para cada plataforma." },
   { num: "04", title: "Recibes los clips listos", desc: "En tu Drive en 24–48h. Revisas, pides ajustes si necesitas y publicas cuando quieras." },
@@ -46,7 +46,7 @@ export default function StatsBar() {
             <div className="md:w-1/3">
               <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-3">Requisitos mínimos</span>
               <h3 className="font-display font-bold text-lg mb-2">Para trabajar bien contigo necesitamos</h3>
-              <p className="text-white/30 text-xs leading-relaxed font-light italic">La edición mejora el contenido. No reemplaza una mala grabación.</p>
+              <p className="text-white/45 text-xs leading-relaxed font-light italic">La edición mejora el contenido. No reemplaza una mala grabación.</p>
             </div>
             <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {requisitos.map((r) => (

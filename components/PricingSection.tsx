@@ -138,7 +138,7 @@ export default function PricingSection({ refCode }: Props) {
         <motion.div initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="space-y-2">
           <p className="text-white/25 text-xs text-center">La mayoría de clips se entregan entre 20 y 90 segundos dependiendo del contenido y la plataforma.</p>
           <p className="text-white/25 text-xs text-center">Los ajustes cubren cambios razonables sobre el contenido entregado. Re-ediciones completas o cambios de estilo se presupuestan aparte.</p>
-          <p className="text-white/20 text-xs text-center italic">Los plazos de entrega empiezan a contar desde que recibimos el material validado, no desde el pago.</p>
+          <p className="text-white/20 text-xs text-center italic">Los plazos de entrega empiezan cuando recibimos tu contenido, no desde el pago.</p>
         </motion.div>
       </div>
 

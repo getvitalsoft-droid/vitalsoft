@@ -2,10 +2,12 @@
 import { motion } from "framer-motion";
 
 const aptoPara = [
-  { icon: "🎙️", title: "Podcasters", desc: "Tienes episodios largos pero no tiempo de reeditar para redes. Nosotros lo hacemos por ti." },
-  { icon: "🎥", title: "Creadores de contenido largo", desc: "Grabas vídeos de YouTube, entrevistas o webinars y quieres reutilizar ese contenido en clips cortos." },
-  { icon: "🏢", title: "Marcas y negocios", desc: "Tienes contenido corporativo, formaciones o eventos y quieres distribuirlo en redes de forma consistente." },
-  { icon: "🎤", title: "Speakers y formadores", desc: "Tienes charlas, ponencias o clases y quieres convertirlas en contenido de valor para tus redes." },
+  { icon: "🎙️", title: "Podcasters", desc: "Tienes episodios pero no tiempo de reeditar. Conviertes cada episodio en semanas de contenido para redes sin tocar el editor." },
+  { icon: "▶️", title: "YouTubers", desc: "Grabas vídeos largos y quieres extraerles más rendimiento. Cada vídeo se convierte en clips para TikTok, Reels y Shorts." },
+  { icon: "🎮", title: "Streamers", desc: "Tus directos están llenos de momentos destacables. Los convertimos en clips editados y publicables sin que pares de crear." },
+  { icon: "🎓", title: "Creadores educativos", desc: "Tienes formaciones, clases o webinars. Les damos una segunda vida en formato corto y los pones a trabajar en redes." },
+  { icon: "🏢", title: "Marcas y negocios", desc: "Tienes contenido corporativo o eventos y quieres distribución constante sin contratar un equipo de edición." },
+  { icon: "🎤", title: "Speakers y formadores", desc: "Tienes charlas y ponencias. Las convertimos en fragmentos de valor que trabajan por ti en redes cada semana." },
 ];
 
 const noApto = [

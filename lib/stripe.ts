@@ -49,22 +49,22 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     key: "starter", name: "Starter", price: 150, videos: 10,
-    features: ["10 clips mensuales", "Formato 9:16 vertical", "Subtítulos animados", "Drive compartido incluido"],
-    turnaround: "Entrega habitual en 48h", revisions: "1 ajuste por clip",
+    features: ["10 clips al mes", "Formato 9:16 vertical", "Subtítulos animados", "Drive compartido incluido"],
+    turnaround: "Entrega en 48h", revisions: "1 ajuste por clip",
   },
   {
     key: "growth", name: "Growth", price: 250, videos: 20, featured: true,
-    features: ["20 clips mensuales", "Todos los formatos", "Subtítulos animados", "Soporte prioritario"],
-    turnaround: "Entrega habitual en 36h", revisions: "2 ajustes por clip",
+    features: ["20 clips al mes", "3 formatos (9:16, 1:1, 16:9)", "Subtítulos animados", "Soporte prioritario"],
+    turnaround: "Entrega en 36h", revisions: "2 ajustes por clip",
   },
   {
     key: "scale", name: "Scale", price: 350, videos: 30,
-    features: ["30 clips mensuales", "Todos los formatos", "Subtítulos avanzados", "Editor dedicado"],
-    turnaround: "Entrega habitual en 24h", revisions: "3 ajustes por clip",
+    features: ["30 clips al mes", "3 formatos (9:16, 1:1, 16:9)", "Subtítulos avanzados", "Editor dedicado"],
+    turnaround: "Entrega en 24h", revisions: "3 ajustes por clip",
   },
   {
     key: "pro", name: "Pro", price: 450, videos: 40,
-    features: ["40 clips mensuales", "Todos los formatos + episodio completo", "Subtítulos premium", "Editor dedicado"],
-    turnaround: "Prioridad de entrega", revisions: "4 ajustes por clip",
+    features: ["40 clips al mes", "3 formatos + clips prioritarios", "Subtítulos premium", "Editor dedicado"],
+    turnaround: "Prioridad máxima", revisions: "4 ajustes por clip",
   },
 ];

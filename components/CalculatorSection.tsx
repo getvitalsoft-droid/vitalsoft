@@ -135,7 +135,7 @@ export default function CalculatorSection({ refCode }: Props) {
           {/* Precio */}
           <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.12)] rounded-xl p-6 text-center mb-6">
             <div className="font-display font-extrabold text-5xl text-accent leading-none mb-2">€{price.toLocaleString("es-ES")}</div>
-            <div className="text-white/35 text-sm">€{perVid} por clip · facturación mensual</div>
+            <div className="text-white/35 text-sm">€{perVid} por clip · sin permanencia · cancela cuando quieras</div>
             <div className="flex items-center justify-center gap-2 flex-wrap mt-3">
               {saved > 0 && <span className="bg-green-400/10 border border-green-400/20 text-green-400 text-xs font-semibold px-3 py-1 rounded-full">Ahorras €{saved} vs tarifa individual</span>}
               {planMatch && <span className="bg-[rgba(232,255,71,0.12)] border border-[rgba(232,255,71,0.25)] text-accent font-display text-xs font-bold px-3 py-1 rounded-full">= Plan {planMatch}</span>}

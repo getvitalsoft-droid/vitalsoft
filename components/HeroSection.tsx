@@ -22,12 +22,13 @@ export default function HeroSection() {
           <span className="text-accent">Publica todo el mes.</span>
         </motion.h1>
 
-        <motion.p {...fadeUp(0.2)} className="text-white/50 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
-          Convertimos tu podcast o contenido largo en clips listos para TikTok, Reels y YouTube Shorts. Subtítulos, formato vertical y entrega en 24–48h.
+        <motion.p {...fadeUp(0.2)} className="text-white/60 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
+          Convertimos tu podcast o vídeo largo en clips listos para TikTok, Reels y YouTube Shorts.
+          Subtítulos, formato vertical y entrega en 24–48h.
         </motion.p>
 
-        <motion.p {...fadeUp(0.25)} className="text-white/30 text-sm max-w-md mx-auto mb-10 font-light">
-          Sin viralidad prometida. Sin humo. Solo distribución constante y consistente.
+        <motion.p {...fadeUp(0.25)} className="text-white/35 text-sm max-w-md mx-auto mb-10 font-light">
+          Sin viralidad prometida. Sin gestión de redes. Solo producción constante y consistente, cada mes.
         </motion.p>
 
         <motion.div {...fadeUp(0.3)} className="flex gap-4 justify-center flex-wrap">
@@ -36,15 +37,15 @@ export default function HeroSection() {
             Ver planes →
           </a>
           <a href="#calculadora" onClick={(e) => { e.preventDefault(); document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" }); }}
-            className="bg-transparent border border-white/10 hover:border-white/25 text-white font-display font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 backdrop-blur-sm">
-            Crear mi sistema de clips
+            className="bg-transparent border border-white/15 hover:border-white/30 text-white/80 font-display font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5">
+            Calcular mi plan
           </a>
         </motion.div>
 
         <motion.div {...fadeUp(0.4)} className="flex items-center justify-center gap-3 mt-10 flex-wrap">
-          <span className="text-white/20 text-xs">Funciona para:</span>
+          <span className="text-white/25 text-xs">Funciona para:</span>
           {platforms.map((p) => (
-            <span key={p} className="bg-white/[0.04] border border-white/[0.08] rounded-md px-3 py-1 text-xs text-white/50">{p}</span>
+            <span key={p} className="bg-white/[0.05] border border-white/[0.10] rounded-md px-3 py-1 text-xs text-white/55">{p}</span>
           ))}
         </motion.div>
       </div>
