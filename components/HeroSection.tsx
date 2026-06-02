@@ -27,13 +27,13 @@ export default function HeroSection() {
         </motion.p>
 
         <motion.p {...fadeUp(0.25)} className="text-white/50 text-sm max-w-md mx-auto mb-10 font-light">
-          Sin promesas de viralidad. Sin gestión de redes. Solo clips listos para publicar.
+          Recibe contenido listo para publicar sin volver a abrir el editor.
         </motion.p>
 
         <motion.div {...fadeUp(0.28)} className="flex items-center justify-center gap-6 mb-10 flex-wrap">
           <span className="text-white/60 text-sm"><span className="text-accent font-bold">Desde 150€/mes</span></span>
           <span className="text-white/20 hidden sm:block">·</span>
-          <span className="text-white/60 text-sm">Planes de <span className="text-white/90 font-medium">10 a 40 clips</span> · hasta 100 con calculadora</span>
+          <span className="text-white/60 text-sm">Planes de <span className="text-white/90 font-medium">10 a 40 clips</span> · Hasta 100 clips con plan personalizado</span>
           <span className="text-white/20 hidden sm:block">·</span>
           <span className="text-white/60 text-sm">Entrega en <span className="text-white/90 font-medium">24–48h</span></span>
         </motion.div>

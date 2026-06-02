@@ -5,13 +5,13 @@ const pasos = [
   { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu carpeta compartida de Google Drive — sin apps nuevas, sin aprender nada." },
   { num: "02", title: "Encontramos los mejores momentos", desc: "Seleccionamos los clips con más potencial para formato corto. Tú no tienes que marcar nada." },
   { num: "03", title: "Editamos y adaptamos", desc: "Subtítulos animados, ritmo, formato vertical 9:16 y optimización para cada plataforma." },
-  { num: "04", title: "Recibes los clips en 24–48h", desc: "De vuelta en tu Drive. Revisas, pides ajustes si necesitas, y publicas cuando quieras en cualquier plataforma." },
+  { num: "04", title: "Recibes semanas de contenido listo para publicar", desc: "Los clips aparecen en tu Drive en 24–48h. Revisas, pides ajustes si los necesitas, y publicas cuando quieras." },
 ];
 
 const requisitos = [
   { icon: "🎙️", label: "Audio claro y entendible" },
   { icon: "📹", label: "Grabación estable, sin cortes bruscos" },
-  { icon: "⏱️", label: "Material suficiente por episodio (+15 min)" },
+  { icon: "⏱️", label: "Grabaciones de al menos 15 minutos" },
   { icon: "🎯", label: "Contenido con estructura o conversación" },
   { icon: "📋", label: "Referencias si tienes preferencias de estilo" },
 ];
@@ -24,7 +24,8 @@ export default function StatsBar() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-10">
             <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-3">Cómo funciona</span>
-            <h2 className="font-display font-extrabold text-2xl tracking-tight">De tu grabación a clips listos en 4 pasos</h2>
+            <h2 className="font-display font-extrabold text-2xl tracking-tight mb-2">De tu grabación a clips listos en 4 pasos</h2>
+            <p className="text-white/40 text-sm font-light">No tienes que seleccionar momentos ni indicar cortes. Nosotros nos encargamos.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {pasos.map((p, i) => (
@@ -46,7 +47,7 @@ export default function StatsBar() {
             <div className="md:w-1/3">
               <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-3">Requisitos mínimos</span>
               <h3 className="font-display font-bold text-lg mb-2">Para trabajar bien contigo necesitamos</h3>
-              <p className="text-white/45 text-xs leading-relaxed font-light italic">La edición mejora el contenido. No reemplaza una mala grabación.</p>
+              <p className="text-white/45 text-xs leading-relaxed font-light italic">El mejor resultado llega cuando el contenido ya tiene valor de origen.</p>
             </div>
             <div className="md:w-2/3 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {requisitos.map((r) => (

@@ -10,11 +10,11 @@ export default function FinalCTA() {
         <h2 className="font-display font-extrabold text-[clamp(2.2rem,5vw,3.5rem)] tracking-tight mb-5 leading-[1.1]">
           Tu próximo mes de contenido<br /><span className="text-accent">ya está grabado.</span>
         </h2>
-        <p className="text-white/40 text-base font-light mb-6 leading-relaxed max-w-lg mx-auto">
+        <p className="text-white/55 text-base font-light mb-3 leading-relaxed max-w-lg mx-auto">
           El sistema ya está listo. Solo falta tu primer episodio.
         </p>
-        <p className="text-white/20 text-xs mb-10 max-w-md mx-auto">
-          Empieza este mes y recibe tus primeros clips en 24–48h desde que subas tu material.
+        <p className="text-white/35 text-sm mb-10 max-w-md mx-auto">
+          Empieza esta semana y recibe tus primeros clips en 24–48h desde que subas tu material.
         </p>
         <div className="flex items-center justify-center gap-4 mb-8 flex-wrap text-xs text-white/35">
           <span>✓ Sin permanencia</span>

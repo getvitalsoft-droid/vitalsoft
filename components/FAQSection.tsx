@@ -5,36 +5,52 @@ import { Plus } from "lucide-react";
 
 const faqs = [
   {
-    q: "¿Quién selecciona los momentos para los clips?",
-    a: "Nosotros. El equipo de VitalSoft revisa tu material e identifica los momentos más relevantes, claros y con potencial de retención. Tú indicas el estilo o referencias en el onboarding, y contamos con ajustes para que el resultado se alinee con lo que necesitas.",
+    q: "¿Qué necesito enviaros para empezar?",
+    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu carpeta Drive compartida y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
   },
   {
-    q: "¿Los clips son míos? ¿Quién tiene los derechos?",
-    a: "Todo el contenido producido es tuyo al 100%. VitalSoft no retiene derechos sobre los clips ni sobre el material original. Puedes publicar, redistribuir o modificar los clips como quieras sin ninguna restricción.",
+    q: "¿Quién selecciona los momentos para los clips?",
+    a: "Nosotros. El equipo de VitalSoft revisa tu material e identifica los momentos más relevantes, claros y con potencial de retención. Tú indicas el estilo o referencias en el onboarding, y contamos con ajustes para que el resultado se alinee con lo que necesitas.",
   },
   {
     q: "¿Cuál es el tiempo de entrega?",
     a: "El plazo empieza cuando recibimos tu material en Drive y lo validamos, no desde el pago. Una vez validado: Starter 48h, Growth 36h, Scale 24h, Pro prioridad máxima. Si el material llega con problemas de calidad, te lo comunicamos antes de empezar.",
   },
   {
-    q: "¿Qué cuenta como ajuste?",
-    a: "Un ajuste es: cambiar un subtítulo, modificar un corte, ajustar timing, cambiar música o añadir zoom. No es ajuste: rehacer el estilo completo, pedir clips nuevos fuera del plan, cambiar branding desde cero o rehacer el episodio. Los cambios fuera del alcance se presupuestan aparte.",
+    q: "¿Y si no me gusta algún clip?",
+    a: "Si algún clip no encaja con tu estilo o referencias, puedes solicitar los ajustes incluidos en tu plan. Corregimos subtítulos, cortes, timing, música o elementos visuales dentro del alcance definido. El objetivo es que el resultado final sea exactamente lo que necesitas.",
   },
   {
-    q: "¿Qué tipo de contenido funciona mejor?",
-    a: "Podcasts, entrevistas, formación, opinión, análisis, webinars y contenido educativo suelen funcionar muy bien. En general: audio claro, conversaciones con estructura y episodios de 15 minutos o más. No suele funcionar tan bien el contenido sin estructura clara, con audio de mala calidad o streams muy fragmentados. Si tienes dudas sobre tu caso concreto, consúltanos antes de suscribirte.",
+    q: "¿Los clips son míos? ¿Quién tiene los derechos?",
+    a: "Todo el contenido producido es tuyo al 100%. VitalSoft no retiene derechos sobre los clips ni sobre el material original. Puedes publicar, redistribuir o modificar los clips como quieras sin ninguna restricción.",
   },
   {
-    q: "¿Cómo funciona la entrega?",
-    a: "Tras suscribirte recibes acceso a un Drive compartido. Subes tu material con las instrucciones del onboarding. Validamos el contenido, producimos los clips y los subimos al mismo Drive. Tú publicas cuando y donde quieras.",
-  },
-  {
-    q: "¿Qué formatos entregáis?",
-    a: "9:16 vertical para TikTok, Reels y Shorts. 1:1 cuadrado para Instagram. 16:9 horizontal para YouTube. Formatos disponibles según plan. Resolución mínima 1080p. Formatos de entrada aceptados: MP4, MOV, AVI, MKV y la mayoría de formatos estándar.",
+    q: "¿Los clips los genera una IA?",
+    a: "Utilizamos herramientas de IA dentro del proceso de producción, pero cada entrega pasa por revisión y edición humana. Nos aseguramos de que el resultado tenga coherencia, ritmo y calidad antes de entregarlo.",
   },
   {
     q: "¿Puedo pausar o cancelar?",
     a: "Sí. Puedes pausar hasta 30 días o cancelar en cualquier momento desde tu portal de cliente. Sin permanencia. Si cancelas, sigues activo hasta el final del período ya pagado.",
+  },
+  {
+    q: "¿Por qué no contratar un editor freelance?",
+    a: "Un freelance puede ser una buena opción. VitalSoft es para quienes prefieren un sistema predecible: capacidad fija, tiempos definidos, entrega consistente y sin necesidad de gestionar personas. La diferencia no es calidad — es previsibilidad.",
+  },
+  {
+    q: "¿Qué tipo de contenido funciona mejor?",
+    a: "Funciona bien: podcasts, entrevistas, formación, webinars y contenido educativo con estructura clara y audio entendible.\n\nFunciona peor: streams caóticos sin estructura, audio con mucho ruido o contenido sin momentos destacables.\n\nSi tienes dudas sobre tu caso concreto, consúltanos antes de suscribirte.",
+  },
+  {
+    q: "¿Qué cuenta como ajuste?",
+    a: "Un ajuste es: cambiar un subtítulo, modificar un corte, ajustar timing, cambiar música o añadir zoom. No es ajuste: rehacer el estilo completo, pedir clips nuevos fuera del plan, cambiar branding desde cero o rehacer el episodio. Los cambios fuera del alcance se presupuestan aparte.",
+  },
+  {
+    q: "¿Cómo funciona la entrega?",
+    a: "Tras suscribirte compartes una carpeta de Google Drive con nosotros. Subes tu material con las instrucciones del onboarding. Validamos el contenido, producimos los clips y los subimos al mismo Drive. Tú publicas cuando y donde quieras.",
+  },
+  {
+    q: "¿Qué formatos entregáis?",
+    a: "9:16 vertical para TikTok, Reels y Shorts. 1:1 cuadrado para Instagram. 16:9 horizontal para YouTube. Formatos disponibles según plan. Resolución mínima 1080p. Formatos de entrada aceptados: MP4, MOV, AVI, MKV y la mayoría de formatos estándar.",
   },
   {
     q: "¿VitalSoft es solo para creadores?",
@@ -49,26 +65,9 @@ const faqs = [
     a: "Depende del contenido. Un episodio puede generar muy pocos clips si tiene poco valor reutilizable, o decenas si está lleno de momentos útiles, frases con gancho o historias. Por eso hablamos de capacidad mensual y no de una cantidad fija por vídeo. Lo que importa es el volumen de material que produces al mes.",
   },
   {
-    q: "¿Los clips los genera una IA?",
-    a: "Utilizamos herramientas de IA dentro del proceso de producción, pero cada entrega pasa por revisión y edición humana. Nos aseguramos de que el resultado tenga coherencia, ritmo y calidad antes de entregarlo.",
-  },
-  {
-    q: "¿Y si no me gusta algún clip?",
-    a: "Si algún clip no encaja con tu estilo o referencias, puedes solicitar los ajustes incluidos en tu plan. Corregimos subtítulos, cortes, timing, música o elementos visuales dentro del alcance definido. El objetivo es que el resultado final sea exactamente lo que necesitas.",
-  },
-  {
     q: "¿Puedo cambiar de plan o reducir volumen?",
     a: "Sí. Puedes cambiar de plan al final de tu ciclo mensual. Si un mes necesitas menos clips, puedes pausar hasta 30 días o cancelar sin penalización. Sin permanencia en ningún plan.",
   },
-  {
-    q: "¿Qué necesito enviaros para empezar?",
-    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu carpeta Drive compartida y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
-  },
-  {
-    q: "¿Por qué no contratar un editor freelance?",
-    a: "Un freelance puede ser una buena opción. VitalSoft es para quienes prefieren un sistema predecible: capacidad fija, tiempos definidos, entrega consistente y sin necesidad de gestionar personas. La diferencia no es calidad — es previsibilidad.",
-  },
-];
 
 export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(null);

@@ -9,8 +9,8 @@ import StripeCheckout from "@/components/StripeCheckout";
 const PLAN_META: Record<string, { forWho: string; freq: string }> = {
   starter: { forWho: "Para creadores que empiezan a publicar con regularidad", freq: "≈ 2–3 publicaciones por semana" },
   growth:  { forWho: "Para creadores activos con contenido semanal",           freq: "≈ 5 publicaciones por semana" },
-  scale:   { forWho: "Para marcas y podcasts con producción constante",        freq: "Publicación diaria" },
-  pro:     { forWho: "Para equipos con alto volumen en varios canales",        freq: "Publicación diaria en varios canales" },
+  scale:   { forWho: "Para publicar todos los días",                           freq: "Publicación diaria" },
+  pro:     { forWho: "Para gestionar varios canales a la vez",                 freq: "Publicación diaria en varios canales" },
 };
 
 

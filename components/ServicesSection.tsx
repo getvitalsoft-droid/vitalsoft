@@ -49,7 +49,7 @@ const vsEditor = [
     items: [
       "Buscar y filtrar candidatos",
       "Coordinar revisiones y correos",
-      "Gestionar plazos cada entrega",
+      "Repetir instrucciones en cada entrega",
       "Dependencia de disponibilidad",
       "Resultado inconsistente entre meses",
     ],
@@ -58,7 +58,7 @@ const vsEditor = [
   {
     label: "VitalSoft",
     items: [
-      "Sistema ya montado",
+      "Empiezas a producir desde el primer día",
       "Flujo definido desde el primer mes",
       "Entrega predecible cada ciclo",
       "Sin gestión de personas",

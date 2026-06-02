@@ -18,20 +18,20 @@ const OUTPUT = {
   label: "Lo que recibes",
   items: [
     { icon: "🗓️", text: "Semanas de publicaciones listas para TikTok, Reels y Shorts", accent: true },
-    { icon: "📱", text: "De 10 a 100 clips de 30–90 segundos según el plan contratado", accent: false },
+    { icon: "📁", text: "Entrega en tu Drive en 24–48h" },
+    { icon: "📱", text: "Entre 10 y 40 clips por plan · hasta 100 con plan personalizado", accent: false },
     { icon: "↕️", text: "Formato 9:16 listo para TikTok y Reels" },
     { icon: "◻️", text: "Formato 1:1 para Instagram feed" },
     { icon: "▶️", text: "Formato 16:9 para YouTube horizontal" },
     { icon: "✍️", text: "Subtítulos animados en todos los clips" },
-    { icon: "📁", text: "Entrega en tu Drive en 24–48h" },
   ],
 };
 
 const PASOS = [
   {
     n: "01",
-    titulo: "Acceso a tu Drive compartido",
-    desc: "En minutos recibes acceso a una carpeta de Google Drive exclusiva para ti. Ahí recibirás todos los clips y tendrás el historial permanente.",
+    titulo: "Compartes tu carpeta de trabajo",
+    desc: "Durante el onboarding nos compartes una carpeta de Google Drive donde subirás tus grabaciones. Trabajaremos siempre desde ahí y ahí recibirás todos los clips.",
     color: "text-accent",
   },
   {
@@ -42,8 +42,8 @@ const PASOS = [
   },
   {
     n: "03",
-    titulo: "Subes tu primer contenido",
-    desc: "Podcast, vídeo, entrevista o clase. Lo subes al Drive una vez y listo. Sin formatos especiales, sin instrucciones complicadas.",
+    titulo: "Subes tu primera grabación",
+    desc: "Podcast, vídeo, entrevista o clase. Lo subes a la carpeta compartida. Sin formatos especiales, sin instrucciones complicadas.",
     color: "text-white/60",
   },
   {

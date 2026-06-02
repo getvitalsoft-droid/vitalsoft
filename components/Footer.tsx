@@ -11,7 +11,7 @@ export default function Footer() {
               <span className="text-accent">Vital</span><span className="text-white/70">Soft</span>
             </div>
             <p className="text-white/30 text-xs max-w-xs">
-              VitalSoft transforma tu contenido largo en un flujo constante de publicaciones para redes.
+              Un sistema para convertir grabaciones largas en semanas de contenido listo para publicar.
             </p>
           </div>
 
@@ -21,7 +21,6 @@ export default function Footer() {
               <div className="text-white/25 text-[10px] uppercase tracking-widest font-semibold mb-2">Acceso</div>
               <a href="/como-funciona" className="block text-white/40 text-xs hover:text-white/70 transition-colors">Cómo funciona</a>
               <a href="/cliente" className="block text-white/40 text-xs hover:text-white/70 transition-colors">Portal cliente</a>
-              <a href="/agentes" className="block text-white/40 text-xs hover:text-white/70 transition-colors">Portal agentes</a>
             </div>
             <div className="space-y-2">
               <div className="text-white/25 text-[10px] uppercase tracking-widest font-semibold mb-2">Legal</div>

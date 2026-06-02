@@ -49,7 +49,7 @@ export interface PricingPlan {
 export const PRICING_PLANS: PricingPlan[] = [
   {
     key: "starter", name: "Starter", price: 150, videos: 10,
-    features: ["10 clips al mes", "Formato 9:16 vertical", "Subtítulos animados", "Drive compartido incluido"],
+    features: ["10 clips al mes", "Formato 9:16 vertical", "Subtítulos animados", "Gestión por Google Drive"],
     turnaround: "Entrega en 48h", revisions: "1 ajuste por clip",
   },
   {
