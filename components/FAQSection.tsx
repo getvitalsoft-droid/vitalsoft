@@ -68,6 +68,7 @@ const faqs = [
     q: "¿Puedo cambiar de plan o reducir volumen?",
     a: "Sí. Puedes cambiar de plan al final de tu ciclo mensual. Si un mes necesitas menos clips, puedes pausar hasta 30 días o cancelar sin penalización. Sin permanencia en ningún plan.",
   },
+];
 
 export default function FAQSection() {
   const [open, setOpen] = useState<number | null>(null);
