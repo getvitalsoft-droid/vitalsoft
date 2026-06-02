@@ -8,9 +8,9 @@ import StripeCheckout from "@/components/StripeCheckout";
 
 const PLAN_META: Record<string, { forWho: string; freq: string }> = {
   starter: { forWho: "Para creadores que empiezan a publicar con regularidad", freq: "≈ 2–3 publicaciones por semana" },
-  growth:  { forWho: "Para creadores activos con contenido semanal", freq: "≈ 5 publicaciones por semana" },
-  scale:   { forWho: "Para marcas y podcasts con producción constante", freq: "Presencia diaria en redes" },
-  pro:     { forWho: "Para equipos con alto volumen en varios canales", freq: "Volumen alto y múltiples canales" },
+  growth:  { forWho: "Para creadores activos con contenido semanal",           freq: "≈ 5 publicaciones por semana" },
+  scale:   { forWho: "Para marcas y podcasts con producción constante",        freq: "Publicación diaria" },
+  pro:     { forWho: "Para equipos con alto volumen en varios canales",        freq: "Publicación diaria en varios canales" },
 };
 
 
@@ -138,6 +138,7 @@ export default function PricingSection({ refCode }: Props) {
                 {plan.features.map(f => <li key={f} className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{f}</li>)}
                 <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{plan.revisions}</li>
                 <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />{plan.turnaround}</li>
+                <li className="flex items-start gap-2.5 text-white/45 text-xs"><Check size={13} className="text-accent mt-0.5 flex-shrink-0" />Sin permanencia</li>
               </ul>
               <button onClick={() => openPlan(plan)}
                 className={`w-full py-3 rounded-xl font-display font-bold text-sm transition-all duration-200 ${plan.featured ? "bg-accent hover:bg-accent-2 text-[#080808]" : "border border-white/10 hover:border-white/25 hover:bg-white/[0.04] text-white"}`}>

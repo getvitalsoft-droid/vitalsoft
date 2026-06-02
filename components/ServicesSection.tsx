@@ -15,6 +15,12 @@ const servicios = [
     tags: ["Selección humana", "30–90 segundos", "Sin marcar nada"],
   },
   {
+    icon: "✅",
+    title: "Ajustes hasta que quede como quieres",
+    desc: "Cada clip entregado incluye ajustes. Si algo no encaja con tu estilo o referencias, lo corregimos. Sin coste extra dentro del alcance de tu plan.",
+    tags: ["Ajustes por clip", "Respuesta en 24h", "Sin coste extra"],
+  },
+  {
     icon: "📐",
     title: "Listo para todas las plataformas en un solo envío",
     desc: "Cada clip en 9:16 para TikTok y Reels, 1:1 para Instagram y 16:9 para YouTube horizontal. Subes el material una vez y lo tienes todo.",
@@ -26,19 +32,13 @@ const servicios = [
     desc: "Subtítulos precisos y bien diseñados en todos los clips. Hacen el contenido accesible y mejoran el tiempo de visualización, sin trabajo extra de tu parte.",
     tags: ["Subtítulos animados", "Alta retención", "Accesibilidad"],
   },
-  {
-    icon: "✅",
-    title: "Ajustes hasta que quede como quieres",
-    desc: "Cada clip entregado incluye ajustes. Si algo no encaja con tu estilo o referencias, lo corregimos. Sin coste extra dentro del alcance de tu plan.",
-    tags: ["Ajustes por clip", "Respuesta en 24h", "Sin coste extra"],
-  },
 ];
 
 const noHacemos = [
   "Gestión de redes sociales",
   "Estrategia de contenido",
   "Publicación del contenido",
-  "Garantizamos viralidad ni crecimiento",
+  "No prometemos viralidad ni crecimiento",
   "SEO ni optimización de algoritmo",
   "Consultoría de marca",
 ];
@@ -48,10 +48,10 @@ const vsEditor = [
     label: "Gestión manual",
     items: [
       "Buscar y filtrar candidatos",
-      "Explicar tu estilo desde cero",
-      "Gestionar plazos y correos",
-      "Riesgo de disponibilidad variable",
-      "Formación continua",
+      "Coordinar revisiones y correos",
+      "Gestionar plazos cada entrega",
+      "Dependencia de disponibilidad",
+      "Resultado inconsistente entre meses",
     ],
     bad: true,
   },
@@ -76,7 +76,7 @@ export default function ServicesSection() {
         {/* Servicios */}
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <span className="inline-block bg-[rgba(232,255,71,0.08)] border border-[rgba(232,255,71,0.15)] text-accent text-xs font-semibold uppercase tracking-widest px-3 py-1 rounded mb-4">Servicios</span>
-          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Todo lo que recibes cada mes</h2>
+          <h2 className="font-display font-extrabold text-[clamp(2rem,4vw,3rem)] tracking-tight mb-3">Lo convertimos en contenido listo para publicar</h2>
           <p className="text-white/50 text-base font-light mb-10 max-w-md">Recibes clips listos para publicar, adaptados a cada plataforma y entregados de forma constante cada mes.</p>
         </motion.div>
 

@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     q: "¿Qué tipo de contenido funciona mejor?",
-    a: "Audio claro, conversaciones con opinión o valor, estructura definida y duración mínima de 15 minutos. No funcionan bien: streams caóticos sin estructura, audios con mucho ruido o contenido sin momentos destacables. Si tienes dudas, consúltanos antes de suscribirte.",
+    a: "Podcasts, entrevistas, formación, opinión, análisis, webinars y contenido educativo suelen funcionar muy bien. En general: audio claro, conversaciones con estructura y episodios de 15 minutos o más. No suele funcionar tan bien el contenido sin estructura clara, con audio de mala calidad o streams muy fragmentados. Si tienes dudas sobre tu caso concreto, consúltanos antes de suscribirte.",
   },
   {
     q: "¿Cómo funciona la entrega?",
@@ -38,11 +38,11 @@ const faqs = [
   },
   {
     q: "¿VitalSoft es solo para creadores?",
-    a: "No. Trabajamos con creadores, podcasters, coaches, marcas y empresas que generan contenido largo de forma recurrente. Si grabas de forma regular y quieres distribución constante, encajas. Para volúmenes superiores a 50 clips/mes usa la calculadora o escríbenos directamente.",
+    a: "No. También trabajamos con marcas, podcasts, coaches, formadores y equipos de marketing que generan contenido largo de forma recurrente. Si grabas con regularidad y quieres más distribución, encajas. Para volúmenes superiores a 50 clips/mes usa la calculadora o escríbenos.",
   },
   {
     q: "¿Qué pasa si no uso todos mis clips ese mes?",
-    a: "Los clips no utilizados no se acumulan ni se trasladan al mes siguiente. Cada ciclo mensual empieza desde cero con la capacidad de tu plan. Si un mes tienes menos material del habitual, puedes pausar la suscripción hasta 30 días desde tu portal de cliente.",
+    a: "Los clips no utilizados no se acumulan ni se trasladan al mes siguiente. Cada ciclo mensual empieza desde cero con la capacidad de tu plan. Si un mes tienes menos material del habitual, puedes pausar la suscripción hasta 30 días sin coste.",
   },
   {
     q: "¿Cuántos clips salen de un episodio?",
@@ -54,11 +54,15 @@ const faqs = [
   },
   {
     q: "¿Y si no me gusta algún clip?",
-    a: "Cada plan incluye ajustes por clip. Si algo no encaja con tu estilo o referencias, nos lo indicas y lo corregimos. Los ajustes cubren cambios razonables sobre el clip entregado, no rehacerlo desde cero.",
+    a: "Si algún clip no encaja con tu estilo o referencias, puedes solicitar los ajustes incluidos en tu plan. Corregimos subtítulos, cortes, timing, música o elementos visuales dentro del alcance definido. El objetivo es que el resultado final sea exactamente lo que necesitas.",
   },
   {
     q: "¿Puedo cambiar de plan o reducir volumen?",
     a: "Sí. Puedes cambiar de plan al final de tu ciclo mensual. Si un mes necesitas menos clips, puedes pausar hasta 30 días o cancelar sin penalización. Sin permanencia en ningún plan.",
+  },
+  {
+    q: "¿Qué necesito enviaros para empezar?",
+    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu carpeta Drive compartida y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
   },
   {
     q: "¿Por qué no contratar un editor freelance?",

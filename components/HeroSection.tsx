@@ -23,8 +23,7 @@ export default function HeroSection() {
         </motion.h1>
 
         <motion.p {...fadeUp(0.2)} className="text-white/60 text-lg max-w-xl mx-auto mb-4 font-light leading-relaxed">
-          Convertimos tu podcast o vídeo largo en clips listos para TikTok, Reels y YouTube Shorts.
-          Subtítulos, formato vertical y entrega en 24–48h.
+          Convierte una grabación en semanas de publicaciones listas para TikTok, Reels y Shorts.
         </motion.p>
 
         <motion.p {...fadeUp(0.25)} className="text-white/50 text-sm max-w-md mx-auto mb-10 font-light">
@@ -34,7 +33,7 @@ export default function HeroSection() {
         <motion.div {...fadeUp(0.28)} className="flex items-center justify-center gap-6 mb-10 flex-wrap">
           <span className="text-white/60 text-sm"><span className="text-accent font-bold">Desde 150€/mes</span></span>
           <span className="text-white/20 hidden sm:block">·</span>
-          <span className="text-white/60 text-sm"><span className="text-white/90 font-medium">10–100 clips</span> al mes</span>
+          <span className="text-white/60 text-sm">Planes de <span className="text-white/90 font-medium">10 a 40 clips</span> · hasta 100 con calculadora</span>
           <span className="text-white/20 hidden sm:block">·</span>
           <span className="text-white/60 text-sm">Entrega en <span className="text-white/90 font-medium">24–48h</span></span>
         </motion.div>

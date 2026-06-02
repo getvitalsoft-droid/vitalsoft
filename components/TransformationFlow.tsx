@@ -17,7 +17,8 @@ const INPUT = {
 const OUTPUT = {
   label: "Lo que recibes",
   items: [
-    { icon: "📱", text: "De 10 a 100 clips de 30–90 segundos según el plan contratado", accent: true },
+    { icon: "🗓️", text: "Semanas de publicaciones listas para TikTok, Reels y Shorts", accent: true },
+    { icon: "📱", text: "De 10 a 100 clips de 30–90 segundos según el plan contratado", accent: false },
     { icon: "↕️", text: "Formato 9:16 listo para TikTok y Reels" },
     { icon: "◻️", text: "Formato 1:1 para Instagram feed" },
     { icon: "▶️", text: "Formato 16:9 para YouTube horizontal" },
@@ -47,13 +48,13 @@ const PASOS = [
   },
   {
     n: "04",
-    titulo: "Producimos y entregamos",
+    titulo: "Convertimos tu grabación en clips listos para publicar",
     desc: "Seleccionamos momentos, editamos, añadimos subtítulos y formateamos. Los clips aparecen en tu Drive en 24–48h desde la validación.",
     color: "text-white/60",
   },
   {
     n: "05",
-    titulo: "Revisas y publicas cuando quieras",
+    titulo: "Recibes semanas de contenido listo para publicar",
     desc: "Los clips son tuyos. Puedes publicarlos, programarlos o guardarlos. Si necesitas ajustes, los tienes incluidos en tu plan.",
     color: "text-white/60",
   },
@@ -72,7 +73,7 @@ export default function TransformationFlow() {
             <span className="text-accent">Semanas de contenido.</span>
           </h2>
           <p className="text-white/45 text-base font-light max-w-md mx-auto">
-            Esto es lo que ocurre entre que subes tu contenido y lo tienes listo para publicar.
+            Así convertimos una sola grabación en semanas de publicaciones.
           </p>
         </motion.div>
 
@@ -120,8 +121,9 @@ export default function TransformationFlow() {
         {/* Flujo paso a paso */}
         <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           className="border border-white/[0.07] rounded-2xl overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/[0.06] bg-white/[0.02]">
-            <div className="text-white/40 text-xs font-semibold uppercase tracking-widest">Después de contratar</div>
+          <div className="px-6 py-5 border-b border-white/[0.06] bg-white/[0.02]">
+            <div className="text-white/40 text-xs font-semibold uppercase tracking-widest mb-1">Después de contratar</div>
+            <div className="font-display font-bold text-base text-white/85">Qué ocurre desde que contratas hasta que publicas</div>
           </div>
           <div className="divide-y divide-white/[0.05]">
             {PASOS.map((paso, i) => (

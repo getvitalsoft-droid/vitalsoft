@@ -122,7 +122,7 @@ export default function CalculatorSection({ refCode }: Props) {
           {/* Slider + input de teclado */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
-              <span className="font-display font-bold text-base">Clips mensuales</span>
+              <span className="font-display font-bold text-base">¿Cuántos clips necesitas al mes?</span>
               <input
                 type="number"
                 min={1}

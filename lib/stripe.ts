@@ -59,12 +59,12 @@ export const PRICING_PLANS: PricingPlan[] = [
   },
   {
     key: "scale", name: "Scale", price: 350, videos: 30,
-    features: ["30 clips al mes", "3 formatos (9:16, 1:1, 16:9)", "Subtítulos avanzados", "Editor dedicado"],
+    features: ["30 clips al mes", "3 formatos (9:16, 1:1, 16:9)", "Subtítulos avanzados", "Producción dedicada"],
     turnaround: "Entrega en 24h", revisions: "3 ajustes por clip",
   },
   {
     key: "pro", name: "Pro", price: 450, videos: 40,
-    features: ["40 clips al mes", "3 formatos + clips prioritarios", "Subtítulos premium", "Editor dedicado"],
+    features: ["40 clips al mes", "3 formatos + clips prioritarios", "Subtítulos premium", "Producción dedicada"],
     turnaround: "Prioridad máxima", revisions: "4 ajustes por clip",
   },
 ];

@@ -11,7 +11,7 @@ export default function FinalCTA() {
           Tu próximo mes de contenido<br /><span className="text-accent">ya está grabado.</span>
         </h2>
         <p className="text-white/40 text-base font-light mb-6 leading-relaxed max-w-lg mx-auto">
-          Sube un episodio. Nosotros lo convertimos en semanas de publicaciones listas para TikTok, Reels y Shorts.
+          El sistema ya está listo. Solo falta tu primer episodio.
         </p>
         <p className="text-white/20 text-xs mb-10 max-w-md mx-auto">
           Empieza este mes y recibe tus primeros clips en 24–48h desde que subas tu material.
