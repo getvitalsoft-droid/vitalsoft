@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { verifyToken } from "../magic/route";
+import { verifyToken } from "@/lib/agente-token";
 import { rateLimit, getIP } from "@/lib/rateLimit";
 
 async function getAgenteFromToken(req: NextRequest) {
