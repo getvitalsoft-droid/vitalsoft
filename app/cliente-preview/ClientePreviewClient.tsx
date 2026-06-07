@@ -235,7 +235,7 @@ export default function ClientePreviewClient() {
 
         <p className="text-center text-white/20 text-xs mt-6">
           ¿Problemas? Escríbenos a{" "}
-          <a href="mailto:getvitalsoft@gmail.com" className="text-white/40 hover:text-accent transition-colors">getvitalsoft@gmail.com</a>
+          <a href="mailto:hola@vitalsoft.pro" className="text-white/40 hover:text-accent transition-colors">hola@vitalsoft.pro</a>
         </p>
       </div>
 

@@ -20,7 +20,7 @@ export default function Privacidad() {
           </section>
           <section>
             <h2 className="font-display font-bold text-white text-base mb-3">Tus derechos</h2>
-            <p>Puedes solicitar acceso, corrección o eliminación de tus datos en cualquier momento contactando a <a href="mailto:getvitalsoft@gmail.com" className="text-accent">getvitalsoft@gmail.com</a>.</p>
+            <p>Puedes solicitar acceso, corrección o eliminación de tus datos en cualquier momento contactando a <a href="mailto:hola@vitalsoft.pro" className="text-accent">hola@vitalsoft.pro</a>.</p>
           </section>
         </div>
       </div>

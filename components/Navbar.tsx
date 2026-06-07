@@ -21,12 +21,17 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handler);
   }, []);
 
+  const isHome = typeof window !== "undefined" && window.location.pathname === "/";
+
   const handleScroll = (href: string) => {
     setMobileOpen(false);
     if (href.startsWith("/")) {
       window.location.href = href;
-    } else {
+    } else if (isHome) {
       document.querySelector(href)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      // Desde otras páginas, navegar a la home con el ancla
+      window.location.href = "/" + href;
     }
   };
 

@@ -16,7 +16,7 @@ export default function Reembolsos() {
           </section>
           <section>
             <h2 className="font-display font-bold text-white text-base mb-3">Proceso</h2>
-            <p>Para solicitar un reembolso escríbenos a <a href="mailto:getvitalsoft@gmail.com" className="text-accent">getvitalsoft@gmail.com</a> indicando el motivo. Respondemos en 48–72h laborables.</p>
+            <p>Para solicitar un reembolso escríbenos a <a href="mailto:hola@vitalsoft.pro" className="text-accent">hola@vitalsoft.pro</a> indicando el motivo. Respondemos en 48–72h laborables.</p>
           </section>
           <section>
             <h2 className="font-display font-bold text-white text-base mb-3">Lo que no reembolsamos</h2>

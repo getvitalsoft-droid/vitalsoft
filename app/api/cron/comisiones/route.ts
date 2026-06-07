@@ -7,7 +7,7 @@ import Stripe from "stripe";
 export const dynamic = "force-dynamic";
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "VitalSoft <notificaciones@vitalsoft.pro>";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "getvitalsoft@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hola@vitalsoft.pro";
 const SITE = "https://vitalsoft.pro";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 

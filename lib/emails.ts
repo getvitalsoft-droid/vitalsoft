@@ -42,7 +42,7 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const FROM = "VitalSoft <notificaciones@vitalsoft.pro>";
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "getvitalsoft@gmail.com";
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hola@vitalsoft.pro";
 const SITE = "https://vitalsoft.pro";
 
 // ─── Estilos base compartidos ──────────────────────────────────────────────

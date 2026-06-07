@@ -1,7 +1,16 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import Image from "next/image";
+
+interface PlanInfo {
+  found: boolean;
+  nombre: string | null;
+  clips: number | null;
+  precio: number | null;
+  planNombre: string | null;
+}
 
 function OnboardingForm() {
   const searchParams = useSearchParams();
@@ -12,6 +21,7 @@ function OnboardingForm() {
   const [done, setDone] = useState(false);
   const [drivePendiente, setDrivePendiente] = useState(false);
   const [error, setError] = useState("");
+  const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
 
   const [form, setForm] = useState({
     nombre_proyecto: "", redes_sociales: "",
@@ -20,6 +30,14 @@ function OnboardingForm() {
     idioma: "Español", drive_link: "",
     referencias: "", instrucciones: "",
   });
+
+  useEffect(() => {
+    if (!sessionId) return;
+    fetch(`/api/onboarding-info?session=${sessionId}`)
+      .then(r => r.json())
+      .then(data => setPlanInfo(data))
+      .catch(() => {});
+  }, [sessionId]);
 
   const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }));
   const togglePlat = (p: string) => set("plataformas", form.plataformas.includes(p)
@@ -50,6 +68,44 @@ function OnboardingForm() {
   const TIPOS = ["Podcast", "Entrevistas", "YouTube largo", "Webinar / Formación", "Eventos", "Otro"];
   const DURACIONES = ["15–30 min", "30–60 min", "1–2h", "Más de 2h", "Varía"];
   const FRECUENCIAS = ["1–2 por semana", "3–4 por semana", "1 por semana", "Quincenal", "Mensual"];
+
+  // Badge del plan — personalizado si no coincide con ningún plan fijo
+  const planBadge = () => {
+    if (!planInfo?.found) return "Tu plan ya está activo";
+    const nombre = planInfo.nombre ? `${planInfo.nombre} · ` : "";
+    if (planInfo.planNombre) {
+      return `${nombre}Plan ${planInfo.planNombre} · ${planInfo.clips} clips/mes`;
+    }
+    // Plan personalizado (clips no coincide con 10/20/30/40)
+    return `${nombre}Plan personalizado · ${planInfo.clips} clips/mes`;
+  };
+
+  const pasosDrive = [
+    {
+      num: "1",
+      texto: "Haz clic derecho sobre la carpeta → Compartir → Compartir",
+      img: "/onboarding/drive-paso1.png",
+      alt: "Clic derecho en carpeta Drive",
+    },
+    {
+      num: "2",
+      texto: "Se abre el panel de uso compartido. Por defecto está en Restringido.",
+      img: "/onboarding/drive-paso2.png",
+      alt: "Panel compartir Drive restringido",
+    },
+    {
+      num: "3",
+      texto: "Pulsa el desplegable y selecciona \"Cualquier persona con el enlace\"",
+      img: "/onboarding/drive-paso3.png",
+      alt: "Seleccionar cualquier persona con el enlace",
+    },
+    {
+      num: "4",
+      texto: "Cambia el rol a Editor (necesitamos poder subir los clips). Luego copia el enlace.",
+      img: "/onboarding/drive-paso4.png",
+      alt: "Cambiar rol a Editor",
+    },
+  ];
 
   if (done) return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
@@ -85,7 +141,7 @@ function OnboardingForm() {
           </div>
           <div className="inline-flex items-center gap-2 bg-white/[0.04] border border-white/[0.08] rounded-full px-4 py-1.5 mb-4">
             <span className="w-2 h-2 rounded-full bg-[#d4f53c]" />
-            <span className="text-white/50 text-xs">Tu plan ya está activo</span>
+            <span className="text-white/50 text-xs">{planBadge()}</span>
           </div>
           <h1 className="font-display font-bold text-2xl mb-2">Bienvenido a VitalSoft.</h1>
           <p className="text-white/35 text-sm max-w-sm mx-auto">Completa esta configuración una sola vez para que podamos empezar a producir tus clips.</p>
@@ -99,7 +155,7 @@ function OnboardingForm() {
 
         <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-7">
 
-          {/* PASO 1 — Tu proyecto */}
+          {/* PASO 1 */}
           {step === 1 && (
             <div className="space-y-4">
               <h2 className="font-display font-bold text-sm mb-4 text-white/60 uppercase tracking-widest">01 — Tu proyecto</h2>
@@ -143,7 +199,7 @@ function OnboardingForm() {
             </div>
           )}
 
-          {/* PASO 2 — Tu contenido */}
+          {/* PASO 2 */}
           {step === 2 && (
             <div className="space-y-4">
               <h2 className="font-display font-bold text-sm mb-4 text-white/60 uppercase tracking-widest">02 — Tu contenido</h2>
@@ -176,9 +232,7 @@ function OnboardingForm() {
                 </select>
               </div>
               <div>
-                <label className={labelCls}>
-                  Referencias de estilo <span className="text-white/20 font-normal">(opcional)</span>
-                </label>
+                <label className={labelCls}>Referencias de estilo <span className="text-white/20 font-normal">(opcional)</span></label>
                 <textarea rows={2} placeholder="URLs de clips que te gustan como referencia visual..."
                   value={form.referencias} onChange={e => set("referencias", e.target.value)} className={inp} />
               </div>
@@ -189,27 +243,37 @@ function OnboardingForm() {
             </div>
           )}
 
-          {/* PASO 3 — Drive y notas */}
+          {/* PASO 3 */}
           {step === 3 && (
             <div className="space-y-5">
               <h2 className="font-display font-bold text-sm mb-4 text-white/60 uppercase tracking-widest">03 — Material y entrega</h2>
 
-              {/* Instrucciones Drive */}
-              <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
-                <p className="text-white/50 text-xs font-semibold mb-3">Cómo compartir tu carpeta de Drive</p>
-                <ol className="space-y-2">
-                  {[
-                    "Crea una carpeta nueva en Google Drive",
-                    "Haz clic derecho → Compartir → Cambiar a cualquier persona con el enlace",
-                    "Cambia el permiso a Editor (necesitamos subir los clips)",
-                    "Copia el enlace y pégalo aquí",
-                  ].map((step, i) => (
-                    <li key={i} className="flex gap-3 text-white/40 text-xs">
-                      <span className="text-[#d4f53c] font-bold flex-shrink-0">{i + 1}.</span>
-                      <span>{step}</span>
-                    </li>
+              {/* Instrucciones Drive con capturas */}
+              <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-white/[0.06]">
+                  <p className="text-white/55 text-xs font-semibold">Cómo compartir tu carpeta de Google Drive</p>
+                  <p className="text-white/25 text-xs mt-0.5">Sigue estos 4 pasos exactos para que podamos subir los clips</p>
+                </div>
+                <div className="divide-y divide-white/[0.04]">
+                  {pasosDrive.map((paso) => (
+                    <div key={paso.num} className="p-4">
+                      <div className="flex gap-3 items-start mb-3">
+                        <span className="text-[#d4f53c] font-display font-black text-sm flex-shrink-0 w-5">{paso.num}.</span>
+                        <p className="text-white/50 text-xs leading-relaxed">{paso.texto}</p>
+                      </div>
+                      <div className="rounded-lg overflow-hidden border border-white/[0.06] ml-8">
+                        <Image
+                          src={paso.img}
+                          alt={paso.alt}
+                          width={600}
+                          height={340}
+                          className="w-full h-auto object-cover"
+                          priority={paso.num === "1"}
+                        />
+                      </div>
+                    </div>
                   ))}
-                </ol>
+                </div>
               </div>
 
               {/* Campo Drive o toggle pendiente */}
@@ -225,11 +289,9 @@ function OnboardingForm() {
                   <p className="text-white/20 text-xs mt-1.5">
                     Ejemplo: <span className="text-white/35">drive.google.com/drive/folders/xxxxx</span>
                   </p>
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => { setDrivePendiente(true); set("drive_link", ""); setError(""); }}
-                    className="text-white/25 text-xs mt-2 hover:text-white/45 transition-colors underline"
-                  >
+                    className="text-white/25 text-xs mt-2 hover:text-white/45 transition-colors underline">
                     Aún no tengo el material preparado →
                   </button>
                 </div>
@@ -237,21 +299,17 @@ function OnboardingForm() {
                 <div className="bg-[rgba(232,255,71,0.03)] border border-[rgba(232,255,71,0.1)] rounded-xl p-4">
                   <p className="text-[#d4f53c] text-xs font-semibold mb-1">Sin material por ahora</p>
                   <p className="text-white/40 text-xs mb-3">Completaremos el onboarding y te enviaremos instrucciones por email cuando estés listo para subir tu primera grabación.</p>
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => setDrivePendiente(false)}
-                    className="text-white/30 text-xs hover:text-white/50 transition-colors underline"
-                  >
+                    className="text-white/30 text-xs hover:text-white/50 transition-colors underline">
                     ← Tengo el enlace ahora
                   </button>
                 </div>
               )}
 
-              {/* Campo único de instrucciones */}
+              {/* Campo instrucciones unificado */}
               <div>
-                <label className={labelCls}>
-                  Instrucciones para la edición <span className="text-white/20 font-normal">(opcional)</span>
-                </label>
+                <label className={labelCls}>Instrucciones para la edición <span className="text-white/20 font-normal">(opcional)</span></label>
                 <textarea rows={3}
                   placeholder="Estilo de subtítulos, música, ritmo de cortes, cosas a evitar, cualquier detalle que debamos saber..."
                   value={form.instrucciones}
@@ -263,7 +321,7 @@ function OnboardingForm() {
               {/* Bloque plazos */}
               <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.12)] rounded-xl p-4 text-xs text-white/40 space-y-1.5">
                 <p className="text-[#d4f53c] font-semibold mb-2">⏱️ Sobre los plazos</p>
-                <p>El plazo de entrega empieza cuando recibimos y <strong className="text-white/60">validamos</strong> tu material, no desde el pago.</p>
+                <p>El plazo empieza cuando recibimos y <strong className="text-white/60">validamos</strong> tu material, no desde el pago.</p>
                 <p>Si el material no cumple los requisitos mínimos de calidad, te avisamos antes de empezar.</p>
               </div>
 
