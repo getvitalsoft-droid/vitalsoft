@@ -8,9 +8,11 @@ interface Venta {
 }
 interface AgenteData {
   id: string; nombre: string; email: string; codigo: string; creado_at: string;
-  aprobado: boolean; bloqueado: boolean; pausado?: boolean; pausado_hasta?: string;
+  aprobado: boolean; bloqueado: boolean;
+  estado_agente?: string; ausente_hasta?: string;
   ultimo_acceso?: string; ultimo_reporte?: string;
   metodo_cobro?: string; datos_cobro?: string; contacto_alternativo?: string;
+  reportes_sin_rellenar?: number;
   ventas?: Venta[];
 }
 
@@ -30,6 +32,154 @@ function buildLinks(codigo: string) {
 type Tab = "inicio" | "links" | "ventas" | "ajustes" | "docs";
 
 const METODOS_COBRO = ["Bizum", "Transferencia bancaria", "PayPal", "Revolut", "Otro"];
+
+function AjustesCobro({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [metodo, setMetodo] = useState(agente.metodo_cobro || "");
+  const [datos, setDatos] = useState(agente.datos_cobro || "");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "actualizar_perfil", metodo_cobro: metodo, datos_cobro: datos }),
+    });
+    if (res.ok) { const d = await res.json(); if (d.agente) onSave(d.agente); setOk(true); setTimeout(() => setOk(false), 2500); }
+    setSaving(false);
+  };
+
+  const inp = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20";
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-1">Método de cobro de comisiones</p>
+      {agente.metodo_cobro && !metodo && (
+        <p className="text-white/30 text-xs mb-3">Actual: <span className="text-white/50">{agente.metodo_cobro} · {agente.datos_cobro}</span></p>
+      )}
+      {!agente.metodo_cobro && <p className="text-white/25 text-xs mb-3">Indícanos cómo quieres recibir tus comisiones cuando se liberen.</p>}
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {METODOS_COBRO.map(m => (
+          <button key={m} type="button" onClick={() => { setMetodo(m); setDatos(m === agente.metodo_cobro ? (agente.datos_cobro || "") : ""); }}
+            className={`text-xs px-3 py-2 rounded-lg border transition-all ${metodo === m ? "border-[#d4f53c] bg-[rgba(232,255,71,0.06)] text-[#d4f53c]" : "border-white/10 text-white/40 hover:border-white/20"}`}>
+            {m}
+          </button>
+        ))}
+      </div>
+      {metodo && (
+        <div className="space-y-2">
+          <input type="text"
+            placeholder={metodo === "Bizum" ? "Número de teléfono" : metodo === "PayPal" || metodo === "Revolut" ? "Email o usuario" : metodo === "Transferencia bancaria" ? "IBAN (ES00 0000 ...)" : "Datos de contacto para el pago"}
+            value={datos} onChange={e => setDatos(e.target.value)} className={inp} />
+          {ok && <p className="text-[#d4f53c] text-xs">✓ Guardado</p>}
+          <button onClick={save} disabled={saving || !datos.trim()}
+            className="w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
+            {saving ? "Guardando..." : "Guardar método de cobro"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AjustesContacto({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [contacto, setContacto] = useState(agente.contacto_alternativo || "");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "actualizar_perfil", contacto_alternativo: contacto }),
+    });
+    if (res.ok) { const d = await res.json(); if (d.agente) onSave(d.agente); setOk(true); setTimeout(() => setOk(false), 2500); }
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-1">Contacto alternativo</p>
+      <p className="text-white/30 text-xs mb-3">WhatsApp, Telegram, teléfono o email secundario para contactarte si es urgente.</p>
+      {agente.contacto_alternativo && <p className="text-white/30 text-xs mb-2">Actual: <span className="text-white/50">{agente.contacto_alternativo}</span></p>}
+      <input type="text" placeholder="+34 600 000 000 (WhatsApp) o email@alternativo.com"
+        value={contacto} onChange={e => setContacto(e.target.value)}
+        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 mb-2" />
+      {ok && <p className="text-[#d4f53c] text-xs mb-2">✓ Guardado</p>}
+      <button onClick={save} disabled={saving || !contacto.trim()}
+        className="w-full py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-white/60 font-display font-bold rounded-xl text-sm transition-all disabled:opacity-40">
+        {saving ? "Guardando..." : "Guardar contacto"}
+      </button>
+    </div>
+  );
+}
+
+function AjustesAusencia({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [hasta, setHasta] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+  const estaAusente = agente.estado_agente === "ausente" && agente.ausente_hasta;
+
+  const marcarAusente = async () => {
+    if (!hasta) return;
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "ausente", ausente_hasta: new Date(hasta).toISOString() }),
+    });
+    if (res.ok) { const d = await res.json(); if (d.agente) onSave({ ...agente, estado_agente: "ausente", ausente_hasta: new Date(hasta).toISOString() }); setOk(true); setTimeout(() => setOk(false), 2500); }
+    setSaving(false);
+  };
+
+  const volverActivo = async () => {
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "volver_ausente" }),
+    });
+    if (res.ok) onSave({ ...agente, estado_agente: "activo", ausente_hasta: undefined });
+    setSaving(false);
+  };
+
+  // Fecha mínima: mañana
+  const manana = new Date(); manana.setDate(manana.getDate() + 1);
+  const minDate = manana.toISOString().split("T")[0];
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-2">Ausencia temporal</p>
+      {estaAusente ? (
+        <>
+          <p className="text-white/40 text-sm mb-1">Estás marcado como ausente hasta el <span className="text-white/70">{new Date(agente.ausente_hasta!).toLocaleDateString("es-ES", { day: "numeric", month: "long" })}</span>.</p>
+          <p className="text-white/25 text-xs mb-4">Durante este tiempo no recibirás recordatorios de reporte.</p>
+          <button onClick={volverActivo} disabled={saving}
+            className="w-full py-2.5 bg-[#d4f53c] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
+            Ya estoy de vuelta
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="text-white/30 text-xs mb-3">Si sabes que vas a estar ocupado un tiempo, indica hasta cuándo. No recibirás recordatorios durante ese periodo.</p>
+          <div className="flex gap-2 items-center mb-3">
+            <input type="date" min={minDate} value={hasta} onChange={e => setHasta(e.target.value)}
+              className="flex-1 bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors" />
+          </div>
+          {ok && <p className="text-[#d4f53c] text-xs mb-2">✓ Guardado</p>}
+          <button onClick={marcarAusente} disabled={saving || !hasta}
+            className="w-full py-2.5 border border-white/10 text-white/40 font-display font-bold rounded-xl text-sm hover:border-white/20 transition-all disabled:opacity-40">
+            Marcar como ausente
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function AgentesPage() {
 
 function AjustesCobro({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
   const [metodo, setMetodo] = useState(agente.metodo_cobro || "");
@@ -190,19 +340,6 @@ export default function AgentesPage() {
     setLoading(false);
   };
 
-  const togglePausa = async () => {
-    if (!token || !agente) return;
-    const accion = agente.pausado ? "reactivar" : "pausar";
-    setLoading(true);
-    const res = await fetch("/api/agentes/activity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-agente-token": token },
-      body: JSON.stringify({ accion }),
-    });
-    if (res.ok) setAgente(a => a ? { ...a, pausado: !a.pausado } : a);
-    setLoading(false);
-  };
-
   if (!mounted) return <main className="min-h-screen bg-[#080808]" />;
 
   const links = agente ? buildLinks(agente.codigo) : null;
@@ -277,8 +414,11 @@ export default function AgentesPage() {
             <div className="font-display font-black text-lg"><span className="text-[#d4f53c]">Vital</span><span className="text-white/70">Soft</span></div>
             <div className="text-white/40 text-xs mt-0.5">Hola, <span className="text-white/70">{agente.nombre}</span> · Código: <span className="text-[#d4f53c] font-mono">{agente.codigo}</span></div>
           </div>
-          {agente.pausado && (
-            <span className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-3 py-1 rounded-full font-semibold">En pausa</span>
+          {agente.estado_agente === "ausente" && (
+            <span className="bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-xs px-3 py-1 rounded-full font-semibold">Ausente temporalmente</span>
+          )}
+          {agente.estado_agente === "inactivo" && (
+            <span className="bg-white/10 border border-white/20 text-white/50 text-xs px-3 py-1 rounded-full font-semibold">Cuenta inactiva</span>
           )}
         </div>
 
@@ -315,7 +455,7 @@ export default function AgentesPage() {
                 <p className="text-white/60 text-xs font-semibold">Reporte semanal</p>
                 <span className="text-white/20 text-[10px]">Se espera cada lunes</span>
               </div>
-              <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. 4 semanas sin reportar = cuenta inactiva automáticamente.</p>
+              <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. Contactos, leads, preguntas... lo que sea. Si no tienes novedades, también puedes indicarlo.</p>
               <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 mb-3">
                 <p className="text-white/20 text-[10px] uppercase tracking-widest mb-2">Plantilla de ejemplo</p>
                 <p className="text-white/30 text-xs italic leading-relaxed">
@@ -339,7 +479,7 @@ export default function AgentesPage() {
               <p>· 20% del primer mes de cada cliente que contrates</p>
               <p>· Periodo de retención de 14 días desde el pago</p>
               <p>· La comisión se libera automáticamente después de 14 días</p>
-              <p>· Las cuentas sin actividad durante 60+ días pasan a inactivas</p>
+
             </div>
           </div>
         )}
@@ -429,31 +569,12 @@ export default function AgentesPage() {
             {/* Contacto alternativo */}
             <AjustesContacto agente={agente} token={token} onSave={a => setAgente(a)} />
 
-            {/* Pausa */}
-            <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
-              <p className="text-white/60 text-xs font-semibold mb-2">Estado de actividad</p>
-              {agente.pausado ? (
-                <>
-                  <p className="text-white/40 text-sm mb-4">Tu cuenta está en pausa. No generarás comisiones hasta que te reactives.</p>
-                  <button onClick={togglePausa} disabled={loading}
-                    className="w-full py-2.5 bg-[#d4f53c] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
-                    Reactivar cuenta
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p className="text-white/40 text-sm mb-4">Si vas a tomarte un descanso, puedes pausar tu cuenta temporalmente.</p>
-                  <button onClick={togglePausa} disabled={loading}
-                    className="w-full py-2.5 border border-white/10 text-white/40 font-display font-bold rounded-xl text-sm hover:border-white/20 transition-all disabled:opacity-40">
-                    Pausar mi cuenta
-                  </button>
-                </>
-              )}
-            </div>
+            {/* Ausencia temporal */}
+            <AjustesAusencia agente={agente} token={token} onSave={a => setAgente(a)} />
 
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 text-xs text-white/30 space-y-1">
-              <p>· Las cuentas con 4 reportes semanales consecutivos sin rellenar pasan automáticamente a inactivas</p>
-              <p>· Para reactivar una cuenta inactiva, escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Reactivación cuenta agente&body=Hola, quiero reactivar mi cuenta de agente.%0A%0AMi código: " target="_blank" rel="noopener noreferrer" className="text-white/50 underline">hola@vitalsoft.pro</a></p>
+              <p>· Si en algún momento quieres tomarte un descanso, márcalo como ausente y no recibirás recordatorios durante ese periodo.</p>
+              <p>· Si necesitas cualquier cosa, escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Duda cuenta agente&body=Hola, soy agente VitalSoft. Mi email: " target="_blank" rel="noopener noreferrer" className="text-white/50 underline">hola@vitalsoft.pro</a></p>
             </div>
           </div>
         )}
@@ -531,10 +652,10 @@ export default function AgentesPage() {
                   <p className="text-white/70 font-semibold mb-2">Reglas importantes</p>
                   <ul className="space-y-1">
                     {[
-                      "No hagas promesas de resultados, viralidad o crecimiento — VitalSoft no lo garantiza.",
+                      "No prometas resultados garantizados ni viralidad — VitalSoft ofrece producción de clips, no crecimiento asegurado.",
                       "No compartas tu código con personas que no sean clientes reales — las ventas inválidas se invalidan.",
                       "Envía un reporte de actividad desde este portal al menos una vez al mes.",
-                      "Los reportes semanales son obligatorios (cada lunes). 4 semanas sin reportar = cuenta inactiva automáticamente.",
+                      "Los reportes semanales son cada lunes. Si pasas 3 semanas sin reportar tu cuenta pasa a inactiva, pero puedes reactivarla cuando quieras.",
                     ].map(r => (
                       <li key={r} className="flex gap-2"><span className="text-red-400/60">·</span>{r}</li>
                     ))}
