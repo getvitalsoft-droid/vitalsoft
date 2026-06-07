@@ -193,6 +193,8 @@ export default function AgentesPage() {
   const [tab, setTab] = useState<Tab>("inicio");
   const [reporte, setReporte] = useState("");
   const [reporteOk, setReporteOk] = useState(false);
+  const [reporteEnviado, setReporteEnviado] = useState("");
+  const [editandoReporte, setEditandoReporte] = useState(false);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -264,6 +266,16 @@ export default function AgentesPage() {
     setCopied(key); setTimeout(() => setCopied(""), 2000);
   };
 
+  // Detectar si ya reportó esta semana
+  const yaReportoEstaSemana = (() => {
+    if (!agente?.ultimo_reporte) return false;
+    const hoy = new Date();
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
+    lunes.setHours(0, 0, 0, 0);
+    return new Date(agente.ultimo_reporte) >= lunes;
+  })();
+
   const sendReporte = async () => {
     if (!reporte.trim() || !token) return;
     setLoading(true);
@@ -272,7 +284,14 @@ export default function AgentesPage() {
       headers: { "Content-Type": "application/json", "x-agente-token": token },
       body: JSON.stringify({ accion: "reporte", mensaje: reporte }),
     });
-    if (res.ok) { setReporteOk(true); setReporte(""); setTimeout(() => setReporteOk(false), 3000); }
+    if (res.ok) {
+      setReporteEnviado(reporte);
+      setReporteOk(true);
+      setEditandoReporte(false);
+      setReporte("");
+      setAgente(a => a ? { ...a, ultimo_reporte: new Date().toISOString() } : a);
+      setTimeout(() => setReporteOk(false), 3000);
+    }
     setLoading(false);
   };
 
@@ -439,22 +458,67 @@ export default function AgentesPage() {
                 <p className="text-white/60 text-xs font-semibold">Reporte semanal</p>
                 <span className="text-white/20 text-[10px]">Se espera cada lunes</span>
               </div>
-              <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. Contactos, leads, preguntas... lo que sea. Si no tienes novedades, también puedes indicarlo.</p>
-              <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 mb-3">
-                <p className="text-white/20 text-[10px] uppercase tracking-widest mb-2">Plantilla de ejemplo</p>
-                <p className="text-white/30 text-xs italic leading-relaxed">
-                  "Esta semana contacté con [número] personas. [Nombre/perfil] mostró interés en el plan Growth para su podcast. Pendiente de enviarle el link. Sin cierres esta semana. Para la próxima semana planeo contactar con [perfil objetivo]."
-                </p>
-              </div>
-              <textarea rows={4}
-                placeholder={"Esta semana contacté con X personas. [Nombre] mostró interés en el plan Growth para su podcast...\nPendiente: enviar link a [nombre].\nPara la próxima semana: contactar con..."}
-                value={reporte} onChange={e => setReporte(e.target.value)}
-                className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 resize-none mb-3" />
-              {reporteOk && <p className="text-[#d4f53c] text-xs mb-2">✓ Reporte enviado correctamente</p>}
-              <button onClick={sendReporte} disabled={loading || !reporte.trim()}
-                className="w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
-                Enviar reporte
-              </button>
+
+              {/* Ya reportó esta semana y no está editando */}
+              {(yaReportoEstaSemana || reporteEnviado) && !editandoReporte ? (
+                <div>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[#d4f53c] text-xs font-semibold">✓ Reporte de esta semana enviado</span>
+                  </div>
+                  {reporteEnviado && (
+                    <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg px-4 py-3 mb-3">
+                      <p className="text-white/45 text-xs leading-relaxed whitespace-pre-wrap">{reporteEnviado}</p>
+                    </div>
+                  )}
+                  {!reporteEnviado && (
+                    <p className="text-white/25 text-xs mb-3">Ya enviaste tu reporte esta semana.</p>
+                  )}
+                  <button
+                    onClick={() => { setEditandoReporte(true); setReporte(reporteEnviado); }}
+                    className="text-white/30 text-xs underline hover:text-white/50 transition-colors">
+                    Editar o añadir información →
+                  </button>
+                </div>
+              ) : (
+                /* Formulario de reporte */
+                <div>
+                  <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. Contactos, leads, preguntas... lo que sea.</p>
+                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 mb-3">
+                    <p className="text-white/20 text-[10px] uppercase tracking-widest mb-2">Plantilla de ejemplo</p>
+                    <p className="text-white/30 text-xs italic leading-relaxed">
+                      "Esta semana contacté con [X] personas. [Nombre] mostró interés en el plan Growth. Pendiente de enviarle el link. Para la próxima semana planeo contactar con [perfil]."
+                    </p>
+                  </div>
+                  <textarea rows={4}
+                    placeholder={"Esta semana contacté con X personas...\nPendiente: enviar link a [nombre].\nPara la próxima semana: ..."}
+                    value={reporte} onChange={e => setReporte(e.target.value)}
+                    className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 resize-none mb-3" />
+                  {reporteOk && <p className="text-[#d4f53c] text-xs mb-2">✓ Reporte enviado correctamente</p>}
+                  <div className="flex gap-2">
+                    {editandoReporte && (
+                      <button onClick={() => { setEditandoReporte(false); setReporte(""); }}
+                        className="flex-1 py-2.5 border border-white/10 text-white/30 font-display font-bold rounded-xl text-sm">
+                        Cancelar
+                      </button>
+                    )}
+                    <button onClick={sendReporte} disabled={loading || !reporte.trim()}
+                      className="flex-1 py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
+                      {editandoReporte ? "Actualizar reporte" : "Enviar reporte"}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Dudas o preguntas */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
+              <p className="text-white/50 text-xs font-semibold mb-2">¿Tienes dudas o preguntas?</p>
+              <p className="text-white/30 text-xs mb-3">Escríbenos por el mismo medio en el que siempre hablamos o mándanos un email.</p>
+              <a href={`mailto:hola@vitalsoft.pro?subject=Duda agente ${agente?.codigo || ""}&body=Hola, soy ${agente?.nombre || "agente"} y tengo una pregunta:%0A%0A`}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-white/40 hover:text-white/70 text-xs underline transition-colors">
+                hola@vitalsoft.pro →
+              </a>
             </div>
 
             {/* Info comisiones */}
