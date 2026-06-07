@@ -5,7 +5,7 @@ interface Reporte {
   id: string;
   admin: string;
   detalle: string;
-  created_at: string;
+  creado_at: string;
   objetivo_id: string;
 }
 
@@ -21,7 +21,7 @@ export default function ReportesTab({ token }: { token: string }) {
   const [vista, setVista] = useState<"agentes" | "recientes">("agentes");
 
   useEffect(() => {
-    fetch("/api/admin/reportes-agentes", { headers: { "x-admin-token": token } })
+    fetch("/api/admin/reportes-agentes", { headers: { "Authorization": `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => {
         // Agrupar por agente
@@ -33,8 +33,8 @@ export default function ReportesTab({ token }: { token: string }) {
         const agrupados = Object.entries(mapa)
           .map(([email, reportes]) => ({ email, reportes }))
           .sort((a, b) => {
-            const ultimaA = new Date(a.reportes[0]?.created_at || 0).getTime();
-            const ultimaB = new Date(b.reportes[0]?.created_at || 0).getTime();
+            const ultimaA = new Date(a.reportes[0]?.creado_at || 0).getTime();
+            const ultimaB = new Date(b.reportes[0]?.creado_at || 0).getTime();
             return ultimaB - ultimaA;
           });
         setDatos(agrupados);
@@ -82,7 +82,7 @@ export default function ReportesTab({ token }: { token: string }) {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-white/25 text-xs">
-                    Último: {new Date(reportes[0].created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
+                    Último: {new Date(reportes[0].creado_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}
                   </span>
                   <span className={`text-white/30 text-xs transition-transform ${expandido === email ? "rotate-180" : ""}`}>▼</span>
                 </div>
@@ -92,7 +92,7 @@ export default function ReportesTab({ token }: { token: string }) {
                   {reportes.map(r => (
                     <div key={r.id} className="px-4 py-3">
                       <div className="text-white/25 text-xs mb-1.5">
-                        {new Date(r.created_at).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · {new Date(r.created_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
+                        {new Date(r.creado_at).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} · {new Date(r.creado_at).toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" })}
                       </div>
                       <p className="text-white/55 text-sm leading-relaxed whitespace-pre-wrap">{r.detalle}</p>
                     </div>
@@ -109,14 +109,14 @@ export default function ReportesTab({ token }: { token: string }) {
         <div className="space-y-3">
           {datos
             .flatMap(a => a.reportes.map(r => ({ ...r, email: a.email })))
-            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .sort((a, b) => new Date(b.creado_at).getTime() - new Date(a.creado_at).getTime())
             .slice(0, 50)
             .map(r => (
               <div key={r.id} className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <span className="text-white/60 text-sm font-semibold">{r.email}</span>
                   <span className="text-white/25 text-xs flex-shrink-0">
-                    {new Date(r.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                    {new Date(r.creado_at).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
                   </span>
                 </div>
                 <p className="text-white/50 text-sm leading-relaxed whitespace-pre-wrap">{r.detalle}</p>
