@@ -179,8 +179,6 @@ function AjustesAusencia({ agente, token, onSave }: { agente: AgenteData; token:
   );
 }
 
-export default function AgentesPage() {
-
 function AjustesCobro({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
   const [metodo, setMetodo] = useState(agente.metodo_cobro || "");
   const [datos, setDatos] = useState(agente.datos_cobro || "");
@@ -372,7 +370,7 @@ export default function AgentesPage() {
             <input type="email" placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} required className={inp} />
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50">
-              {loading ? "Enviando..." : "Enviar enlace de acceso →"}
+              {loading ? "Enviando..." : "Enviar enlace →"}
             </button>
           </form>
           <p className="text-center text-white/20 text-xs mt-4">¿No eres agente? <a href="mailto:hola@vitalsoft.pro?subject=Quiero ser agente VitalSoft&body=Hola, me interesa formar parte de la red de agentes de VitalSoft.%0A%0AMi nombre: %0AMi email: %0ACómo llegué a VitalSoft: " target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">Solicita acceso</a></p>

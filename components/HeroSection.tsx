@@ -40,11 +40,11 @@ export default function HeroSection() {
 
         <motion.div {...fadeUp(0.3)} className="flex gap-4 justify-center flex-wrap">
           <a href="#precios" onClick={(e) => { e.preventDefault(); document.getElementById("precios")?.scrollIntoView({ behavior: "smooth" }); }}
-            className="bg-accent hover:bg-accent-2 text-[#080808] font-display font-bold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(232,255,71,0.3)]">
+            className="bg-accent hover:bg-accent-2 text-[#080808] font-display font-bold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(232,255,71,0.3)] whitespace-nowrap">
             Ver planes →
           </a>
           <a href="#calculadora" onClick={(e) => { e.preventDefault(); document.getElementById("calculadora")?.scrollIntoView({ behavior: "smooth" }); }}
-            className="bg-transparent border border-white/15 hover:border-white/30 text-white/80 font-display font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5">
+            className="bg-transparent border border-white/15 hover:border-white/30 text-white/80 font-display font-semibold px-8 py-3.5 rounded-xl transition-all duration-200 hover:-translate-y-0.5 whitespace-nowrap">
             Calcular mi plan
           </a>
         </motion.div>
