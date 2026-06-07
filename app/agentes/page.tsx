@@ -261,31 +261,7 @@ export default function AgentesPage() {
     setLoading(false);
   };
 
-  const cargarYEditar = async () => {
-    if (reporteEnviado) {
-      setReporte(reporteEnviado);
-      setEditandoReporte(true);
-      return;
-    }
-    setLoading(true);
-    const res = await fetch("/api/agentes/activity", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-agente-token": token },
-      body: JSON.stringify({ accion: "obtener_ultimo_reporte" }),
-    });
-    if (res.ok) {
-      const d = await res.json();
-      setReporteEnviado(d.texto || "");
-      setReporte(d.texto || "");
-    }
-    setEditandoReporte(true);
-    setLoading(false);
-  };
-
   const copyLink = (link: string, key: string) => {
-    navigator.clipboard.writeText(link).catch(() => {});
-    setCopied(key); setTimeout(() => setCopied(""), 2000);
-  };
     navigator.clipboard.writeText(link).catch(() => {});
     setCopied(key); setTimeout(() => setCopied(""), 2000);
   };
@@ -316,6 +292,27 @@ export default function AgentesPage() {
       setAgente(a => a ? { ...a, ultimo_reporte: new Date().toISOString() } : a);
       setTimeout(() => setReporteOk(false), 3000);
     }
+    setLoading(false);
+  };
+
+  const cargarYEditar = async () => {
+    if (reporteEnviado) {
+      setReporte(reporteEnviado);
+      setEditandoReporte(true);
+      return;
+    }
+    setLoading(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "obtener_ultimo_reporte" }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setReporteEnviado(d.texto || "");
+      setReporte(d.texto || "");
+    }
+    setEditandoReporte(true);
     setLoading(false);
   };
 
@@ -351,7 +348,7 @@ export default function AgentesPage() {
             <input type="email" placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} required className={inp} />
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50">
-              {loading ? "Enviando..." : "Enviar enlace →"}
+              {loading ? "Enviando..." : "Enviar enlace de acceso →"}
             </button>
           </form>
           <p className="text-center text-white/20 text-xs mt-4">
@@ -361,6 +358,18 @@ export default function AgentesPage() {
             </button>
           </p>
         </div>
+      </div>
+    </main>
+  );
+
+  // ── Email enviado ─────────────────────────────────────────────────────────────
+  if (step === "pending") return (
+    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="text-4xl mb-4">📬</div>
+        <h2 className="font-display font-bold text-xl mb-2">Revisa tu email</h2>
+        <p className="text-white/40 text-sm mb-6">Si tu email está registrado como agente activo, recibirás el enlace en unos segundos.</p>
+        <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver</button>
       </div>
     </main>
   );
@@ -404,18 +413,6 @@ export default function AgentesPage() {
         <h2 className="font-display font-bold text-xl mb-2">Solicitud recibida</h2>
         <p className="text-white/40 text-sm mb-6">Revisamos tu solicitud y te avisamos en 24–48h con tu acceso y código de agente.</p>
         <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver al acceso</button>
-      </div>
-    </main>
-  );
-
-  // ── Email enviado ─────────────────────────────────────────────────────────────
-  if (step === "pending") return (
-    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
-      <div className="text-center max-w-sm">
-        <div className="text-4xl mb-4">📬</div>
-        <h2 className="font-display font-bold text-xl mb-2">Revisa tu email</h2>
-        <p className="text-white/40 text-sm mb-6">Si tu email está registrado como agente activo, recibirás el enlace en unos segundos.</p>
-        <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver</button>
       </div>
     </main>
   );
@@ -483,7 +480,6 @@ export default function AgentesPage() {
                 <span className="text-white/20 text-[10px]">Se espera cada lunes</span>
               </div>
 
-              {/* Ya reportó esta semana y no está editando */}
               {(yaReportoEstaSemana || reporteEnviado) && !editandoReporte ? (
                 <div>
                   <div className="flex items-center gap-2 mb-3">
@@ -505,7 +501,6 @@ export default function AgentesPage() {
                   </button>
                 </div>
               ) : (
-                /* Formulario de reporte */
                 <div>
                   <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. Contactos, leads, preguntas... lo que sea.</p>
                   <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 mb-3">
