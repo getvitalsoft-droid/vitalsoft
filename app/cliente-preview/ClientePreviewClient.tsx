@@ -42,18 +42,7 @@ const ESTADO_COLOR: Record<string, string> = {
 };
 
 export default function ClientePreviewClient() {
-  // Check access key client-side
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    const key = params.get("key");
-    // Allow if key matches OR if running on localhost
-    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
-    if (!isLocal && !key) {
-      // No key provided — redirect to home
-      window.location.href = "/";
-      return null;
-    }
-  }
+  // Preview libre — sin contraseña ni key requerida
 
   const data = MOCK_DATA;
   const { order, creditos, refLink } = data;

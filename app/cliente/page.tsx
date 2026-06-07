@@ -86,6 +86,12 @@ function ClientePortal({ token }: { token: string }) {
   const headers = { "Content-Type": "application/json", "x-cliente-token": token };
 
   const loadData = useCallback(async () => {
+    // Detectar cookies deshabilitadas antes de hacer la llamada
+    if (typeof navigator !== "undefined" && !navigator.cookieEnabled) {
+      setError("cookies_disabled");
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch("/api/cliente/portal", { headers: { "x-cliente-token": token } });
       if (!res.ok) { setError("Sesión expirada. Solicita un nuevo enlace."); return; }
@@ -155,6 +161,28 @@ function ClientePortal({ token }: { token: string }) {
   if (loading) return (
     <div className="min-h-screen bg-[#080808] flex items-center justify-center">
       <Loader2 className="animate-spin text-accent" size={32} />
+    </div>
+  );
+
+  if (error === "cookies_disabled") return (
+    <div className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="text-4xl mb-5">🍪</div>
+        <h2 className="font-display font-bold text-xl mb-3 text-white">Activa las cookies para continuar</h2>
+        <p className="text-white/45 text-sm leading-relaxed mb-6">
+          Tu navegador tiene las cookies bloqueadas. El portal de cliente necesita cookies para verificar tu sesión de forma segura.
+        </p>
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4 text-left text-xs text-white/35 space-y-2 mb-6">
+          <p className="text-white/55 font-semibold mb-2">Cómo activarlas:</p>
+          <p>· <strong className="text-white/50">Chrome / Edge:</strong> Configuración → Privacidad → Cookies → Permitir todas</p>
+          <p>· <strong className="text-white/50">Firefox:</strong> Ajustes → Privacidad → Protección estándar</p>
+          <p>· <strong className="text-white/50">Safari:</strong> Preferencias → Privacidad → desactiva "Bloquear todas las cookies"</p>
+        </div>
+        <button onClick={() => window.location.reload()}
+          className="bg-accent text-[#080808] font-display font-black px-6 py-3 rounded-xl text-sm hover:bg-accent-2 transition-all">
+          Reintentar →
+        </button>
+      </div>
     </div>
   );
 
