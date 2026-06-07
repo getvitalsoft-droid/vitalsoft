@@ -298,13 +298,15 @@ export async function POST(req: NextRequest) {
         const periodo = invoice.period_end ? new Date(invoice.period_end * 1000).toLocaleDateString("es-ES") : "";
 
         let orderRenovado = null;
+        let clipsRenovacion: number | null = null;
         if (invoice.subscription) {
           const { data } = await supabase.from("orders")
             .update({ estado: "esperando_material", revisiones_usadas: 0 })
             .eq("stripe_subscription_id", String(invoice.subscription))
             .neq("estado", "cancelado")
-            .select("id, stripe_customer_id, cliente_nombre").single();
+            .select("id, stripe_customer_id, cliente_nombre, clips").single();
           orderRenovado = data;
+          clipsRenovacion = data?.clips || null;
         }
 
         // Pedir reseña en renovaciones (si no se ha pedido antes y REVIEW_URL configurado)
@@ -324,7 +326,13 @@ export async function POST(req: NextRequest) {
 
         await log("renovacion", `invoice:${invoice.id}`, "invoice");
         await log("renovacion_cliente", `${clienteEmail} · €${importe}`);
-        await sendEmail(() => enviarEmailClienteRenovacion({ email: clienteEmail, plan: "Plan VitalSoft", importe, periodo }), clienteEmail, "cliente_renovacion", event.type);
+        await sendEmail(() => enviarEmailClienteRenovacion({
+          email: clienteEmail,
+          plan: "Plan VitalSoft",
+          importe,
+          periodo,
+          clips: clipsRenovacion,
+        }), clienteEmail, "cliente_renovacion", event.type);
         break;
       }
 

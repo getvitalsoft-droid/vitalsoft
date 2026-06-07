@@ -99,17 +99,51 @@ export async function enviarEmailClientePagoRealizado({
   });
 }
 
+/** Disparado por: order pasa a completado */
+export async function enviarEmailClienteEntregaCompletada({
+  email, nombre, plan, driveFolder, completions,
+}: {
+  email: string; nombre?: string; plan: string; driveFolder?: string | null; completions?: number;
+}) {
+  const esRepeat = (completions || 0) > 1;
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">
+      Hola${nombre ? ` <strong>${nombre}</strong>` : ""}, tus clips están listos.
+    </p>
+    ${CARD(`
+      ${ROW("Plan", plan)}
+      ${ROW("Estado", "Entregados ✓", true)}
+      ${esRepeat ? ROW("Entrega número", String(completions)) : ""}
+    `)}
+    <p style="font-size:13px;color:#888;line-height:1.7;margin:16px 0">
+      Puedes encontrar todos los clips en tu carpeta de Google Drive. Revísalos y si necesitas algún ajuste, 
+      solicítalo desde tu portal de cliente — los ajustes están incluidos en tu plan.
+    </p>
+    ${driveFolder ? BTN("Ver mis clips en Drive →", driveFolder) : ""}
+    <p style="font-size:12px;color:#444;margin-top:16px">
+      ¿Tienes dudas sobre los clips? Responde a este email o escríbenos a 
+      <a href="mailto:${ADMIN_EMAIL}" style="color:#d4f53c">${ADMIN_EMAIL}</a>
+    </p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `🎬 Tus clips están listos — VitalSoft`,
+    html: WRAP(HEADER("¡Tus clips están listos!", `Hola${nombre ? ` ${nombre}` : ""}, ya puedes publicar.`, "🎬"), body),
+  });
+}
+
 /** Disparado por: invoice.paid (renovaciones) */
 export async function enviarEmailClienteRenovacion({
-  email, plan, importe, periodo,
+  email, plan, importe, periodo, clips,
 }: {
-  email: string; plan: string; importe: number; periodo: string;
+  email: string; plan: string; importe: number; periodo: string; clips?: number | null;
 }) {
   const body = `
     ${CARD(`
       ${ROW("Plan", plan)}
       ${ROW("Renovado hasta", periodo)}
       ${ROW("Importe", `€${importe}`, true)}
+      ${clips ? ROW("Clips disponibles este mes", `${clips} clips`, true) : ""}
     `)}
     <p style="font-size:13px;color:#888;line-height:1.7">
       Tu suscripción se ha renovado correctamente. Puedes subir nuevo material a tu carpeta Drive en cualquier momento.

@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import {
   enviarEmailClientePausada, enviarEmailClienteReactivada,
-  enviarEmailAdminClientePausado,
+  enviarEmailAdminClientePausado, enviarEmailClienteEntregaCompletada,
 } from "@/lib/emails";
 
 const supabaseAdmin = createClient(
@@ -78,6 +78,17 @@ export async function PATCH(req: NextRequest) {
     const { data, error } = await supabaseAdmin.from("orders").update(updates).eq("id", order_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await log(`estado_${estado}`, motivo);
+
+    // Si completado → email de entrega al cliente
+    if (estado === "completado" && data.cliente_email) {
+      await enviarEmailClienteEntregaCompletada({
+        email: data.cliente_email,
+        nombre: data.cliente_nombre,
+        plan: data.plan || "Plan VitalSoft",
+        driveFolder: data.drive_folder || null,
+        completions: data.review_completions || 1,
+      }).catch(console.error);
+    }
 
     // Si material inválido → email al cliente
     if (estado === "material_invalido" && data.cliente_email) {

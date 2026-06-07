@@ -5,6 +5,10 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/cron/onboarding-reminder",
+      "schedule": "0 10 * * *"
+    },
+    {
       "path": "/api/cron/recuperacion",
       "schedule": "0 10 * * 1"
     },
