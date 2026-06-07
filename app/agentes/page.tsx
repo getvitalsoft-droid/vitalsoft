@@ -261,7 +261,31 @@ export default function AgentesPage() {
     setLoading(false);
   };
 
+  const cargarYEditar = async () => {
+    if (reporteEnviado) {
+      setReporte(reporteEnviado);
+      setEditandoReporte(true);
+      return;
+    }
+    setLoading(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "obtener_ultimo_reporte" }),
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setReporteEnviado(d.texto || "");
+      setReporte(d.texto || "");
+    }
+    setEditandoReporte(true);
+    setLoading(false);
+  };
+
   const copyLink = (link: string, key: string) => {
+    navigator.clipboard.writeText(link).catch(() => {});
+    setCopied(key); setTimeout(() => setCopied(""), 2000);
+  };
     navigator.clipboard.writeText(link).catch(() => {});
     setCopied(key); setTimeout(() => setCopied(""), 2000);
   };
@@ -474,9 +498,10 @@ export default function AgentesPage() {
                     <p className="text-white/25 text-xs mb-3">Ya enviaste tu reporte esta semana.</p>
                   )}
                   <button
-                    onClick={() => { setEditandoReporte(true); setReporte(reporteEnviado); }}
-                    className="text-white/30 text-xs underline hover:text-white/50 transition-colors">
-                    Editar o añadir información →
+                    onClick={cargarYEditar}
+                    disabled={loading}
+                    className="text-white/30 text-xs underline hover:text-white/50 transition-colors disabled:opacity-50">
+                    {loading ? "Cargando..." : "Editar o añadir información →"}
                   </button>
                 </div>
               ) : (

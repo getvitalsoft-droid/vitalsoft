@@ -43,6 +43,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, agente: updated });
   }
 
+  if (accion === "obtener_ultimo_reporte") {
+    const inicioSemana = new Date();
+    inicioSemana.setDate(inicioSemana.getDate() - ((inicioSemana.getDay() + 6) % 7));
+    inicioSemana.setHours(0, 0, 0, 0);
+    const { data } = await supabase
+      .from("activity_logs")
+      .select("detalle, creado_at")
+      .eq("accion", "reporte_agente")
+      .eq("objetivo_id", agente.id)
+      .gte("creado_at", inicioSemana.toISOString())
+      .order("creado_at", { ascending: false })
+      .limit(1)
+      .single();
+    return NextResponse.json({ ok: true, texto: data?.detalle || "" });
+  }
+
   if (accion === "reporte") {
     if (!mensaje?.trim()) return NextResponse.json({ error: "Mensaje requerido." }, { status: 400 });
     await supabase.from("activity_logs").insert({
