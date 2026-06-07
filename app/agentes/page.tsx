@@ -180,8 +180,9 @@ function AjustesAusencia({ agente, token, onSave }: { agente: AgenteData; token:
 }
 
 export default function AgentesPage() {
-  const [step, setStep] = useState<"magic" | "pending" | "dashboard">("magic");
+  const [step, setStep] = useState<"magic" | "pending" | "dashboard" | "register" | "registered">("magic");
   const [email, setEmail] = useState("");
+  const [nombre, setNombre] = useState("");
   const [token, setToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [agente, setAgente] = useState<AgenteData | null>(null);
@@ -241,6 +242,23 @@ export default function AgentesPage() {
     setLoading(false);
   };
 
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true); setError("");
+    const res = await fetch("/api/agentes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nombre, email }),
+    });
+    const d = await res.json();
+    if (res.ok || res.status === 201) {
+      setStep("registered");
+    } else {
+      setError(d.error || "Error al registrarse.");
+    }
+    setLoading(false);
+  };
+
   const copyLink = (link: string, key: string) => {
     navigator.clipboard.writeText(link).catch(() => {});
     setCopied(key); setTimeout(() => setCopied(""), 2000);
@@ -293,8 +311,56 @@ export default function AgentesPage() {
               {loading ? "Enviando..." : "Enviar enlace →"}
             </button>
           </form>
-          <p className="text-center text-white/20 text-xs mt-4">¿No eres agente? <a href="mailto:hola@vitalsoft.pro?subject=Quiero ser agente VitalSoft&body=Hola, me interesa formar parte de la red de agentes de VitalSoft.%0A%0AMi nombre: %0AMi email: %0ACómo llegué a VitalSoft: " target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">Solicita acceso</a></p>
+          <p className="text-center text-white/20 text-xs mt-4">
+            ¿Quieres ser agente?{" "}
+            <button onClick={() => { setStep("register"); setError(""); }} className="text-white/40 hover:text-white/60 underline">
+              Regístrate aquí
+            </button>
+          </p>
         </div>
+      </div>
+    </main>
+  );
+
+  // ── Formulario de registro ────────────────────────────────────────────────────
+  if (step === "register") return (
+    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <div className="max-w-sm w-full">
+        <div className="text-center mb-8">
+          <div className="font-display font-black text-xl mb-1"><span className="text-[#d4f53c]">Vital</span><span className="text-white/70">Soft</span></div>
+          <p className="text-white/30 text-xs">Portal de Agentes</p>
+        </div>
+        <div className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-7">
+          <h1 className="font-display font-bold text-lg mb-1">Únete como agente</h1>
+          <p className="text-white/35 text-sm mb-6">Gana un 20% de comisión por cada cliente que traigas. Sin permanencia, a tu ritmo.</p>
+          {error && <p className="text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2 mb-4">{error}</p>}
+          <form onSubmit={handleRegister} className="space-y-3">
+            <input type="text" placeholder="Tu nombre" value={nombre} onChange={e => setNombre(e.target.value)} required className={inp} />
+            <input type="email" placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} required className={inp} />
+            <button type="submit" disabled={loading}
+              className="w-full py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50">
+              {loading ? "Enviando..." : "Solicitar acceso →"}
+            </button>
+          </form>
+          <p className="text-center text-white/20 text-xs mt-4">
+            ¿Ya tienes cuenta?{" "}
+            <button onClick={() => { setStep("magic"); setError(""); }} className="text-white/40 hover:text-white/60 underline">
+              Accede aquí
+            </button>
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+
+  // ── Registro completado ───────────────────────────────────────────────────────
+  if (step === "registered") return (
+    <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
+      <div className="text-center max-w-sm">
+        <div className="text-4xl mb-4">✅</div>
+        <h2 className="font-display font-bold text-xl mb-2">Solicitud recibida</h2>
+        <p className="text-white/40 text-sm mb-6">Revisamos tu solicitud y te avisamos en 24–48h con tu acceso y código de agente.</p>
+        <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver al acceso</button>
       </div>
     </main>
   );
