@@ -511,14 +511,15 @@ export default function AgentesPage() {
             </div>
 
             {/* Dudas o preguntas */}
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-5">
-              <p className="text-white/50 text-xs font-semibold mb-2">¿Tienes dudas o preguntas?</p>
-              <p className="text-white/30 text-xs mb-3">Escríbenos por el mismo medio en el que siempre hablamos o mándanos un email.</p>
-              <a href={`mailto:hola@vitalsoft.pro?subject=Duda agente ${agente?.codigo || ""}&body=Hola, soy ${agente?.nombre || "agente"} y tengo una pregunta:%0A%0A`}
-                target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-white/40 hover:text-white/70 text-xs underline transition-colors">
-                hola@vitalsoft.pro →
-              </a>
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4">
+              <p className="text-white/35 text-xs leading-relaxed">
+                ¿Tienes dudas o preguntas? Envíalas por el canal habitual de comunicación o escríbenos a{" "}
+                <a href={`mailto:hola@vitalsoft.pro?subject=Duda agente ${agente?.codigo || ""}&body=Hola, soy ${agente?.nombre || "agente"} y tengo una pregunta:%0A%0A`}
+                  target="_blank" rel="noopener noreferrer"
+                  className="text-white/50 hover:text-white/70 underline transition-colors">
+                  hola@vitalsoft.pro
+                </a>
+              </p>
             </div>
 
             {/* Info comisiones */}
