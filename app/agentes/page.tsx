@@ -10,6 +10,7 @@ interface AgenteData {
   id: string; nombre: string; email: string; codigo: string; creado_at: string;
   aprobado: boolean; bloqueado: boolean; pausado?: boolean; pausado_hasta?: string;
   ultimo_acceso?: string; ultimo_reporte?: string;
+  metodo_cobro?: string; datos_cobro?: string; contacto_alternativo?: string;
   ventas?: Venta[];
 }
 
@@ -27,6 +28,88 @@ function buildLinks(codigo: string) {
 }
 
 type Tab = "inicio" | "links" | "ventas" | "ajustes" | "docs";
+
+const METODOS_COBRO = ["Bizum", "Transferencia bancaria", "PayPal", "Revolut", "Otro"];
+
+function AjustesCobro({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [metodo, setMetodo] = useState(agente.metodo_cobro || "");
+  const [datos, setDatos] = useState(agente.datos_cobro || "");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "actualizar_perfil", metodo_cobro: metodo, datos_cobro: datos }),
+    });
+    if (res.ok) { const d = await res.json(); if (d.agente) onSave(d.agente); setOk(true); setTimeout(() => setOk(false), 2500); }
+    setSaving(false);
+  };
+
+  const inp = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20";
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-3">Método de cobro de comisiones</p>
+      <div className="grid grid-cols-2 gap-2 mb-3">
+        {METODOS_COBRO.map(m => (
+          <button key={m} type="button" onClick={() => setMetodo(m)}
+            className={`text-xs px-3 py-2 rounded-lg border transition-all ${metodo === m ? "border-[#d4f53c] bg-[rgba(232,255,71,0.06)] text-[#d4f53c]" : "border-white/10 text-white/40 hover:border-white/20"}`}>
+            {m}
+          </button>
+        ))}
+      </div>
+      {metodo && (
+        <div className="space-y-2">
+          <input type="text" placeholder={metodo === "Bizum" ? "Número de teléfono" : metodo === "PayPal" || metodo === "Revolut" ? "Email o usuario" : metodo === "Transferencia bancaria" ? "IBAN (ES00 0000 ...)" : "Datos de contacto para el pago"}
+            value={datos} onChange={e => setDatos(e.target.value)} className={inp} />
+          {ok && <p className="text-[#d4f53c] text-xs">✓ Guardado</p>}
+          <button onClick={save} disabled={saving || !datos.trim()}
+            className="w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
+            {saving ? "Guardando..." : "Guardar método de cobro"}
+          </button>
+        </div>
+      )}
+      {!metodo && agente.metodo_cobro && (
+        <p className="text-white/30 text-xs">Método actual: <span className="text-white/50">{agente.metodo_cobro} · {agente.datos_cobro}</span></p>
+      )}
+    </div>
+  );
+}
+
+function AjustesContacto({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [contacto, setContacto] = useState(agente.contacto_alternativo || "");
+  const [saving, setSaving] = useState(false);
+  const [ok, setOk] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "actualizar_perfil", contacto_alternativo: contacto }),
+    });
+    if (res.ok) { const d = await res.json(); if (d.agente) onSave(d.agente); setOk(true); setTimeout(() => setOk(false), 2500); }
+    setSaving(false);
+  };
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-1">Contacto alternativo</p>
+      <p className="text-white/30 text-xs mb-3">WhatsApp, Telegram, teléfono o email secundario. Para contactarte si es urgente.</p>
+      <input type="text" placeholder="+34 600 000 000 (WhatsApp) o email@alternativo.com"
+        value={contacto} onChange={e => setContacto(e.target.value)}
+        className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 mb-2" />
+      {ok && <p className="text-[#d4f53c] text-xs mb-2">✓ Guardado</p>}
+      <button onClick={save} disabled={saving || !contacto.trim()}
+        className="w-full py-2.5 bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-white/60 font-display font-bold rounded-xl text-sm transition-all disabled:opacity-40">
+        {saving ? "Guardando..." : "Guardar contacto"}
+      </button>
+    </div>
+  );
+}
 
 export default function AgentesPage() {
   const [step, setStep] = useState<"magic" | "pending" | "dashboard">("magic");
@@ -155,7 +238,7 @@ export default function AgentesPage() {
               {loading ? "Enviando..." : "Enviar enlace de acceso →"}
             </button>
           </form>
-          <p className="text-center text-white/20 text-xs mt-4">¿No eres agente? <a href="mailto:hola@vitalsoft.pro?subject=Quiero ser agente VitalSoft&body=Hola, me interesa formar parte de la red de agentes de VitalSoft.%0A%0AMi nombre: %0AMi email: %0ACómo llegué a VitalSoft: " className="text-white/40 hover:text-white/60 underline">Solicita acceso</a></p>
+          <p className="text-center text-white/20 text-xs mt-4">¿No eres agente? <a href="mailto:hola@vitalsoft.pro?subject=Quiero ser agente VitalSoft&body=Hola, me interesa formar parte de la red de agentes de VitalSoft.%0A%0AMi nombre: %0AMi email: %0ACómo llegué a VitalSoft: " target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white/60 underline">Solicita acceso</a></p>
         </div>
       </div>
     </main>
@@ -226,14 +309,24 @@ export default function AgentesPage() {
               ))}
             </div>
 
-            {/* Reporte rápido */}
+            {/* Reporte semanal */}
             <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
-              <p className="text-white/60 text-xs font-semibold mb-3">Enviar actualización a VitalSoft</p>
-              <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la prospección, si tienes leads, dudas o cualquier novedad. Mantener el reporte activo evita que tu cuenta pase a inactiva.</p>
-              <textarea rows={3} placeholder="Esta semana contacté con 3 podcasters interesados, uno quiere ver una demo..."
+              <div className="flex items-center justify-between mb-1">
+                <p className="text-white/60 text-xs font-semibold">Reporte semanal</p>
+                <span className="text-white/20 text-[10px]">Se espera cada lunes</span>
+              </div>
+              <p className="text-white/30 text-xs mb-3">Cuéntanos cómo va la semana. 4 semanas sin reportar = cuenta inactiva automáticamente.</p>
+              <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-3 mb-3">
+                <p className="text-white/20 text-[10px] uppercase tracking-widest mb-2">Plantilla de ejemplo</p>
+                <p className="text-white/30 text-xs italic leading-relaxed">
+                  "Esta semana contacté con [número] personas. [Nombre/perfil] mostró interés en el plan Growth para su podcast. Pendiente de enviarle el link. Sin cierres esta semana. Para la próxima semana planeo contactar con [perfil objetivo]."
+                </p>
+              </div>
+              <textarea rows={4}
+                placeholder={"Esta semana contacté con X personas. [Nombre] mostró interés en el plan Growth para su podcast...\nPendiente: enviar link a [nombre].\nPara la próxima semana: contactar con..."}
                 value={reporte} onChange={e => setReporte(e.target.value)}
                 className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 resize-none mb-3" />
-              {reporteOk && <p className="text-[#d4f53c] text-xs mb-2">✓ Reporte enviado</p>}
+              {reporteOk && <p className="text-[#d4f53c] text-xs mb-2">✓ Reporte enviado correctamente</p>}
               <button onClick={sendReporte} disabled={loading || !reporte.trim()}
                 className="w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl text-sm transition-all disabled:opacity-40">
                 Enviar reporte
@@ -321,13 +414,20 @@ export default function AgentesPage() {
         {/* ── TAB AJUSTES ── */}
         {tab === "ajustes" && (
           <div className="space-y-4">
+            {/* Datos cuenta */}
             <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
-              <p className="text-white/60 text-xs font-semibold mb-1">Tu cuenta</p>
-              <p className="text-white/40 text-sm mb-1">{agente.nombre}</p>
+              <p className="text-white/60 text-xs font-semibold mb-3">Tu cuenta</p>
+              <p className="text-white/40 text-sm mb-0.5">{agente.nombre}</p>
               <p className="text-white/25 text-xs">{agente.email}</p>
               {agente.ultimo_acceso && <p className="text-white/20 text-xs mt-2">Último acceso: {new Date(agente.ultimo_acceso).toLocaleString("es-ES")}</p>}
               {agente.ultimo_reporte && <p className="text-white/20 text-xs">Último reporte: {new Date(agente.ultimo_reporte).toLocaleString("es-ES")}</p>}
             </div>
+
+            {/* Método de cobro */}
+            <AjustesCobro agente={agente} token={token} onSave={a => setAgente(a)} />
+
+            {/* Contacto alternativo */}
+            <AjustesContacto agente={agente} token={token} onSave={a => setAgente(a)} />
 
             {/* Pausa */}
             <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
@@ -342,7 +442,7 @@ export default function AgentesPage() {
                 </>
               ) : (
                 <>
-                  <p className="text-white/40 text-sm mb-4">Si vas a tomarte un descanso, puedes pausar tu cuenta temporalmente. Seguirás teniendo acceso al portal.</p>
+                  <p className="text-white/40 text-sm mb-4">Si vas a tomarte un descanso, puedes pausar tu cuenta temporalmente.</p>
                   <button onClick={togglePausa} disabled={loading}
                     className="w-full py-2.5 border border-white/10 text-white/40 font-display font-bold rounded-xl text-sm hover:border-white/20 transition-all disabled:opacity-40">
                     Pausar mi cuenta
@@ -352,8 +452,8 @@ export default function AgentesPage() {
             </div>
 
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 text-xs text-white/30 space-y-1">
-              <p>· Las cuentas sin actividad durante 60+ días pasan automáticamente a inactivas</p>
-              <p>· Para reactivar una cuenta inactiva, escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Reactivación cuenta agente&body=Hola, quiero reactivar mi cuenta de agente.%0A%0AMi código: " className="text-white/50 underline">hola@vitalsoft.pro</a></p>
+              <p>· Las cuentas con 4 reportes semanales consecutivos sin rellenar pasan automáticamente a inactivas</p>
+              <p>· Para reactivar una cuenta inactiva, escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Reactivación cuenta agente&body=Hola, quiero reactivar mi cuenta de agente.%0A%0AMi código: " target="_blank" rel="noopener noreferrer" className="text-white/50 underline">hola@vitalsoft.pro</a></p>
             </div>
           </div>
         )}
@@ -434,7 +534,7 @@ export default function AgentesPage() {
                       "No hagas promesas de resultados, viralidad o crecimiento — VitalSoft no lo garantiza.",
                       "No compartas tu código con personas que no sean clientes reales — las ventas inválidas se invalidan.",
                       "Envía un reporte de actividad desde este portal al menos una vez al mes.",
-                      "Las cuentas inactivas 60+ días pasan a estado inactivo automáticamente.",
+                      "Los reportes semanales son obligatorios (cada lunes). 4 semanas sin reportar = cuenta inactiva automáticamente.",
                     ].map(r => (
                       <li key={r} className="flex gap-2"><span className="text-red-400/60">·</span>{r}</li>
                     ))}
@@ -443,7 +543,7 @@ export default function AgentesPage() {
 
                 <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.1)] rounded-xl p-4">
                   <p className="text-white/50 font-semibold mb-1">¿Tienes dudas?</p>
-                  <p>Escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Duda agente VitalSoft&body=Hola, soy agente con código " className="text-[#d4f53c] underline">hola@vitalsoft.pro</a> o envía un reporte desde la pestaña Inicio.</p>
+                  <p>Escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Duda agente VitalSoft&body=Hola, soy agente con código " target="_blank" rel="noopener noreferrer" className="text-[#d4f53c] underline">hola@vitalsoft.pro</a> o envía un reporte desde la pestaña Inicio.</p>
                 </div>
               </div>
             </div>

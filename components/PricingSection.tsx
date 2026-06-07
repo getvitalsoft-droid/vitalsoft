@@ -123,8 +123,8 @@ export default function PricingSection({ refCode }: Props) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-6">
           {PRICING_PLANS.map((plan, i) => (
             <motion.div key={plan.key} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-              className={`relative rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-1 ${plan.featured ? "bg-[rgba(232,255,71,0.05)] border-[rgba(232,255,71,0.35)]" : "glass hover:border-white/15"}`}>
-              {plan.featured && <div className="absolute -top-px left-1/2 -translate-x-1/2 bg-accent text-[#080808] font-display font-black text-[10px] tracking-widest uppercase px-4 py-1 rounded-b-lg">Más Popular</div>}
+              className={`relative rounded-2xl p-6 border transition-all duration-300 hover:-translate-y-1 ${plan.featured ? "bg-[rgba(232,255,71,0.05)] border-[rgba(232,255,71,0.35)] pt-9" : "glass hover:border-white/15"}`}>
+              {plan.featured && <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-accent text-[#080808] font-display font-black text-[10px] tracking-widest uppercase px-4 py-1 rounded-full whitespace-nowrap">Más Popular</div>}
               <div className="text-white/40 font-display font-black text-xs tracking-widest uppercase mb-2">{plan.name}</div>
               <div className="text-white/30 text-[11px] font-light mb-3 leading-snug min-h-[2.5rem]">{PLAN_META[plan.key]?.forWho}</div>
               <div className="flex items-start gap-0.5 mb-0.5">

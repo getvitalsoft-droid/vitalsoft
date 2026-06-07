@@ -210,7 +210,7 @@ export default function ComoFuncionaContent() {
             className="bg-accent hover:bg-accent-2 text-[#080808] font-display font-bold px-7 py-3 rounded-xl text-sm transition-all hover:-translate-y-0.5">
             Ver planes →
           </a>
-          <a href="mailto:hola@vitalsoft.pro?subject=Tengo una pregunta sobre VitalSoft&body=Hola, me gustaría saber más sobre el servicio.%0A%0AMi pregunta es:%0A"
+          <a href="mailto:hola@vitalsoft.pro?subject=Tengo una pregunta sobre VitalSoft&body=Hola, me gustaría saber más sobre el servicio.%0A%0AMi pregunta es:%0A" target="_blank" rel="noopener noreferrer"
             className="border border-white/15 text-white/60 hover:text-white hover:border-white/30 font-display font-semibold px-7 py-3 rounded-xl text-sm transition-all">
             Tengo preguntas
           </a>

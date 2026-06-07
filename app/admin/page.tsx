@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import NegocioTab from "@/components/NegocioTab";
+import ReportesTab from "@/components/ReportesTab";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -32,7 +33,7 @@ export default function AdminPage() {
   const [adminToken, setAdminToken] = useState("");
   const [agentes, setAgentes] = useState<Agente[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [mainTab, setMainTab] = useState<"agentes"|"orders"|"referidos"|"retencion"|"negocio">("agentes");
+  const [mainTab, setMainTab] = useState<"agentes"|"orders"|"referidos"|"retencion"|"negocio"|"reportes">("agentes");
   const [negocio, setNegocio] = useState<any>(null);
   const [negocioLoading, setNegocioLoading] = useState(false);
   const [agentesTab, setAgentesTab] = useState<"pendientes"|"activos"|"sospechas"|"todos">("pendientes");
@@ -219,6 +220,7 @@ export default function AdminPage() {
             ["referidos", `Referidos${referralStats?.disponible.count ? ` (${referralStats.disponible.count} 🟢)` : ""}`],
             ["retencion", `Retención${orders.filter(o => o.is_paused).length ? ` (${orders.filter(o => o.is_paused).length} ⏸)` : ""}`],
             ["negocio", "📊 Negocio"],
+            ["reportes", "📋 Reportes"],
           ] as Array<[typeof mainTab, string]>).map(([t, l]) => (
             <button key={t} onClick={() => setMainTab(t)} className={`px-5 py-2 rounded-lg text-sm font-display font-bold uppercase transition-all ${mainTab === t ? "bg-[#d4f53c] text-[#080808]" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.07]"}`}>{l}</button>
           ))}
@@ -561,6 +563,10 @@ export default function AdminPage() {
             loading={negocioLoading}
             onLoad={loadNegocio}
           />
+        )}
+
+        {mainTab === "reportes" && (
+          <ReportesTab token={adminToken} />
         )}
 
       {/* Modal pausa */}

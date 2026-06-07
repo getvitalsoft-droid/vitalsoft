@@ -436,7 +436,7 @@ function ClientePortal({ token }: { token: string }) {
 
         <p className="text-center text-white/20 text-xs mt-6">
           ¿Problemas? Escríbenos a{" "}
-          <a href={`mailto:hola@vitalsoft.pro?subject=Ayuda con mi pedido&body=Hola, soy ${data?.email || "cliente"} y necesito ayuda con mi pedido (Plan: ${order?.plan || ""}).%0A%0AMi consulta es:%0A`} className="text-white/40 hover:text-accent transition-colors">
+          <a href={`mailto:hola@vitalsoft.pro?subject=Ayuda con mi pedido&body=Hola, soy ${data?.email || "cliente"} y necesito ayuda con mi pedido (Plan: ${order?.plan || ""}).%0A%0AMi consulta es:%0A`} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-accent transition-colors">
             hola@vitalsoft.pro
           </a>
         </p>

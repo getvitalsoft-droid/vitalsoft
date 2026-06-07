@@ -248,13 +248,16 @@ function OnboardingForm() {
             <div className="space-y-5">
               <h2 className="font-display font-bold text-sm mb-4 text-white/60 uppercase tracking-widest">03 — Material y entrega</h2>
 
-              {/* Instrucciones Drive con capturas */}
-              <div className="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-white/[0.06]">
-                  <p className="text-white/55 text-xs font-semibold">Cómo compartir tu carpeta de Google Drive</p>
-                  <p className="text-white/25 text-xs mt-0.5">Sigue estos 4 pasos exactos para que podamos subir los clips</p>
-                </div>
-                <div className="divide-y divide-white/[0.04]">
+              {/* Instrucciones Drive en desplegable */}
+              <details className="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden group">
+                <summary className="px-4 py-3 cursor-pointer flex items-center justify-between list-none">
+                  <div>
+                    <p className="text-white/55 text-xs font-semibold">¿Necesitas ayuda para obtener el enlace?</p>
+                    <p className="text-white/25 text-xs mt-0.5">Ver cómo compartir tu carpeta de Google Drive</p>
+                  </div>
+                  <span className="text-white/30 text-xs ml-3 flex-shrink-0 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="border-t border-white/[0.06] divide-y divide-white/[0.04]">
                   {pasosDrive.map((paso) => (
                     <div key={paso.num} className="p-4">
                       <div className="flex gap-3 items-start mb-3">
@@ -262,19 +265,12 @@ function OnboardingForm() {
                         <p className="text-white/50 text-xs leading-relaxed">{paso.texto}</p>
                       </div>
                       <div className="rounded-lg overflow-hidden border border-white/[0.06] ml-8">
-                        <Image
-                          src={paso.img}
-                          alt={paso.alt}
-                          width={600}
-                          height={340}
-                          className="w-full h-auto object-cover"
-                          priority={paso.num === "1"}
-                        />
+                        <Image src={paso.img} alt={paso.alt} width={600} height={340} className="w-full h-auto object-cover" priority={paso.num === "1"} />
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
+              </details>
 
               {/* Campo Drive o toggle pendiente */}
               {!drivePendiente ? (

@@ -20,7 +20,7 @@ export default function Privacidad() {
           </section>
           <section>
             <h2 className="font-display font-bold text-white text-base mb-3">Tus derechos</h2>
-            <p>Puedes solicitar acceso, corrección o eliminación de tus datos en cualquier momento contactando a <a href="mailto:hola@vitalsoft.pro?subject=Solicitud de datos personales&body=Hola, quiero ejercer mi derecho de acceso/corrección/eliminación de datos.%0A%0AEmail de mi cuenta: %0ASolicitud: %0A" className="text-accent">hola@vitalsoft.pro</a>.</p>
+            <p>Puedes solicitar acceso, corrección o eliminación de tus datos en cualquier momento contactando a <a href="mailto:hola@vitalsoft.pro?subject=Solicitud de datos personales&body=Hola, quiero ejercer mi derecho de acceso/corrección/eliminación de datos.%0A%0AEmail de mi cuenta: %0ASolicitud: %0A" target="_blank" rel="noopener noreferrer" className="text-accent">hola@vitalsoft.pro</a>.</p>
           </section>
         </div>
       </div>

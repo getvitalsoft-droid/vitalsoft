@@ -34,6 +34,16 @@ export async function POST(req: NextRequest) {
 
   const { accion, mensaje, pausa_hasta } = await req.json();
 
+  if (accion === "actualizar_perfil") {
+    const { metodo_cobro, datos_cobro, contacto_alternativo } = await req.json().catch(() => ({}));
+    const updates: Record<string, string> = { ultimo_acceso: new Date().toISOString() };
+    if (metodo_cobro !== undefined) updates.metodo_cobro = metodo_cobro;
+    if (datos_cobro !== undefined) updates.datos_cobro = datos_cobro;
+    if (contacto_alternativo !== undefined) updates.contacto_alternativo = contacto_alternativo;
+    const { data: updated } = await supabase.from("agentes").update(updates).eq("id", agente.id).select().single();
+    return NextResponse.json({ ok: true, agente: updated });
+  }
+
   if (accion === "reporte") {
     if (!mensaje?.trim()) return NextResponse.json({ error: "Mensaje requerido." }, { status: 400 });
     await supabase.from("activity_logs").insert({
