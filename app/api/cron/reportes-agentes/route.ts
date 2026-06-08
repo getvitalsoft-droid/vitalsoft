@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
   const { data: agentes } = await supabase
     .from("agentes")
-    .select("id, nombre, email, aprobado, estado_agente, ausente_hasta, reportes_sin_rellenar, ultimo_reporte")
+    .select("id, nombre, email, aprobado, estado_agente, ausente_hasta, reportes_sin_rellenar, ultimo_reporte, primer_recordatorio_enviado")
     .eq("aprobado", true)
     .neq("estado_agente", "inactivo");
 
