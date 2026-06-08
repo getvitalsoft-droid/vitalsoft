@@ -8,7 +8,7 @@ const FROM = "VitalSoft <notificaciones@vitalsoft.pro>";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || "hola@vitalsoft.pro";
 
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("x-cron-secret");
+  const secret = req.headers.get("x-cron-secret") || req.nextUrl.searchParams.get("secret");
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
