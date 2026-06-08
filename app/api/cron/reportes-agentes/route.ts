@@ -14,6 +14,12 @@ export async function GET(req: NextRequest) {
   // Solo ejecutar lunes
   if (hoy.getDay() !== 1) return NextResponse.json({ ok: true, mensaje: "No es lunes." });
 
+  // Registrar inicio de ejecución
+  await supabase.from("activity_logs").insert({
+    admin: "system", accion: "cron_reportes_agentes_inicio",
+    objetivo_tipo: "system", detalle: `Cron ejecutado: ${hoy.toISOString()}`,
+  });
+
   const { data: agentes } = await supabase
     .from("agentes")
     .select("id, nombre, email, aprobado, estado_agente, ausente_hasta, reportes_sin_rellenar, ultimo_reporte")
@@ -98,6 +104,12 @@ export async function GET(req: NextRequest) {
       enviados++;
     }
   }
+
+  await supabase.from("activity_logs").insert({
+    admin: "system", accion: "cron_reportes_agentes_fin",
+    objetivo_tipo: "system",
+    detalle: `Completado: ${enviados} recordatorios enviados, ${inactivados} agentes inactivados`,
+  });
 
   return NextResponse.json({ ok: true, enviados, inactivados });
 }

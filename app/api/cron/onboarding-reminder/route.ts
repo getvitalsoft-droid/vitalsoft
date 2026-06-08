@@ -13,12 +13,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "No autorizado" }, { status: 401 });
   }
 
-  // Buscar orders en onboarding_pendiente con más de 24h de antigüedad
-  // y que no hayan recibido ya el recordatorio
+  // Log de inicio — visible en Supabase activity_logs
+  await supabase.from("activity_logs").insert({
+    admin: "system", accion: "cron_onboarding_reminder_inicio",
+    objetivo_tipo: "system", detalle: `Cron ejecutado: ${new Date().toISOString()}`,
+  });
+
   const hace24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const hace72h = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();
 
-  // Orders pendientes entre 24h y 72h (solo un recordatorio, no spamear)
   const { data: pendientes } = await supabase
     .from("orders")
     .select("id, cliente_email, cliente_nombre, stripe_session_id, fecha_pago")
@@ -27,6 +30,10 @@ export async function GET(req: NextRequest) {
     .gt("fecha_pago", hace72h);
 
   if (!pendientes?.length) {
+    await supabase.from("activity_logs").insert({
+      admin: "system", accion: "cron_onboarding_reminder_fin",
+      objetivo_tipo: "system", detalle: "Sin orders pendientes en ventana 24-72h",
+    });
     return NextResponse.json({ ok: true, enviados: 0 });
   }
 
@@ -35,7 +42,6 @@ export async function GET(req: NextRequest) {
   for (const order of pendientes) {
     if (!order.cliente_email) continue;
 
-    // Verificar que no se ha enviado ya este recordatorio (idempotencia)
     const { data: yaEnviado } = await supabase
       .from("activity_logs")
       .select("id")
@@ -64,8 +70,7 @@ export async function GET(req: NextRequest) {
               Hola${nombre ? ` <strong>${nombre}</strong>` : ""}, tu pago se confirmó correctamente.
             </p>
             <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px">
-              Solo falta completar la configuración de tu proyecto para que podamos empezar a producir tus clips.
-              Tarda menos de 5 minutos.
+              Solo falta completar la configuración de tu proyecto para que podamos empezar a producir tus clips. Tarda menos de 5 minutos.
             </p>
             <a href="${onboardingUrl}" style="display:inline-block;background:#d4f53c;color:#080808;padding:11px 22px;border-radius:8px;text-decoration:none;font-weight:800;font-size:13px">
               Completar configuración →
@@ -78,7 +83,6 @@ export async function GET(req: NextRequest) {
       `,
     }).catch(console.error);
 
-    // Registrar que se envió para idempotencia
     await supabase.from("activity_logs").insert({
       admin: "system",
       accion: "recordatorio_onboarding",
@@ -89,6 +93,11 @@ export async function GET(req: NextRequest) {
 
     enviados++;
   }
+
+  await supabase.from("activity_logs").insert({
+    admin: "system", accion: "cron_onboarding_reminder_fin",
+    objetivo_tipo: "system", detalle: `Completado: ${enviados} recordatorios enviados`,
+  });
 
   return NextResponse.json({ ok: true, enviados });
 }
