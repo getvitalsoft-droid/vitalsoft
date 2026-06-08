@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { verifyToken } from "@/lib/agente-token";
 import { rateLimit, getIP } from "@/lib/rateLimit";
+import { enviarEmailBienvenidaPortalAgente } from "@/lib/emails";
 
 async function getAgenteFromToken(req: NextRequest) {
   const token = req.headers.get("x-agente-token") || req.nextUrl.searchParams.get("token");
@@ -16,8 +17,28 @@ export async function GET(req: NextRequest) {
   const agente = await getAgenteFromToken(req);
   if (!agente) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  await supabase.from("agentes").update({ ultimo_acceso: new Date().toISOString() }).eq("id", agente.id);
-  const { data: ventas } = await supabase.from("ventas").select("*").eq("agente_id", agente.id).order("creado_at", { ascending: false });
+  const ahora = new Date().toISOString();
+
+  // Detectar primer acceso al portal
+  const esPrimerAcceso = !agente.primer_acceso_portal;
+  if (esPrimerAcceso) {
+    await supabase.from("agentes").update({
+      ultimo_acceso: ahora,
+      primer_acceso_portal: ahora,
+    }).eq("id", agente.id);
+
+    // Email de bienvenida al portal — una sola vez
+    enviarEmailBienvenidaPortalAgente({
+      email: agente.email,
+      nombre: agente.nombre,
+      codigo: agente.codigo,
+    }).catch(console.error);
+  } else {
+    await supabase.from("agentes").update({ ultimo_acceso: ahora }).eq("id", agente.id);
+  }
+
+  const { data: ventas } = await supabase
+    .from("ventas").select("*").eq("agente_id", agente.id).order("creado_at", { ascending: false });
 
   return NextResponse.json({ agente, ventas: ventas || [] });
 }

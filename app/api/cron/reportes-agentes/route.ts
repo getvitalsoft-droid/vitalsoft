@@ -82,8 +82,21 @@ export async function GET(req: NextRequest) {
       }).catch(() => {});
       inactivados++;
     } else {
-      // Incrementar contador — recordatorio amable
+      // Incrementar contador y enviar recordatorio
       await supabase.from("agentes").update({ reportes_sin_rellenar: nuevoContador }).eq("id", agente.id);
+
+      const esPrimero = !agente.primer_recordatorio_enviado;
+      if (esPrimero) {
+        await supabase.from("agentes").update({ primer_recordatorio_enviado: true }).eq("id", agente.id);
+      }
+
+      const plantilla = esPrimero ? `
+            <div style="background:#111;border-radius:8px;padding:16px;margin-bottom:20px">
+              <p style="font-size:11px;font-weight:700;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Plantilla de ejemplo</p>
+              <p style="font-size:13px;color:#666;font-style:italic;line-height:1.7;margin:0">
+                "Esta semana contacté con [X] personas. [Nombre] mostró interés en el plan Growth para su podcast. Pendiente de enviarle el link. Para la próxima semana planeo contactar con [perfil]."
+              </p>
+            </div>` : "";
 
       await resend.emails.send({
         from: "VitalSoft <notificaciones@vitalsoft.pro>",
@@ -93,7 +106,8 @@ export async function GET(req: NextRequest) {
           <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#080808;color:#f0f0f0;padding:32px;border-radius:12px">
             <div style="font-size:20px;font-weight:900;margin-bottom:24px"><span style="color:#d4f53c">Vital</span>Soft</div>
             <h2 style="font-size:16px;margin-bottom:12px">Hola ${agente.nombre} 👋</h2>
-            <p style="color:#aaa;font-size:14px;margin-bottom:24px">Es lunes — si tienes novedades esta semana, cuéntanoslas desde el portal. Contactos, leads, preguntas que te hayan surgido... lo que sea.</p>
+            <p style="color:#aaa;font-size:14px;margin-bottom:20px">Es lunes — si tienes novedades esta semana, cuéntanoslas desde el portal.</p>
+            ${plantilla}
             <a href="${SITE}/agentes" style="display:inline-block;background:#d4f53c;color:#080808;font-weight:900;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:14px">
               Ir al portal →
             </a>

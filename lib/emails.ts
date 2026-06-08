@@ -260,6 +260,45 @@ export async function enviarEmailBienvenidaAgente({
 }
 
 /** Disparado por: checkout.session.completed (cuando hay agente referido) */
+/** Disparado la primera vez que un agente accede al portal */
+export async function enviarEmailBienvenidaPortalAgente({
+  email, nombre, codigo,
+}: {
+  email: string; nombre: string; codigo: string;
+}) {
+  const portalUrl = `${SITE}/agentes`;
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:20px">
+      Hola <strong>${nombre}</strong>, ya tienes acceso completo a tu portal de agente.
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:8px">
+      <strong style="color:#d4f53c">Tu código de agente es: <span style="font-family:monospace;font-size:15px">${codigo}</span></strong>
+    </p>
+    <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px">
+      Este código va incluido en tus links de venta y es lo que vincula cada cliente contigo para el cálculo de comisiones.
+    </p>
+    <div style="background:#1a1a1a;border-radius:10px;padding:20px;margin-bottom:20px">
+      <p style="font-size:12px;font-weight:700;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:14px">Qué puedes hacer en el portal</p>
+      <p style="font-size:13px;color:#888;margin-bottom:8px">📎 <strong style="color:#aaa">Pestaña Links</strong> — tus links de venta listos para copiar, uno por plan y uno personalizable por número de clips.</p>
+      <p style="font-size:13px;color:#888;margin-bottom:8px">💰 <strong style="color:#aaa">Pestaña Ventas</strong> — historial de clientes que contrataron con tu código y el estado de cada comisión.</p>
+      <p style="font-size:13px;color:#888;margin-bottom:8px">📋 <strong style="color:#aaa">Pestaña Inicio</strong> — envía tu reporte semanal de actividad cada lunes.</p>
+      <p style="font-size:13px;color:#888;margin-bottom:0">⚙️ <strong style="color:#aaa">Pestaña Ajustes</strong> — indica cómo quieres cobrar tus comisiones y gestiona tu disponibilidad.</p>
+    </div>
+    <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px">
+      Las comisiones son del <strong style="color:#aaa">20% del primer mes</strong> de cada cliente. Se liberan automáticamente a los 14 días del pago.
+    </p>
+    ${BTN("Acceder al portal →", portalUrl)}
+    <p style="font-size:12px;color:#444;margin-top:20px">
+      ¿Tienes dudas? Escríbenos a <a href="mailto:${ADMIN_EMAIL}" style="color:#d4f53c">${ADMIN_EMAIL}</a>
+    </p>`;
+
+  return await resend.emails.send({
+    from: FROM, to: email,
+    subject: `🚀 Bienvenido al portal VitalSoft Agentes — tu código: ${codigo}`,
+    html: WRAP(HEADER("¡Ya tienes acceso!", "Tu portal de agente está listo.", "🚀"), body),
+  });
+}
+
 export async function enviarEmailAgente({
   agente, clienteEmail, plan, importe, comision,
 }: {
