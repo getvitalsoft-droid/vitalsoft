@@ -1,7 +1,12 @@
 import crypto from "crypto";
 
+// Sesión del portal de agentes: 14 días. Se guarda en localStorage en el navegador
+// del agente para evitar tener que pedir un enlace de acceso nuevo (y abrir una
+// pestaña nueva) cada vez que quiere entrar.
+const DURACION_SESION_MS = 14 * 24 * 60 * 60 * 1000;
+
 export function signToken(agenteId: string, email: string): string {
-  const exp = Date.now() + 60 * 60 * 1000; // 1 hora
+  const exp = Date.now() + DURACION_SESION_MS;
   const payload = `${agenteId}:${email}:${exp}`;
   const sig = crypto.createHmac("sha256", process.env.CRON_SECRET!).update(payload).digest("hex");
   return Buffer.from(`${payload}:${sig}`).toString("base64url");

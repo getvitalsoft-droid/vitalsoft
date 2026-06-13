@@ -408,6 +408,28 @@ export async function enviarEmailAgenteReactivado({
   });
 }
 
+/** Disparado por: POST /api/agentes/activity accion=reporte_reactivacion (agente inactivo envía reporte y se reactiva solo) */
+export async function enviarEmailAdminAgenteReactivadoPorReporte({
+  nombre, email, codigo, mensaje,
+}: {
+  nombre: string; email: string; codigo: string; mensaje: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px"><strong>${nombre}</strong> (${codigo}) estaba inactivo y se ha reactivado enviando su reporte semanal.</p>
+    ${CARD(ROW("Email", email))}
+    <div style="background:#111;border-radius:8px;padding:16px;margin-bottom:20px">
+      <p style="font-size:11px;font-weight:700;color:#555;letter-spacing:2px;text-transform:uppercase;margin-bottom:10px">Su reporte</p>
+      <p style="font-size:13px;color:#aaa;line-height:1.7;margin:0">${mensaje}</p>
+    </div>
+    ${BTN("Abrir admin →", `${SITE}/admin`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `🔄 ${nombre} se ha reactivado solo — VitalSoft`,
+    html: WRAP(HEADER("Agente reactivado", `${nombre} volvió a estar activo.`, "🔄"), body),
+  });
+}
+
 /** Disparado por: POST /api/agentes/activity accion=solicitar_reactivacion (agente inactivo pulsa "Volver a pedir acceso") */
 export async function enviarEmailAdminSolicitudReactivacion({
   nombre, email, codigo,

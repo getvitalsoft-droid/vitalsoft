@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { verifyToken } from "@/lib/agente-token";
 import { rateLimit, getIP } from "@/lib/rateLimit";
-import { enviarEmailBienvenidaPortalAgente, enviarEmailAdminSolicitudReactivacion } from "@/lib/emails";
+import { enviarEmailBienvenidaPortalAgente, enviarEmailAdminSolicitudReactivacion, enviarEmailAdminAgenteReactivadoPorReporte } from "@/lib/emails";
 
 async function getAgenteFromToken(req: NextRequest) {
   const token = req.headers.get("x-agente-token") || req.nextUrl.searchParams.get("token");
@@ -119,6 +119,38 @@ export async function POST(req: NextRequest) {
       estado_agente: "activo",
       ultimo_acceso: new Date().toISOString(),
     }).eq("id", agente.id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (accion === "reporte_reactivacion") {
+    if (agente.estado_agente !== "inactivo") {
+      return NextResponse.json({ error: "Tu cuenta no está inactiva." }, { status: 400 });
+    }
+    if (!mensaje?.trim()) return NextResponse.json({ error: "Mensaje requerido." }, { status: 400 });
+
+    await supabase.from("agentes").update({
+      ultimo_reporte: new Date().toISOString(),
+      ultimo_acceso: new Date().toISOString(),
+      reportes_sin_rellenar: 0,
+      estado_agente: "activo",
+      reactivacion_solicitada: false,
+    }).eq("id", agente.id);
+
+    await supabase.from("activity_logs").insert({
+      admin: agente.email, accion: "reporte_agente",
+      objetivo_tipo: "agente", objetivo_id: agente.id,
+      detalle: mensaje.trim(),
+    });
+    await supabase.from("activity_logs").insert({
+      admin: agente.email, accion: "reactivado_por_reporte",
+      objetivo_tipo: "agente", objetivo_id: agente.id,
+      detalle: "El agente envió su reporte semanal y se reactivó automáticamente",
+    });
+
+    enviarEmailAdminAgenteReactivadoPorReporte({
+      nombre: agente.nombre, email: agente.email, codigo: agente.codigo, mensaje: mensaje.trim(),
+    }).catch(console.error);
+
     return NextResponse.json({ ok: true });
   }
 

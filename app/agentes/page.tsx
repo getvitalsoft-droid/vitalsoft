@@ -130,7 +130,7 @@ function AjustesAusencia({ agente, token, onSave }: { agente: AgenteData; token:
       headers: { "Content-Type": "application/json", "x-agente-token": token },
       body: JSON.stringify({ accion: "ausente", ausente_hasta: new Date(hasta).toISOString() }),
     });
-    if (res.ok) { const d = await res.json(); if (d.agente) onSave({ ...agente, estado_agente: "ausente", ausente_hasta: new Date(hasta).toISOString() }); setOk(true); setTimeout(() => setOk(false), 2500); }
+    if (res.ok) { onSave({ ...agente, estado_agente: "ausente", ausente_hasta: new Date(hasta).toISOString() }); setOk(true); setTimeout(() => setOk(false), 2500); }
     setSaving(false);
   };
 
@@ -326,6 +326,7 @@ function OverlayCard({ color, icon, title, children }: { color: "red" | "yellow"
 
 function EstadoOverlay({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
   const [loading, setLoading] = useState(false);
+  const [mensaje, setMensaje] = useState("");
 
   // ── BLOQUEADO — rojo, permanente ──────────────────────────────────────────
   if (agente.bloqueado) {
@@ -352,6 +353,18 @@ function EstadoOverlay({ agente, token, onSave }: { agente: AgenteData; token: s
 
   // ── INACTIVO — amarillo, por falta de reportes ────────────────────────────
   if (agente.estado_agente === "inactivo") {
+    const enviarReporte = async () => {
+      if (!mensaje.trim()) return;
+      setLoading(true);
+      const res = await fetch("/api/agentes/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-agente-token": token },
+        body: JSON.stringify({ accion: "reporte_reactivacion", mensaje: mensaje.trim() }),
+      });
+      if (res.ok) onSave({ ...agente, estado_agente: "activo", reactivacion_solicitada: false });
+      setLoading(false);
+    };
+
     const solicitar = async () => {
       setLoading(true);
       const res = await fetch("/api/agentes/activity", {
@@ -369,14 +382,28 @@ function EstadoOverlay({ agente, token, onSave }: { agente: AgenteData; token: s
           Al estar más de 3 semanas sin enviar tu reporte semanal, tu cuenta ha sido marcada como inactiva.
         </p>
         {agente.nota_agente && <p className="text-white/40 text-xs leading-relaxed mb-4">{agente.nota_agente}</p>}
-        {agente.reactivacion_solicitada ? (
-          <p className="text-yellow-400/80 text-sm font-semibold text-center">Solicitud enviada — te contactaremos pronto.</p>
-        ) : (
-          <button onClick={solicitar} disabled={loading}
-            className="w-full py-2.5 rounded-xl bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/30 text-yellow-400 text-sm font-bold transition-all disabled:opacity-50">
-            {loading ? "Enviando..." : "Volver a pedir acceso"}
-          </button>
-        )}
+
+        <p className="text-white/40 text-xs leading-relaxed mb-2">
+          Para volver, envía tu reporte de esta semana — tu cuenta se reactivará automáticamente. A partir de ahora, hazlo cada lunes para mantenerla activa.
+        </p>
+        <textarea value={mensaje} onChange={e => setMensaje(e.target.value)} rows={4}
+          placeholder="Esta semana contacté con..."
+          className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-3 resize-none focus:border-yellow-400/30" />
+        <button onClick={enviarReporte} disabled={loading || !mensaje.trim()}
+          className="w-full py-2.5 rounded-xl bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/30 text-yellow-400 text-sm font-bold transition-all disabled:opacity-40 mb-3">
+          {loading ? "Enviando..." : "Enviar reporte y reactivar mi cuenta"}
+        </button>
+
+        <div className="border-t border-white/[0.06] pt-3">
+          {agente.reactivacion_solicitada ? (
+            <p className="text-white/30 text-xs text-center">Solicitud enviada — te contactaremos pronto.</p>
+          ) : (
+            <button onClick={solicitar} disabled={loading}
+              className="w-full text-white/30 hover:text-white/50 text-xs underline transition-all disabled:opacity-50">
+              O si prefieres hablar antes, pide que te contactemos
+            </button>
+          )}
+        </div>
       </OverlayCard>
     );
   }
@@ -433,12 +460,19 @@ export default function AgentesPage() {
 
   useEffect(() => {
     setMounted(true);
-    // Leer token de la URL
+    // Leer token de la URL (enlace de email)
     const params = new URLSearchParams(window.location.search);
     const t = params.get("token");
     if (t) {
       setToken(t);
       loadDashboard(t);
+      return;
+    }
+    // Sin token en la URL — intentar recuperar sesión guardada (14 días)
+    const saved = window.localStorage.getItem("vs_agente_token");
+    if (saved) {
+      setToken(saved);
+      loadDashboard(saved);
     }
   }, []);
 
@@ -453,9 +487,13 @@ export default function AgentesPage() {
         setAgente(data.agente);
         setVentas(data.ventas || []);
         setStep("dashboard");
+        // Guardar sesión para futuras visitas (evita pedir enlace nuevo / abrir otra pestaña)
+        window.localStorage.setItem("vs_agente_token", t);
         // Limpiar token de la URL sin recargar
         window.history.replaceState({}, "", "/agentes");
       } else {
+        // Token inválido/caducado — limpiar sesión guardada si era la que falló
+        window.localStorage.removeItem("vs_agente_token");
         setError("Enlace inválido o caducado. Solicita uno nuevo.");
       }
     } catch { setError("Error de conexión."); }
@@ -883,6 +921,11 @@ export default function AgentesPage() {
               <p>· Si en algún momento quieres tomarte un descanso, márcalo como ausente y no recibirás recordatorios durante ese periodo.</p>
               <p>· Si necesitas cualquier cosa, escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Duda cuenta agente&body=Hola, soy agente VitalSoft. Mi email: " target="_blank" rel="noopener noreferrer" className="text-white/50 underline">hola@vitalsoft.pro</a></p>
             </div>
+
+            <button onClick={() => { window.localStorage.removeItem("vs_agente_token"); setAgente(null); setToken(""); setStep("magic"); }}
+              className="w-full py-2.5 border border-white/[0.06] text-white/25 font-display font-semibold rounded-xl text-xs hover:border-white/15 hover:text-white/40 transition-all">
+              Cerrar sesión en este dispositivo
+            </button>
           </div>
         )}
 
