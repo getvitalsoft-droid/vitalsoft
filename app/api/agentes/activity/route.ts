@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 import { verifyToken } from "@/lib/agente-token";
 import { rateLimit, getIP } from "@/lib/rateLimit";
-import { enviarEmailBienvenidaPortalAgente } from "@/lib/emails";
+import { enviarEmailBienvenidaPortalAgente, enviarEmailAdminSolicitudReactivacion } from "@/lib/emails";
 
 async function getAgenteFromToken(req: NextRequest) {
   const token = req.headers.get("x-agente-token") || req.nextUrl.searchParams.get("token");
@@ -119,6 +119,24 @@ export async function POST(req: NextRequest) {
       estado_agente: "activo",
       ultimo_acceso: new Date().toISOString(),
     }).eq("id", agente.id);
+    return NextResponse.json({ ok: true });
+  }
+
+  if (accion === "solicitar_reactivacion") {
+    if (agente.estado_agente !== "inactivo") {
+      return NextResponse.json({ error: "Tu cuenta no está inactiva." }, { status: 400 });
+    }
+    if (!agente.reactivacion_solicitada) {
+      await supabase.from("agentes").update({ reactivacion_solicitada: true }).eq("id", agente.id);
+      await supabase.from("activity_logs").insert({
+        admin: agente.email, accion: "solicitud_reactivacion",
+        objetivo_tipo: "agente", objetivo_id: agente.id,
+        detalle: "El agente solicitó volver a estar activo",
+      });
+      enviarEmailAdminSolicitudReactivacion({
+        nombre: agente.nombre, email: agente.email, codigo: agente.codigo,
+      }).catch(console.error);
+    }
     return NextResponse.json({ ok: true });
   }
 

@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
   enviarEmailBienvenidaAgente, enviarEmailAgenteBloqueo,
-  enviarEmailAgenteComisionPagada,
+  enviarEmailAgenteComisionPagada, enviarEmailAgenteReactivado,
 } from "@/lib/emails";
 
 const supabaseAdmin = createClient(
@@ -37,7 +37,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   if (!await verificarAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-  const { accion, agente_id, venta_id, motivo_bloqueo, notas_admin } = await req.json();
+  const { accion, agente_id, venta_id, motivo_bloqueo, notas_admin, nota_agente } = await req.json();
 
   const log = async (a: string, id: string, detalle?: string, tipo = "agente") => {
     try {
@@ -53,16 +53,27 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, agente: data });
   }
   if (accion === "bloquear") {
-    const { data, error } = await supabaseAdmin.from("agentes").update({ aprobado: false, bloqueado: true, bloqueado_at: new Date().toISOString(), motivo_bloqueo, notas_admin }).eq("id", agente_id).select().single();
+    const { data, error } = await supabaseAdmin.from("agentes").update({ bloqueado: true, bloqueado_at: new Date().toISOString(), motivo_bloqueo, nota_agente, notas_admin }).eq("id", agente_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await log("bloquear_agente", agente_id, motivo_bloqueo);
-    await enviarEmailAgenteBloqueo({ agente: data, motivo: motivo_bloqueo }).catch(console.error);
+    await enviarEmailAgenteBloqueo({ agente: data, motivo: motivo_bloqueo, nota: nota_agente }).catch(console.error);
     return NextResponse.json({ success: true, agente: data });
   }
   if (accion === "reactivar") {
-    const { data, error } = await supabaseAdmin.from("agentes").update({ aprobado: true, bloqueado: false }).eq("id", agente_id).select().single();
+    const { data, error } = await supabaseAdmin.from("agentes").update({
+      aprobado: true, bloqueado: false, motivo_bloqueo: null, nota_agente: null,
+      estado_agente: "activo", ausente_hasta: null,
+      reactivacion_solicitada: false, reportes_sin_rellenar: 0,
+    }).eq("id", agente_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     await log("reactivar_agente", agente_id);
+    await enviarEmailAgenteReactivado({ agente: data }).catch(console.error);
+    return NextResponse.json({ success: true, agente: data });
+  }
+  if (accion === "editar_nota") {
+    const { data, error } = await supabaseAdmin.from("agentes").update({ nota_agente }).eq("id", agente_id).select().single();
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    await log("editar_nota_agente", agente_id, nota_agente);
     return NextResponse.json({ success: true, agente: data });
   }
   if (accion === "marcar_pagado") {

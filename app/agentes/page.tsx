@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ReactNode } from "react";
 import { calcPrice } from "@/lib/stripe";
 
 interface Venta {
@@ -8,8 +8,8 @@ interface Venta {
 }
 interface AgenteData {
   id: string; nombre: string; email: string; codigo: string; creado_at: string;
-  aprobado: boolean; bloqueado: boolean;
-  estado_agente?: string; ausente_hasta?: string;
+  aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; nota_agente?: string;
+  estado_agente?: string; ausente_hasta?: string; reactivacion_solicitada?: boolean;
   ultimo_acceso?: string; ultimo_reporte?: string;
   metodo_cobro?: string; datos_cobro?: string; contacto_alternativo?: string;
   reportes_sin_rellenar?: number;
@@ -306,6 +306,113 @@ function AjustesCorreo({ agente, token }: { agente: AgenteData; token: string })
   );
 }
 
+function OverlayCard({ color, icon, title, children }: { color: "red" | "yellow" | "green"; icon: string; title: string; children: ReactNode }) {
+  const styles = {
+    red: { bg: "bg-red-500/[0.07]", border: "border-red-500/25", text: "text-red-400" },
+    yellow: { bg: "bg-yellow-400/[0.07]", border: "border-yellow-400/25", text: "text-yellow-400" },
+    green: { bg: "bg-green-400/[0.07]", border: "border-green-400/25", text: "text-green-400" },
+  }[color];
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 backdrop-blur-xl bg-black/50">
+      <div className={`max-w-sm w-full rounded-2xl p-7 border ${styles.bg} ${styles.border}`}>
+        <div className="text-3xl mb-3">{icon}</div>
+        <h2 className={`font-display font-black text-lg mb-3 ${styles.text}`}>{title}</h2>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function EstadoOverlay({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [loading, setLoading] = useState(false);
+
+  // ── BLOQUEADO — rojo, permanente ──────────────────────────────────────────
+  if (agente.bloqueado) {
+    return (
+      <OverlayCard color="red" icon="🔒" title="Cuenta inhabilitada">
+        <p className="text-white/50 text-sm mb-3">
+          VitalSoft ha inhabilitado tu cuenta de agente de manera permanente.
+        </p>
+        {agente.motivo_bloqueo && (
+          <div className="bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 mb-3">
+            <div className="text-white/25 text-[10px] uppercase tracking-widest mb-0.5">Motivo</div>
+            <div className="text-white/70 text-sm">{agente.motivo_bloqueo}</div>
+          </div>
+        )}
+        {agente.nota_agente && <p className="text-white/40 text-xs leading-relaxed mb-4">{agente.nota_agente}</p>}
+        <a href={`mailto:hola@vitalsoft.pro?subject=Mi cuenta de agente ha sido inhabilitada&body=Hola, mi código de agente es ${agente.codigo} y me gustaría más información sobre por qué se ha inhabilitado mi cuenta.`}
+          target="_blank" rel="noopener noreferrer"
+          className="block text-center w-full py-2.5 rounded-xl border border-white/10 text-white/50 text-sm font-semibold hover:border-white/20 transition-all">
+          Contactar con VitalSoft
+        </a>
+      </OverlayCard>
+    );
+  }
+
+  // ── INACTIVO — amarillo, por falta de reportes ────────────────────────────
+  if (agente.estado_agente === "inactivo") {
+    const solicitar = async () => {
+      setLoading(true);
+      const res = await fetch("/api/agentes/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-agente-token": token },
+        body: JSON.stringify({ accion: "solicitar_reactivacion" }),
+      });
+      if (res.ok) onSave({ ...agente, reactivacion_solicitada: true });
+      setLoading(false);
+    };
+
+    return (
+      <OverlayCard color="yellow" icon="⏸️" title="Cuenta en inactividad prolongada">
+        <p className="text-white/50 text-sm mb-3">
+          Al estar más de 3 semanas sin enviar tu reporte semanal, tu cuenta ha sido marcada como inactiva.
+        </p>
+        {agente.nota_agente && <p className="text-white/40 text-xs leading-relaxed mb-4">{agente.nota_agente}</p>}
+        {agente.reactivacion_solicitada ? (
+          <p className="text-yellow-400/80 text-sm font-semibold text-center">Solicitud enviada — te contactaremos pronto.</p>
+        ) : (
+          <button onClick={solicitar} disabled={loading}
+            className="w-full py-2.5 rounded-xl bg-yellow-400/15 hover:bg-yellow-400/25 border border-yellow-400/30 text-yellow-400 text-sm font-bold transition-all disabled:opacity-50">
+            {loading ? "Enviando..." : "Volver a pedir acceso"}
+          </button>
+        )}
+      </OverlayCard>
+    );
+  }
+
+  // ── AUSENTE — verde, voluntario y temporal ────────────────────────────────
+  const ausenteVigente = agente.estado_agente === "ausente" && agente.ausente_hasta && new Date(agente.ausente_hasta) >= new Date();
+  if (ausenteVigente) {
+    const volver = async () => {
+      setLoading(true);
+      const res = await fetch("/api/agentes/activity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-agente-token": token },
+        body: JSON.stringify({ accion: "volver_ausente" }),
+      });
+      if (res.ok) onSave({ ...agente, estado_agente: "activo", ausente_hasta: undefined });
+      setLoading(false);
+    };
+
+    const fecha = new Date(agente.ausente_hasta!).toLocaleDateString("es-ES", { day: "numeric", month: "long" });
+
+    return (
+      <OverlayCard color="green" icon="🌴" title="Ausencia temporal">
+        <p className="text-white/50 text-sm mb-5">
+          Tu cuenta está marcada como ausente hasta el <span className="text-white/80 font-semibold">{fecha}</span>. No recibirás recordatorios durante este periodo.
+        </p>
+        <button onClick={volver} disabled={loading}
+          className="w-full py-2.5 rounded-xl bg-green-400/15 hover:bg-green-400/25 border border-green-400/30 text-green-400 text-sm font-bold transition-all disabled:opacity-50">
+          {loading ? "Procesando..." : "Volver antes de tiempo"}
+        </button>
+      </OverlayCard>
+    );
+  }
+
+  return null;
+}
+
 export default function AgentesPage() {
   const [step, setStep] = useState<"magic" | "pending" | "dashboard" | "register" | "registered">("magic");
   const [email, setEmail] = useState("");
@@ -557,6 +664,7 @@ export default function AgentesPage() {
 
   return (
     <main className="min-h-screen bg-[#080808] px-4 py-10">
+      <EstadoOverlay agente={agente} token={token} onSave={a => setAgente(a)} />
       <div className="max-w-2xl mx-auto">
 
         {/* Header */}

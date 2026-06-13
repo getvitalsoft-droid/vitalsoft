@@ -10,7 +10,7 @@ const supabase = createClient(
 );
 
 interface Venta { id: string; plan: string; importe: number; creado_at: string; estado: string; cliente_email: string; notas_admin?: string; sospechoso?: boolean; sospechoso_motivo?: string; disponible_at?: string; }
-interface Agente { id: string; nombre: string; email: string; codigo: string; creado_at: string; aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; ventas: Venta[]; }
+interface Agente { id: string; nombre: string; email: string; codigo: string; creado_at: string; aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; nota_agente?: string; estado_agente?: string; reactivacion_solicitada?: boolean; ventas: Venta[]; }
 interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; is_paused?: boolean; paused_at?: string | null; pause_until?: string | null; pause_reason?: string | null; recovery_attempts?: number; recovery_email_sent_at?: string | null; }
 interface Referral { id: string; referrer_email: string; referred_email: string; amount_paid: number; credit_amount: number; status: string; is_suspicious: boolean; suspicious_reason: string | null; notes: string | null; created_at: string; available_at: string | null; applied_at: string | null; }
 interface ReferralStats { pendiente_validacion: { count: number; total: number }; disponible: { count: number; total: number }; aplicado: { count: number; total: number }; invalido: { count: number }; suspicious: { count: number }; }
@@ -54,6 +54,7 @@ export default function AdminPage() {
   const [saving, setSaving] = useState("");
   const [modal, setModal] = useState<{tipo: string; id: string; id2?: string} | null>(null);
   const [motivo, setMotivo] = useState("");
+  const [notaAgente, setNotaAgente] = useState("");
   const [inputText, setInputText] = useState("");
   const [mounted, setMounted] = useState(false);
 
@@ -101,7 +102,7 @@ export default function AdminPage() {
     if (cr.stats) setCreditStats(cr.stats);
   };
 
-  const accionAgente = async (body: Record<string, string>) => {
+  const accionAgente = async (body: Record<string, string | undefined>) => {
     setSaving(body.agente_id || body.venta_id || "x");
     await fetch("/api/agentes/admin", { method: "PATCH", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${adminToken}` }, body: JSON.stringify(body) });
     await cargarTodo(); setSaving(""); setModal(null); setMotivo(""); setInputText("");
@@ -246,7 +247,9 @@ export default function AdminPage() {
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <span className="font-display font-bold">{ag.nombre}</span>
                           {!ag.aprobado && !ag.bloqueado && <span className="bg-yellow-400/10 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full">PENDIENTE</span>}
-                          {ag.aprobado && !ag.bloqueado && <span className="bg-green-400/10 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-full">ACTIVO</span>}
+                          {ag.aprobado && !ag.bloqueado && ag.estado_agente !== "inactivo" && <span className="bg-green-400/10 text-green-400 text-[10px] font-bold px-2 py-0.5 rounded-full">ACTIVO</span>}
+                          {ag.aprobado && !ag.bloqueado && ag.estado_agente === "inactivo" && <span className="bg-white/10 text-white/50 text-[10px] font-bold px-2 py-0.5 rounded-full">INACTIVO</span>}
+                          {ag.reactivacion_solicitada && <span className="bg-yellow-400/10 text-yellow-400 text-[10px] font-bold px-2 py-0.5 rounded-full">🔔 Pidió reactivación</span>}
                           {ag.bloqueado && <span className="bg-red-400/10 text-red-400 text-[10px] font-bold px-2 py-0.5 rounded-full">BLOQUEADO{ag.motivo_bloqueo ? ` · ${ag.motivo_bloqueo}` : ""}</span>}
                         </div>
                         <div className="text-white/35 text-xs">{ag.email}</div>
@@ -259,8 +262,9 @@ export default function AdminPage() {
                     </div>
                     <div className="flex gap-2 flex-wrap mb-3">
                       {!ag.aprobado && !ag.bloqueado && <button onClick={() => accionAgente({ accion: "aprobar", agente_id: ag.id })} disabled={saving !== ""} className="bg-green-400/10 hover:bg-green-400/20 text-green-400 border border-green-400/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-all">✓ Aprobar</button>}
-                      {ag.aprobado && !ag.bloqueado && <button onClick={() => setModal({ tipo: "bloquear", id: ag.id })} className="bg-red-400/10 hover:bg-red-400/20 text-red-400 border border-red-400/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-all">✕ Bloquear</button>}
-                      {ag.bloqueado && <button onClick={() => accionAgente({ accion: "reactivar", agente_id: ag.id })} disabled={saving !== ""} className="bg-white/[0.05] text-white/40 border border-white/10 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/10">Reactivar</button>}
+                      {ag.aprobado && !ag.bloqueado && ag.estado_agente !== "inactivo" && <button onClick={() => setModal({ tipo: "bloquear", id: ag.id })} className="bg-red-400/10 hover:bg-red-400/20 text-red-400 border border-red-400/20 text-xs font-bold px-3 py-1.5 rounded-lg transition-all">✕ Bloquear</button>}
+                      {(ag.bloqueado || ag.estado_agente === "inactivo") && <button onClick={() => accionAgente({ accion: "reactivar", agente_id: ag.id })} disabled={saving !== ""} className="bg-white/[0.05] text-white/40 border border-white/10 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/10">Reactivar</button>}
+                      {(ag.bloqueado || ag.estado_agente === "inactivo") && <button onClick={() => { setNotaAgente(ag.nota_agente || ""); setModal({ tipo: "nota", id: ag.id }); }} className="bg-white/[0.05] text-white/40 border border-white/10 text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-white/10">{ag.nota_agente ? "✎ Editar nota" : "+ Nota para el agente"}</button>}
                     </div>
                     {ag.ventas.length > 0 && (
                       <div className="space-y-1.5">
@@ -666,7 +670,30 @@ export default function AdminPage() {
               <>
                 <h3 className="font-display font-bold mb-4">Motivo de bloqueo</h3>
                 <div className="space-y-2 mb-4">{MOTIVOS_BLOQUEO.map(m => <button key={m} onClick={() => setMotivo(m)} className={`w-full text-left text-sm px-3 py-2 rounded-lg border transition-all ${motivo === m ? "border-[#d4f53c] bg-[rgba(212,245,60,0.06)] text-[#d4f53c]" : "border-white/10 text-white/40 hover:border-white/20"}`}>{m}</button>)}</div>
-                <div className="flex gap-2"><button onClick={() => { setModal(null); setMotivo(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button><button disabled={!motivo} onClick={() => accionAgente({ accion: "bloquear", agente_id: modal.id, motivo_bloqueo: motivo })} className="flex-1 py-2 bg-red-500 hover:bg-red-400 rounded-lg text-white font-bold text-sm disabled:opacity-40">Confirmar</button></div>
+                <textarea
+                  rows={3}
+                  placeholder="Nota para el agente (opcional) — se mostrará en su portal"
+                  value={notaAgente}
+                  onChange={e => setNotaAgente(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none"
+                />
+                <div className="flex gap-2"><button onClick={() => { setModal(null); setMotivo(""); setNotaAgente(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button><button disabled={!motivo} onClick={() => { accionAgente({ accion: "bloquear", agente_id: modal.id, motivo_bloqueo: motivo, nota_agente: notaAgente.trim() || undefined }); setNotaAgente(""); }} className="flex-1 py-2 bg-red-500 hover:bg-red-400 rounded-lg text-white font-bold text-sm disabled:opacity-40">Confirmar</button></div>
+              </>
+            )}
+
+            {/* Nota para el agente (inactivos / bloqueados) */}
+            {modal.tipo === "nota" && (
+              <>
+                <h3 className="font-display font-bold mb-1">Nota para el agente</h3>
+                <p className="text-white/30 text-xs mb-4">Se mostrará en su portal, en la pantalla de estado. Déjalo vacío para no mostrar nada.</p>
+                <textarea
+                  rows={4}
+                  placeholder="Ej: Contáctanos por WhatsApp para resolver esto."
+                  value={notaAgente}
+                  onChange={e => setNotaAgente(e.target.value)}
+                  className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none"
+                />
+                <div className="flex gap-2"><button onClick={() => { setModal(null); setNotaAgente(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button><button onClick={() => { accionAgente({ accion: "editar_nota", agente_id: modal.id, nota_agente: notaAgente.trim() || undefined }); setNotaAgente(""); }} className="flex-1 py-2 bg-[#d4f53c] hover:bg-[#b8e032] rounded-lg text-[#080808] font-bold text-sm">Guardar</button></div>
               </>
             )}
 

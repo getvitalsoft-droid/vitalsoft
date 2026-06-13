@@ -373,19 +373,57 @@ export async function enviarEmailAgenteComisionPagada({
 
 /** Disparado por: PATCH /api/agentes accion=bloquear */
 export async function enviarEmailAgenteBloqueo({
-  agente, motivo,
+  agente, motivo, nota,
 }: {
-  agente: Agente; motivo?: string;
+  agente: Agente; motivo?: string; nota?: string;
 }) {
   const body = `
     <p style="font-size:14px;color:#aaa;margin-bottom:16px">Hola <strong>${agente.nombre}</strong>, tu cuenta de agente ha sido desactivada.</p>
     ${motivo ? CARD(ROW("Motivo", motivo)) : ""}
+    ${nota ? `<p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:16px">${nota}</p>` : ""}
     <p style="font-size:13px;color:#888">Si crees que es un error, contacta con nosotros en <a href="mailto:${ADMIN_EMAIL}" style="color:#d4f53c">${ADMIN_EMAIL}</a>.</p>`;
 
   return await resend.emails.send({
     from: FROM, to: agente.email,
     subject: `Cuenta de agente desactivada — VitalSoft`,
     html: WRAP(HEADER("Cuenta desactivada", "Tu acceso como agente ha sido suspendido.", "🔒"), body),
+  });
+}
+
+/** Disparado por: PATCH /api/agentes/admin accion=reactivar (desde bloqueado o inactivo) */
+export async function enviarEmailAgenteReactivado({
+  agente,
+}: {
+  agente: Agente;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px">Hola <strong>${agente.nombre}</strong>, tu cuenta de agente ha sido reactivada.</p>
+    <p style="font-size:13px;color:#888;line-height:1.7;margin-bottom:20px">Ya puedes acceder de nuevo a tu portal con normalidad — tus links, ventas y comisiones siguen disponibles.</p>
+    ${BTN("Acceder al portal →", `${SITE}/agentes`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: agente.email,
+    subject: `✅ Tu cuenta de agente ha sido reactivada — VitalSoft`,
+    html: WRAP(HEADER("¡Bienvenido de nuevo!", "Tu acceso ha sido restaurado.", "✅"), body),
+  });
+}
+
+/** Disparado por: POST /api/agentes/activity accion=solicitar_reactivacion (agente inactivo pulsa "Volver a pedir acceso") */
+export async function enviarEmailAdminSolicitudReactivacion({
+  nombre, email, codigo,
+}: {
+  nombre: string; email: string; codigo: string;
+}) {
+  const body = `
+    <p style="font-size:14px;color:#aaa;margin-bottom:16px"><strong>${nombre}</strong> (${codigo}) ha solicitado volver a estar activo.</p>
+    ${CARD(ROW("Email", email))}
+    <p style="font-size:13px;color:#888">Revisa su historial y reactívalo desde el panel de administración si procede.</p>
+    ${BTN("Abrir admin →", `${SITE}/admin`)}`;
+
+  return await resend.emails.send({
+    from: FROM, to: ADMIN_EMAIL,
+    subject: `🔔 ${nombre} solicita reactivación de cuenta — VitalSoft`,
+    html: WRAP(HEADER("Solicitud de reactivación", `${nombre} quiere volver a estar activo.`, "🔔"), body),
   });
 }
 

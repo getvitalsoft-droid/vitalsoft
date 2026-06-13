@@ -15,10 +15,13 @@ export async function POST(req: NextRequest) {
   if (!email?.trim()) return NextResponse.json({ error: "Email requerido." }, { status: 400 });
 
   const { data: agente } = await supabase
-    .from("agentes").select("id, nombre, email, aprobado, bloqueado").eq("email", email.trim().toLowerCase()).single();
+    .from("agentes").select("id, nombre, email, aprobado").eq("email", email.trim().toLowerCase()).single();
 
   // Responder siempre igual para no revelar si el email existe
-  if (!agente || agente.bloqueado || !agente.aprobado) {
+  // Nota: agentes bloqueados o inactivos SÍ pueden recibir el enlace — necesitan
+  // entrar al portal para ver su pantalla de estado (bloqueo/inactividad).
+  // Solo los que nunca fueron aprobados (pendientes de aprobación) no reciben enlace.
+  if (!agente || !agente.aprobado) {
     return NextResponse.json({ ok: true });
   }
 
