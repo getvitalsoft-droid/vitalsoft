@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;background:#080808;color:#f0f0f0;padding:32px;border-radius:12px">
         <div style="font-size:20px;font-weight:900;margin-bottom:24px"><span style="color:#d4f53c">Vital</span>Soft</div>
         <h2 style="font-size:18px;margin-bottom:8px">Hola ${agente.nombre} 👋</h2>
-        <p style="color:#aaa;font-size:14px;margin-bottom:24px">Aquí tienes tu enlace de acceso al portal de agentes. Una vez entres, tu sesión se guarda en este navegador durante 14 días — no necesitarás pedir otro enlace hasta entonces.</p>
+        <p style="color:#aaa;font-size:14px;margin-bottom:24px">Aquí tienes tu enlace de acceso al portal de agentes. Caduca en 1 hora — si cierras la pestaña y vuelves dentro de ese tiempo, no necesitarás otro enlace.</p>
         <a href="${url}" style="display:inline-block;background:#d4f53c;color:#080808;font-weight:900;padding:14px 28px;border-radius:10px;text-decoration:none;font-size:14px">
           Acceder al portal →
         </a>

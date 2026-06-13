@@ -1,9 +1,9 @@
 import crypto from "crypto";
 
-// Sesión del portal de agentes: 14 días. Se guarda en localStorage en el navegador
-// del agente para evitar tener que pedir un enlace de acceso nuevo (y abrir una
-// pestaña nueva) cada vez que quiere entrar.
-const DURACION_SESION_MS = 14 * 24 * 60 * 60 * 1000;
+// Sesión del portal de agentes: 1 hora. Se cachea en localStorage para que si
+// el agente cierra y reabre la pestaña dentro de esa hora no tenga que pedir
+// un enlace nuevo — pero pasada la hora, el token deja de ser válido igualmente.
+const DURACION_SESION_MS = 60 * 60 * 1000;
 
 export function signToken(agenteId: string, email: string): string {
   const exp = Date.now() + DURACION_SESION_MS;

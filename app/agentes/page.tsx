@@ -457,6 +457,7 @@ export default function AgentesPage() {
   const [reporteEnviado, setReporteEnviado] = useState("");
   const [editandoReporte, setEditandoReporte] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [sesionEnOtraPestana, setSesionEnOtraPestana] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -468,12 +469,24 @@ export default function AgentesPage() {
       loadDashboard(t);
       return;
     }
-    // Sin token en la URL — intentar recuperar sesión guardada (14 días)
+    // Sin token en la URL — intentar recuperar sesión guardada (dentro de la hora)
     const saved = window.localStorage.getItem("vs_agente_token");
     if (saved) {
       setToken(saved);
       loadDashboard(saved);
     }
+
+    // Si esta pestaña queda en "Revisa tu email" y el agente abre el enlace en
+    // otra pestaña (mismo origen), localStorage se actualiza ahí y este evento
+    // nos avisa aquí — ya no necesitamos esta pestaña.
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "vs_agente_token" && e.newValue) {
+        setSesionEnOtraPestana(true);
+        setTimeout(() => { try { window.close(); } catch {} }, 1500);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   const loadDashboard = async (t: string) => {
@@ -638,10 +651,21 @@ export default function AgentesPage() {
   if (step === "pending") return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
       <div className="text-center max-w-sm">
-        <div className="text-4xl mb-4">📬</div>
-        <h2 className="font-display font-bold text-xl mb-2">Revisa tu email</h2>
-        <p className="text-white/40 text-sm mb-6">Si tu email está registrado como agente activo, recibirás el enlace en unos segundos.</p>
-        <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver</button>
+        {sesionEnOtraPestana ? (
+          <>
+            <div className="text-4xl mb-4">✅</div>
+            <h2 className="font-display font-bold text-xl mb-2">Ya iniciaste sesión</h2>
+            <p className="text-white/40 text-sm mb-6">Hemos detectado que abriste el enlace en otra pestaña. Esta ya no la necesitas — puedes cerrarla.</p>
+            <button onClick={() => window.close()} className="text-white/25 text-xs underline hover:text-white/50">Cerrar esta pestaña</button>
+          </>
+        ) : (
+          <>
+            <div className="text-4xl mb-4">📬</div>
+            <h2 className="font-display font-bold text-xl mb-2">Revisa tu email</h2>
+            <p className="text-white/40 text-sm mb-6">Si tu email está registrado como agente activo, recibirás el enlace en unos segundos.</p>
+            <button onClick={() => setStep("magic")} className="text-white/25 text-xs underline hover:text-white/50">← Volver</button>
+          </>
+        )}
       </div>
     </main>
   );
