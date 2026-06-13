@@ -19,15 +19,18 @@ export async function GET(req: NextRequest) {
 
   const ahora = new Date().toISOString();
 
-  // Detectar primer acceso al portal
-  const esPrimerAcceso = !agente.primer_acceso_portal;
-  if (esPrimerAcceso) {
-    await supabase.from("agentes").update({
-      ultimo_acceso: ahora,
-      primer_acceso_portal: ahora,
-    }).eq("id", agente.id);
+  // Detectar primer acceso al portal — update atómico: solo entra si primer_acceso_portal sigue NULL
+  // en el momento de escribir, evitando duplicados por peticiones simultáneas
+  const { data: actualizado } = await supabase
+    .from("agentes")
+    .update({ ultimo_acceso: ahora, primer_acceso_portal: ahora })
+    .eq("id", agente.id)
+    .is("primer_acceso_portal", null)
+    .select("id")
+    .single();
 
-    // Email de bienvenida al portal — una sola vez
+  if (actualizado) {
+    // Esta petición fue la que marcó el primer acceso — envía bienvenida una sola vez
     enviarEmailBienvenidaPortalAgente({
       email: agente.email,
       nombre: agente.nombre,

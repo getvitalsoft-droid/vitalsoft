@@ -268,7 +268,16 @@ function AjustesCorreo({ agente, token }: { agente: AgenteData; token: string })
                   </div>
                 )}
               </li>
-              <li>Guarda los cambios. Gmail enviará un correo de verificación — confírmalo y ya podrás escribir como {direccion}.</li>
+              <li>
+                Guarda los cambios. Gmail enviará un correo de verificación a {direccion} con un enlace o un código de confirmación.
+                <span className="block text-white/30 mt-1">
+                  Si todavía no has configurado la recepción (sección de abajo), ese correo no te llegará — pide primero la activación de recepción a VitalSoft.
+                </span>
+              </li>
+              <li>
+                Vuelve a <span className="text-white/65">Ajustes → Ver todas las opciones de configuración → Cuentas e importación</span>. Verás {direccion} marcado como "pendiente de verificación" — pulsa <span className="text-white/65">Verificar</span> e introduce el código o confirma el enlace recibido.
+              </li>
+              <li>Listo — ya puedes escribir como {direccion}.</li>
             </ol>
           </div>
 
