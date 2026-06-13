@@ -179,6 +179,124 @@ function AjustesAusencia({ agente, token, onSave }: { agente: AgenteData; token:
   );
 }
 
+function generarAlias(nombre: string): string {
+  const primerNombre = (nombre || "").trim().split(/\s+/)[0] || "agente";
+  return primerNombre
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // quitar acentos
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function AjustesCorreo({ agente, token }: { agente: AgenteData; token: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const [smtp, setSmtp] = useState<{ server: string; port: number; username: string; password: string } | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [copiado, setCopiado] = useState("");
+
+  const alias = generarAlias(agente.nombre);
+  const direccion = `${alias}@vitalsoft.pro`;
+  const nombreVisible = `${(agente.nombre || "").trim().split(/\s+/)[0]} | VitalSoft`;
+
+  const cargarSmtp = async () => {
+    if (smtp) return;
+    setLoading(true);
+    const res = await fetch("/api/agentes/correo", { headers: { "x-agente-token": token } });
+    if (res.ok) setSmtp(await res.json());
+    setLoading(false);
+  };
+
+  const toggle = () => {
+    const next = !abierto;
+    setAbierto(next);
+    if (next) cargarSmtp();
+  };
+
+  const copiar = (texto: string, key: string) => {
+    navigator.clipboard.writeText(texto).catch(() => {});
+    setCopiado(key);
+    setTimeout(() => setCopiado(""), 2000);
+  };
+
+  const campo = (label: string, valor: string, key: string) => (
+    <div className="flex items-center justify-between bg-white/[0.03] border border-white/[0.06] rounded-lg px-3 py-2 mb-2">
+      <div className="min-w-0">
+        <div className="text-white/25 text-[10px] uppercase tracking-widest">{label}</div>
+        <div className="text-white/70 text-xs font-mono truncate">{valor}</div>
+      </div>
+      <button onClick={() => copiar(valor, key)}
+        className={`flex-shrink-0 ml-2 px-2.5 py-1 rounded-md text-[10px] font-bold transition-all ${copiado === key ? "bg-[#d4f53c] text-[#080808]" : "border border-white/10 text-white/40 hover:border-white/20"}`}>
+        {copiado === key ? "✓" : "Copiar"}
+      </button>
+    </div>
+  );
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <button onClick={toggle} className="w-full flex items-center justify-between text-left">
+        <div>
+          <p className="text-white/60 text-xs font-semibold">¿Quieres un correo propio de la empresa?</p>
+          <p className="text-white/25 text-xs mt-1">Configura {direccion} en tu Gmail para escribir y recibir como agente VitalSoft.</p>
+        </div>
+        <span className="text-white/30 text-lg flex-shrink-0 ml-3">{abierto ? "−" : "+"}</span>
+      </button>
+
+      {abierto && (
+        <div className="mt-5 space-y-6">
+          {/* ENVIAR */}
+          <div>
+            <p className="text-[#d4f53c] text-xs font-semibold mb-3">Para escribir desde {direccion}</p>
+            <ol className="space-y-2.5 text-white/45 text-xs leading-relaxed list-decimal list-inside">
+              <li>En el Gmail de tu cuenta personal, entra en <span className="text-white/65">Ajustes</span> (icono de engranaje).</li>
+              <li>Pulsa <span className="text-white/65">Ver todas las opciones de configuración</span> y abre la pestaña <span className="text-white/65">Cuentas e importación</span>.</li>
+              <li>En la sección <span className="text-white/65">Enviar correo como</span>, pulsa <span className="text-white/65">Añadir otra dirección de correo electrónico</span>.</li>
+              <li>
+                Se abrirá una ventana que pide nombre y dirección. Pon esto:
+                {campo("Nombre", nombreVisible, "nombre")}
+                {campo("Dirección de correo", direccion, "direccion")}
+                Deja marcada la opción <span className="text-white/65">Tratarlo como un alias</span> y pulsa siguiente.
+              </li>
+              <li>
+                En el siguiente paso te pedirá los datos del servidor SMTP. Pon estos:
+                {loading && <p className="text-white/30 text-xs mt-2">Cargando datos...</p>}
+                {smtp && (
+                  <div className="mt-2">
+                    {campo("Servidor SMTP", smtp.server, "server")}
+                    {campo("Puerto", String(smtp.port), "port")}
+                    {campo("Nombre de usuario", smtp.username, "username")}
+                    {campo("Contraseña", smtp.password, "password")}
+                  </div>
+                )}
+              </li>
+              <li>Guarda los cambios. Gmail enviará un correo de verificación — confírmalo y ya podrás escribir como {direccion}.</li>
+            </ol>
+          </div>
+
+          {/* RECIBIR */}
+          <div className="pt-4 border-t border-white/[0.06]">
+            <p className="text-[#d4f53c] text-xs font-semibold mb-2">Para recibir mensajes en {direccion}</p>
+            <p className="text-white/45 text-xs leading-relaxed">
+              Esto lo configuramos nosotros manualmente. Contáctanos por el canal habitual o escribe a{" "}
+              <a href={`mailto:hola@vitalsoft.pro?subject=Quiero recibir correos en ${direccion}&body=Hola, quiero activar la recepción de correos en ${direccion}. Mi Gmail personal donde quiero recibirlos es: `}
+                target="_blank" rel="noopener noreferrer" className="text-white/65 underline">
+                hola@vitalsoft.pro
+              </a>
+              {" "}indicando tu Gmail personal. Te llegará un correo de verificación que deberás confirmar.
+            </p>
+          </div>
+
+          <div className="pt-1">
+            <p className="text-white/25 text-xs">
+              ¿Dudas o algo no funciona? Escríbenos por el canal habitual o a{" "}
+              <a href="mailto:hola@vitalsoft.pro" target="_blank" rel="noopener noreferrer" className="text-white/40 underline">hola@vitalsoft.pro</a>.
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AgentesPage() {
   const [step, setStep] = useState<"magic" | "pending" | "dashboard" | "register" | "registered">("magic");
   const [email, setEmail] = useState("");
@@ -640,6 +758,9 @@ export default function AgentesPage() {
 
             {/* Ausencia temporal */}
             <AjustesAusencia agente={agente} token={token} onSave={a => setAgente(a)} />
+
+              {/* Correo propio @vitalsoft.pro */}
+              <AjustesCorreo agente={agente} token={token} />
 
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-4 text-xs text-white/30 space-y-1">
               <p>· Si en algún momento quieres tomarte un descanso, márcalo como ausente y no recibirás recordatorios durante ese periodo.</p>
