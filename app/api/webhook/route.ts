@@ -304,9 +304,9 @@ export async function POST(req: NextRequest) {
             .update({ estado: "esperando_material", revisiones_usadas: 0 })
             .eq("stripe_subscription_id", String(invoice.subscription))
             .neq("estado", "cancelado")
-            .select("id, stripe_customer_id, cliente_nombre, clips").single();
+            .select("id, stripe_customer_id, cliente_nombre, clips_mensuales").single();
           orderRenovado = data;
-          clipsRenovacion = data?.clips || null;
+          clipsRenovacion = data?.clips_mensuales || null;
         }
 
         // Pedir reseña en renovaciones (si no se ha pedido antes y REVIEW_URL configurado)
