@@ -1180,20 +1180,36 @@ export default function AgentesPage() {
                 </div>
 
                 <div>
+                  <p className="text-white/70 font-semibold mb-3">Cómo hablar del precio</p>
+                  <div className="bg-white/[0.02] border border-white/[0.05] rounded-lg p-4 mb-4">
+                    <p className="text-white/50 text-[11px] leading-relaxed mb-3">
+                      <span className="text-white/70 font-semibold">No defiendas el precio — habla de lo que el cliente recupera.</span>{" "}
+                      La mayoría de creadores dedican entre 10 y 20 horas al mes a sacar clips de su contenido largo. Cuando lo entienden así, 250€ deja de parecer un gasto y se convierte en una decisión obvia.
+                    </p>
+                    <p className="text-white/40 text-[11px] leading-relaxed">Céntrate en tres cosas: <span className="text-white/60">horas recuperadas</span>, <span className="text-white/60">consistencia de publicación</span> (ya no se procrastina la tarea), y <span className="text-white/60">eliminar una tarea que no les gusta hacer</span>. No menciones lo que vale su hora — muchos creadores pequeños no se identifican con cifras grandes.</p>
+                  </div>
+
                   <p className="text-white/70 font-semibold mb-2">Objeciones frecuentes</p>
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {[
-                      ["¿No es más barato contratar un editor?", "La diferencia no es el precio, es la previsibilidad. Con un editor gestionas personas, plazos y revisiones. Con VitalSoft tienes un sistema: subes el material y recibes clips. Sin gestión."],
-                      ["¿Y si no me gustan los clips?", "Cada plan incluye ajustes por clip. Si algo no encaja, se corrige."],
-                      ["¿Cuántos clips salen de un episodio?", "Depende del contenido. Un episodio de 60 minutos suele generar entre 8 y 15 clips. Por eso los planes se definen por capacidad mensual, no por episodio."],
-                      ["¿Puedo cancelar?", "Sí, sin permanencia, desde el portal del cliente."],
+                      ["— Es caro.", "Entiendo la preocupación. Muchos creadores lo comparan con hacerlo ellos mismos o con contratar un editor. La diferencia es que VitalSoft está pensado para convertir una grabación larga en semanas de contenido sin que tengas que dedicar horas a revisar, cortar, subtitular y exportar. Si actualmente dedicas 10–15 horas al mes a esta tarea, el coste real suele ser bastante superior a la cuota del servicio."],
+                      ["— Ya tengo editor.", "Perfecto. Si tu editor te funciona, no hay motivo para cambiar. Lo que ofrecemos es un sistema con plazos definidos, ajustes incluidos y capacidad de producir volumen constante sin depender de una sola persona. Si en algún momento eso te resulta útil, aquí estamos."],
+                      ["— ¿No es más barato contratar un editor?", "Un editor a 15€ por clip, en el plan Growth (20 clips), son 300€ más el tiempo que pasas coordinando, revisando y explicando tu estilo. VitalSoft son 250€ y cero gestión — subes el material y recibes los clips."],
+                      ["— ¿Y si no me gustan los clips?", "Cada plan incluye ajustes por clip. Si algo no encaja, se corrige."],
+                      ["— ¿Cuántos clips salen de un episodio?", "Depende del contenido. Un episodio de 60 minutos suele generar entre 8 y 15 clips. Por eso los planes se definen por capacidad mensual, no por episodio."],
+                      ["— ¿Puedo cancelar?", "Sí, sin permanencia, desde el portal del cliente."],
                     ].map(([q, a]) => (
-                      <div key={q}>
-                        <p className="text-white/60 font-semibold mb-1">— {q}</p>
+                      <div key={q} className="border-b border-white/[0.05] pb-3 last:border-0 last:pb-0">
+                        <p className="text-white/60 font-semibold mb-1">{q}</p>
                         <p>{a}</p>
                       </div>
                     ))}
                   </div>
+                </div>
+
+                <div className="bg-[rgba(255,200,50,0.04)] border border-[rgba(255,200,50,0.1)] rounded-xl p-4">
+                  <p className="text-white/60 text-xs font-semibold mb-2">⚠️ Lo que más perjudica ahora mismo no es el precio</p>
+                  <p className="text-white/40 text-[11px] leading-relaxed">Es no tener casos reales ni muestras de trabajo. Un cliente puede entender perfectamente el ROI y aun así pensar: "vale, pero ¿quién dice que los clips serán buenos?". Esa objeción no se gana con argumentos — se gana con muestras. Cuando las tengamos, os avisamos para que las uséis.</p>
                 </div>
 
                 <div>
