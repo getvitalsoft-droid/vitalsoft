@@ -122,6 +122,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  if (accion === "completar_onboarding") {
+    if (!agente.onboarding_completado_at) {
+      await supabase.from("agentes").update({
+        onboarding_completado_at: new Date().toISOString(),
+      }).eq("id", agente.id);
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  if (accion === "confirmar_docs") {
+    // El agente confirma que ha leído la documentación — requiere su propio código
+    const { codigo_confirmacion } = body;
+    if (!codigo_confirmacion || codigo_confirmacion.trim().toUpperCase() !== agente.codigo.toUpperCase()) {
+      return NextResponse.json({ error: "Código incorrecto." }, { status: 400 });
+    }
+    const ahora2 = new Date().toISOString();
+    await supabase.from("agentes").update({
+      onboarding_docs_leidos: true,
+      onboarding_docs_leidos_at: ahora2,
+    }).eq("id", agente.id);
+    return NextResponse.json({ ok: true });
+  }
+
   if (accion === "reporte_reactivacion") {
     if (agente.estado_agente !== "inactivo") {
       return NextResponse.json({ error: "Tu cuenta no está inactiva." }, { status: 400 });

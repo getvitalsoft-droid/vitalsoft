@@ -13,6 +13,8 @@ interface AgenteData {
   ultimo_acceso?: string; ultimo_reporte?: string;
   metodo_cobro?: string; datos_cobro?: string; contacto_alternativo?: string;
   reportes_sin_rellenar?: number;
+  onboarding_docs_leidos?: boolean;
+  onboarding_completado_at?: string;
   ventas?: Venta[];
 }
 
@@ -440,6 +442,169 @@ function EstadoOverlay({ agente, token, onSave }: { agente: AgenteData; token: s
   return null;
 }
 
+function ConfirmarDocs({ agente, token, onSave }: { agente: AgenteData; token: string; onSave: (a: AgenteData) => void }) {
+  const [codigo, setCodigo] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [ok, setOk] = useState(false);
+
+  if (agente.onboarding_docs_leidos) {
+    return (
+      <div className="flex items-center gap-2 py-3 px-4 bg-[rgba(212,245,60,0.04)] border border-[rgba(212,245,60,0.12)] rounded-xl">
+        <span className="text-[#d4f53c] text-sm">✓</span>
+        <span className="text-white/40 text-xs">Documentación confirmada — vuelve a Inicio para continuar.</span>
+      </div>
+    );
+  }
+
+  const confirmar = async () => {
+    if (!codigo.trim()) return;
+    setLoading(true); setError("");
+    const res = await fetch("/api/agentes/activity", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-agente-token": token },
+      body: JSON.stringify({ accion: "confirmar_docs", codigo_confirmacion: codigo.trim() }),
+    });
+    if (res.ok) {
+      setOk(true);
+      onSave({ ...agente, onboarding_docs_leidos: true });
+    } else {
+      const d = await res.json();
+      setError(d.error || "Código incorrecto.");
+    }
+    setLoading(false);
+  };
+
+  if (ok) return (
+    <div className="flex items-center gap-2 py-3 px-4 bg-[rgba(212,245,60,0.04)] border border-[rgba(212,245,60,0.12)] rounded-xl">
+      <span className="text-[#d4f53c] text-sm">✓</span>
+      <span className="text-white/40 text-xs">¡Perfecto! Vuelve a Inicio para continuar.</span>
+    </div>
+  );
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-5">
+      <p className="text-white/60 text-xs font-semibold mb-1">He leído la documentación completa</p>
+      <p className="text-white/25 text-[11px] mb-4 leading-relaxed">Introduce tu código de agente para confirmar que has leído y entendido todo.</p>
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder={`Tu código (ej: ${agente.codigo.slice(0, 4)}...)`}
+          value={codigo}
+          onChange={e => { setCodigo(e.target.value.toUpperCase()); setError(""); }}
+          className="flex-1 bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-white text-sm font-mono outline-none focus:border-white/20"
+        />
+        <button onClick={confirmar} disabled={loading || !codigo.trim()}
+          className="px-4 py-2 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-bold text-xs rounded-lg disabled:opacity-40 transition-all">
+          {loading ? "..." : "Confirmar"}
+        </button>
+      </div>
+      {error && <p className="text-red-400 text-[11px] mt-2">{error}</p>}
+    </div>
+  );
+}
+
+function ChecklistOnboarding({ agente, token, onSave, onIrADocs, onIrAAjustes }: {
+  agente: AgenteData; token: string;
+  onSave: (a: AgenteData) => void;
+  onIrADocs: () => void;
+  onIrAAjustes: () => void;
+}) {
+  const [colapsado, setColapsado] = useState(false);
+
+  const items = [
+    {
+      id: "docs",
+      label: "Lee la documentación completa",
+      desc: "Contiene todo lo que necesitas saber para vender correctamente.",
+      hecho: !!agente.onboarding_docs_leidos,
+      accion: <button onClick={onIrADocs} className="text-[#d4f53c] text-xs font-semibold underline">Ir a Documentación →</button>,
+    },
+    {
+      id: "cobro",
+      label: "Configura tu método de cobro",
+      desc: "Necesitamos saber cómo enviarte tus comisiones.",
+      hecho: !!agente.metodo_cobro,
+      accion: <button onClick={onIrAAjustes} className="text-[#d4f53c] text-xs font-semibold underline">Ir a Ajustes →</button>,
+    },
+    {
+      id: "contacto",
+      label: "Añade un contacto alternativo",
+      desc: "WhatsApp u otro canal por si necesitamos localizarte.",
+      hecho: !!agente.contacto_alternativo,
+      accion: <button onClick={onIrAAjustes} className="text-[#d4f53c] text-xs font-semibold underline">Ir a Ajustes →</button>,
+    },
+  ];
+
+  const total = items.length;
+  const hechos = items.filter(i => i.hecho).length;
+  const todoCompleto = hechos === total;
+
+  // Si ya estaba completado antes de esta sesión, no mostrar nada
+  if (agente.onboarding_completado_at) return null;
+
+  if (colapsado && todoCompleto) {
+    return (
+      <div className="bg-[rgba(212,245,60,0.04)] border border-[rgba(212,245,60,0.15)] rounded-xl px-5 py-3 flex items-center justify-between">
+        <span className="text-[#d4f53c] text-xs font-semibold">✓ Cuenta configurada — ¡ya estás listo para vender!</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-white/70 text-xs font-semibold">Primeros pasos</p>
+          <p className="text-white/25 text-[10px] mt-0.5">{hechos} de {total} completados</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="flex gap-1">
+            {items.map(item => (
+              <div key={item.id} className={`w-6 h-1.5 rounded-full transition-all ${item.hecho ? "bg-[#d4f53c]" : "bg-white/10"}`} />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        {items.map(item => (
+          <div key={item.id} className={`flex gap-3 p-3 rounded-lg border transition-all ${item.hecho ? "border-[rgba(212,245,60,0.1)] bg-[rgba(212,245,60,0.03)] opacity-60" : "border-white/[0.06] bg-white/[0.02]"}`}>
+            <div className={`flex-shrink-0 w-5 h-5 rounded-full border flex items-center justify-center mt-0.5 ${item.hecho ? "border-[#d4f53c] bg-[#d4f53c]" : "border-white/20"}`}>
+              {item.hecho && <span className="text-[#080808] text-[10px] font-black">✓</span>}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className={`text-xs font-semibold mb-0.5 ${item.hecho ? "text-white/40 line-through" : "text-white/70"}`}>{item.label}</p>
+              {!item.hecho && (
+                <>
+                  <p className="text-white/30 text-[11px] mb-2 leading-relaxed">{item.desc}</p>
+                  {item.accion}
+                </>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {todoCompleto && (
+        <button onClick={() => {
+          setColapsado(true);
+          // Marcar onboarding completado en BD (fire & forget)
+          fetch("/api/agentes/activity", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "x-agente-token": token },
+            body: JSON.stringify({ accion: "completar_onboarding" }),
+          }).catch(() => {});
+          onSave({ ...agente, onboarding_completado_at: new Date().toISOString() });
+        }}
+          className="mt-4 w-full py-2.5 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-bold text-xs rounded-xl transition-all">
+          ¡Todo listo! Empezar a vender →
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function AgentesPage() {
   const [step, setStep] = useState<"magic" | "pending" | "dashboard" | "register" | "registered">("magic");
   const [email, setEmail] = useState("");
@@ -756,6 +921,15 @@ export default function AgentesPage() {
         {/* ── TAB INICIO ── */}
         {tab === "inicio" && (
           <div className="space-y-4">
+            {/* Checklist onboarding — solo si no está completado */}
+            <ChecklistOnboarding
+              agente={agente}
+              token={token}
+              onSave={a => setAgente(a)}
+              onIrADocs={() => setTab("docs")}
+              onIrAAjustes={() => setTab("ajustes")}
+            />
+
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
@@ -1040,6 +1214,16 @@ export default function AgentesPage() {
                   <p className="text-white/50 font-semibold mb-1">¿Tienes dudas?</p>
                   <p>Escríbenos a <a href="mailto:hola@vitalsoft.pro?subject=Duda agente VitalSoft&body=Hola, soy agente con código " target="_blank" rel="noopener noreferrer" className="text-[#d4f53c] underline">hola@vitalsoft.pro</a> o envía un reporte desde la pestaña Inicio.</p>
                 </div>
+
+                <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4">
+                  <p className="text-white/40 text-[11px] leading-relaxed">
+                    <span className="text-white/60 font-semibold">⚠️ Esta documentación es tu referencia para cada venta.</span>{" "}
+                    Revísala periódicamente — está sujeta a cambios. Por ejemplo, próximamente el sistema de entrega cambiará de Google Drive a un portal propio integrado en VitalSoft.
+                  </p>
+                </div>
+
+                <ConfirmarDocs agente={agente} token={token} onSave={a => setAgente(a)} />
+
               </div>
             </div>
           </div>
