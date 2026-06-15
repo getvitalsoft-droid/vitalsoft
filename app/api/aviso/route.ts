@@ -18,6 +18,10 @@ export async function GET() {
     .single();
 
   return NextResponse.json(data || null, {
-    headers: { "Cache-Control": "no-store" },
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate",
+      "CDN-Cache-Control": "no-store",
+      "Vercel-CDN-Cache-Control": "no-store",
+    },
   });
 }
