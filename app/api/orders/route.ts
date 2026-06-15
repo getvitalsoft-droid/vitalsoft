@@ -47,7 +47,7 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   if (!await verificarAdmin(req)) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const { accion, order_id, venta_id, estado, agente_codigo, motivo, nota } = await req.json();
+  const { accion, order_id, venta_id, estado, agente_codigo, motivo, nota, nota_cliente } = await req.json();
 
   const log = async (a: string, detalle?: string) => {
     try {
@@ -142,12 +142,15 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true, venta, agente });
   }
 
-  // Añadir nota interna al order
+  // Añadir nota interna al order (y opcionalmente nota visible para el cliente)
   if (accion === "añadir_nota") {
+    const updates: Record<string, string> = {};
+    if (nota) updates.notas_admin = nota;
+    if (nota_cliente !== undefined) updates.notas_cliente = nota_cliente;
     const { data, error } = await supabaseAdmin.from("orders")
-      .update({ notas_admin: nota }).eq("id", order_id).select().single();
+      .update(updates).eq("id", order_id).select().single();
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-    await log("nota_añadida", nota);
+    await log("nota_añadida", nota || nota_cliente);
     return NextResponse.json({ success: true, order: data });
   }
 

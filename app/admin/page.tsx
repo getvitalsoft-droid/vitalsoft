@@ -325,9 +325,9 @@ export default function AdminPage() {
                     <select
                       defaultValue=""
                       onChange={e => { if (e.target.value) { setModal({ tipo: "cambiar_estado", id: order.id, id2: e.target.value }); e.target.value = ""; } }}
-                      className="bg-white/[0.04] border border-white/10 text-white/50 text-xs rounded-lg px-2 py-1.5 outline-none">
-                      <option value="" disabled>Cambiar estado...</option>
-                      {ESTADOS_ORDER.map(e => <option key={e} value={e}>{e.replace(/_/g, " ")}</option>)}
+                      className="bg-[#111] border border-white/10 text-white/50 text-xs rounded-lg px-2 py-1.5 outline-none">
+                      <option value="" disabled style={{background:"#111",color:"rgba(255,255,255,0.3)"}}>Cambiar estado...</option>
+                      {ESTADOS_ORDER.map(e => <option key={e} value={e} style={{background:"#111",color:"rgba(255,255,255,0.8)"}}>{e.replace(/_/g, " ")}</option>)}
                     </select>
 
                     {/* Asignar agente */}
@@ -754,12 +754,21 @@ export default function AdminPage() {
               </>
             )}
 
-            {/* Nota interna */}
+            {/* Nota interna + Nota para cliente */}
             {modal.tipo === "nota" && (
               <>
-                <h3 className="font-display font-bold mb-4">Añadir nota interna</h3>
+                <h3 className="font-display font-bold mb-1">Añadir nota interna</h3>
+                <p className="text-white/25 text-xs mb-3">Solo visible para el admin.</p>
                 <textarea rows={3} placeholder="Nota visible solo para el admin..." value={inputText} onChange={e => setInputText(e.target.value)} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none" />
-                <div className="flex gap-2"><button onClick={() => { setModal(null); setInputText(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button><button disabled={!inputText} onClick={() => accionOrder({ accion: "añadir_nota", order_id: modal.id, nota: inputText })} className="flex-1 py-2 bg-[#d4f53c] text-[#080808] rounded-lg font-bold text-sm disabled:opacity-40">Guardar</button></div>
+
+                <h3 className="font-display font-bold mb-1">Nota para el cliente</h3>
+                <p className="text-white/25 text-xs mb-3">Se muestra en el portal del cliente.</p>
+                <textarea rows={3} placeholder="Ej: Hemos recibido tu material, empezamos mañana..." value={notaAgente} onChange={e => setNotaAgente(e.target.value)} className="w-full bg-white/[0.05] border border-white/10 rounded-lg px-3 py-2 text-white text-sm outline-none mb-4 resize-none" />
+
+                <div className="flex gap-2">
+                  <button onClick={() => { setModal(null); setInputText(""); setNotaAgente(""); }} className="flex-1 py-2 border border-white/10 rounded-lg text-white/40 text-sm">Cancelar</button>
+                  <button disabled={!inputText && !notaAgente} onClick={() => { accionOrder({ accion: "añadir_nota", order_id: modal.id, nota: inputText, nota_cliente: notaAgente.trim() || undefined }); setNotaAgente(""); }} className="flex-1 py-2 bg-[#d4f53c] text-[#080808] rounded-lg font-bold text-sm disabled:opacity-40">Guardar</button>
+                </div>
               </>
             )}
           </div>

@@ -64,34 +64,30 @@ export default function ArchivosCliente({ orderId, clienteToken, clipsContratado
   return (
     <div className="space-y-5">
       {/* Zona de subida de material bruto */}
-      {puedeSubir && !tieneBruto && (
+      {puedeSubir && (
         <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
           <p className="text-white/60 text-xs font-semibold mb-1">Sube tu material</p>
           <p className="text-white/25 text-xs mb-4 leading-relaxed">
-            Sube el vídeo o episodio que quieres convertir en clips. Formatos aceptados: MP4, MOV, AVI, WebM. Máximo 10 GB.
+            Sube el vídeo o episodio que quieres convertir en clips. Puedes subir varios. Formatos aceptados: MP4, MOV, AVI, WebM. Máximo 10 GB por archivo.
           </p>
+          {tieneBruto && (
+            <div className="mb-3 space-y-1.5">
+              {brutos.map(b => (
+                <div key={b.id} className="flex items-center gap-2 px-3 py-2 bg-white/[0.03] border border-white/[0.05] rounded-lg">
+                  <span className="text-green-400 text-xs">✓</span>
+                  <span className="text-white/40 text-xs truncate">{b.nombre}</span>
+                  {b.tamanio_bytes && <span className="text-white/20 text-[10px] flex-shrink-0">{formatBytes(b.tamanio_bytes)}</span>}
+                </div>
+              ))}
+            </div>
+          )}
           <ArchivoUploader
             orderId={orderId}
             tipo="bruto"
             authHeader={authHeader}
             onSuccess={() => cargar()}
-            label="Sube tu vídeo o episodio"
+            label={tieneBruto ? "Subir otro vídeo" : "Sube tu vídeo o episodio"}
           />
-        </div>
-      )}
-
-      {/* Material recibido */}
-      {tieneBruto && (
-        <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-4">
-          <div className="flex items-center gap-2">
-            <span className="text-green-400 text-sm">✓</span>
-            <p className="text-white/50 text-xs">
-              Material recibido — estamos produciendo tus clips.
-              {brutos[0].tamanio_bytes && (
-                <span className="text-white/25"> ({formatBytes(brutos[0].tamanio_bytes)})</span>
-              )}
-            </p>
-          </div>
         </div>
       )}
 

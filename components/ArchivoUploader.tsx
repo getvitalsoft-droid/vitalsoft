@@ -1,14 +1,21 @@
 "use client";
 // components/ArchivoUploader.tsx
-// Componente reutilizable para subir archivos a Supabase Storage
-// vía URL firmada. Funciona tanto para el cliente (brutos) como para el admin (clips).
-
 import { useState, useRef } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const BUCKET = "vitalsoft-archivos";
+
+// Cliente Supabase solo para storage (anon key — el bucket es privado pero las
+// signed upload URLs no requieren auth adicional, son autocontenidas)
+const sbStorage = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 interface Props {
   orderId: string;
   tipo: "bruto" | "clip";
-  authHeader: Record<string, string>; // { "x-cliente-token": "..." } o { "Authorization": "Bearer ..." }
+  authHeader: Record<string, string>;
   onSuccess: (archivo: { id: string; nombre: string; storage_path: string }) => void;
   accept?: string;
   maxGb?: number;
@@ -40,7 +47,7 @@ export default function ArchivoUploader({
     }
 
     try {
-      // 1. Obtener URL firmada de subida
+      // 1. Obtener URL firmada + token de subida
       const urlRes = await fetch("/api/archivos/upload-url", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeader },
@@ -57,25 +64,21 @@ export default function ArchivoUploader({
         throw new Error(err.error || "Error al preparar la subida");
       }
 
-      const { upload_url, storage_path } = await urlRes.json();
+      const { storage_path, token } = await urlRes.json();
 
-      // 2. Subir directamente al bucket con XMLHttpRequest para tener progreso
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.upload.addEventListener("progress", (e) => {
-          if (e.lengthComputable) setProgreso(Math.round((e.loaded / e.total) * 95));
-        });
-        xhr.addEventListener("load", () => {
-          if (xhr.status >= 200 && xhr.status < 300) resolve();
-          else reject(new Error(`Error de subida: ${xhr.status}`));
-        });
-        xhr.addEventListener("error", () => reject(new Error("Error de red durante la subida")));
-        xhr.open("PUT", upload_url);
-        xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-        xhr.send(file);
-      });
+      // 2. Subir usando el SDK de Supabase con uploadToSignedUrl
+      // (el XHR directo da 400 — la signed upload URL requiere el token del SDK)
+      setProgreso(10);
 
-      setProgreso(97);
+      const { error: uploadError } = await sbStorage.storage
+        .from(BUCKET)
+        .uploadToSignedUrl(storage_path, token, file, {
+          contentType: file.type || "video/mp4",
+        });
+
+      if (uploadError) throw new Error(uploadError.message);
+
+      setProgreso(90);
       setEstado("confirmando");
 
       // 3. Confirmar en la BD
@@ -179,3 +182,14 @@ export default function ArchivoUploader({
     </div>
   );
 }
+
+interface Props {
+  orderId: string;
+  tipo: "bruto" | "clip";
+  authHeader: Record<string, string>; // { "x-cliente-token": "..." } o { "Authorization": "Bearer ..." }
+  onSuccess: (archivo: { id: string; nombre: string; storage_path: string }) => void;
+  accept?: string;
+  maxGb?: number;
+  label?: string;
+}
+

@@ -369,7 +369,7 @@ function ClientePortal({ token }: { token: string }) {
             <span className="text-sm font-bold text-white/70">🤝 Tu link de referido</span>
           </div>
           <p className="text-white/30 text-xs mb-3">
-            Compártelo. Si alguien contrata, recibes crédito para tu siguiente mensualidad.
+            Compártelo. Si alguien contrata usando tu link, recibes <span className="text-white/70 font-semibold">crédito del 20%</span> de su primer pago en tu próxima factura.
           </p>
           <button
             onClick={copyRef}
@@ -527,6 +527,19 @@ function ClienteLogin() {
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState("");
+  const [sesionEnOtraPestana, setSesionEnOtraPestana] = useState(false);
+
+  // Detectar si el enlace se abrió en otra pestaña
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "vs_cliente_token" && e.newValue) {
+        setSesionEnOtraPestana(true);
+        setTimeout(() => { try { window.close(); } catch {} }, 1500);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -546,13 +559,24 @@ function ClienteLogin() {
   if (sent) return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
       <div className="text-center max-w-sm">
-        <div className="text-5xl mb-6">📧</div>
-        <h2 className="font-display font-black text-xl mb-3">Revisa tu email</h2>
-        <p className="text-white/40 text-sm">
-          Si tienes una cuenta activa, recibirás un enlace de acceso en{" "}
-          <strong className="text-white/60">{email}</strong>.<br/>
-          Caduca en 1 hora.
-        </p>
+        {sesionEnOtraPestana ? (
+          <>
+            <div className="text-5xl mb-6">✅</div>
+            <h2 className="font-display font-black text-xl mb-3">Ya iniciaste sesión</h2>
+            <p className="text-white/40 text-sm">Abriste el enlace en otra pestaña. Puedes cerrar esta.</p>
+            <button onClick={() => window.close()} className="mt-4 text-white/25 text-xs underline hover:text-white/40">Cerrar esta pestaña</button>
+          </>
+        ) : (
+          <>
+            <div className="text-5xl mb-6">📧</div>
+            <h2 className="font-display font-black text-xl mb-3">Revisa tu email</h2>
+            <p className="text-white/40 text-sm">
+              Si tienes una cuenta activa, recibirás un enlace de acceso en{" "}
+              <strong className="text-white/60">{email}</strong>.<br/>
+              Caduca en 1 hora.
+            </p>
+          </>
+        )}
       </div>
     </main>
   );
@@ -601,7 +625,15 @@ function ClientePageInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
-  if (token) return <ClientePortal token={token} />;
+  if (token) {
+    // Guardar en localStorage para que la pestaña de "Revisa tu email" detecte
+    // que ya se accedió y se pueda cerrar sola
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("vs_cliente_token", token);
+      window.history.replaceState({}, "", "/cliente");
+    }
+    return <ClientePortal token={token} />;
+  }
   return <ClienteLogin />;
 }
 
