@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import NegocioTab from "@/components/NegocioTab";
 import ReportesTab from "@/components/ReportesTab";
 import { createClient } from "@supabase/supabase-js";
+import ArchivosAdmin from "@/components/ArchivosAdmin";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,7 +12,7 @@ const supabase = createClient(
 
 interface Venta { id: string; plan: string; importe: number; creado_at: string; estado: string; cliente_email: string; notas_admin?: string; sospechoso?: boolean; sospechoso_motivo?: string; disponible_at?: string; }
 interface Agente { id: string; nombre: string; email: string; codigo: string; creado_at: string; aprobado: boolean; bloqueado: boolean; motivo_bloqueo?: string; nota_agente?: string; estado_agente?: string; reactivacion_solicitada?: boolean; ventas: Venta[]; }
-interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; is_paused?: boolean; paused_at?: string | null; pause_until?: string | null; pause_reason?: string | null; recovery_attempts?: number; recovery_email_sent_at?: string | null; }
+interface Order { id: string; cliente_email: string; cliente_nombre?: string; plan: string; importe: number; estado: string; creado_at: string; fecha_pago: string; drive_folder_id?: string; material_link?: string; agente_codigo?: string; notas_admin?: string; stripe_session_id?: string; is_paused?: boolean; paused_at?: string | null; pause_until?: string | null; pause_reason?: string | null; recovery_attempts?: number; recovery_email_sent_at?: string | null; clips_mensuales?: number | null; }
 interface Referral { id: string; referrer_email: string; referred_email: string; amount_paid: number; credit_amount: number; status: string; is_suspicious: boolean; suspicious_reason: string | null; notes: string | null; created_at: string; available_at: string | null; applied_at: string | null; }
 interface ReferralStats { pendiente_validacion: { count: number; total: number }; disponible: { count: number; total: number }; aplicado: { count: number; total: number }; invalido: { count: number }; suspicious: { count: number }; }
 interface LoyaltyCredit { id: string; customer_email: string; milestone: string; amount: number; status: string; created_at: string; applied_at: string | null; notes: string | null; }
@@ -53,6 +54,7 @@ export default function AdminPage() {
   const [creditForm, setCreditForm] = useState({ amount: "", reason: "", notes: "" });
   const [saving, setSaving] = useState("");
   const [modal, setModal] = useState<{tipo: string; id: string; id2?: string} | null>(null);
+  const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [motivo, setMotivo] = useState("");
   const [notaAgente, setNotaAgente] = useState("");
   const [inputText, setInputText] = useState("");
@@ -342,6 +344,32 @@ export default function AdminPage() {
                   </div>
 
                   {order.notas_admin && <div className="mt-2 text-white/30 text-xs bg-white/[0.02] rounded px-3 py-2 italic">{order.notas_admin}</div>}
+
+                  {/* Panel de archivos — expandible */}
+                  <div className="mt-3 border-t border-white/[0.05] pt-3">
+                    <button
+                      onClick={() => setExpandedOrder(expandedOrder === order.id ? null : order.id)}
+                      className="flex items-center gap-2 text-white/30 text-xs hover:text-white/50 transition-colors">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/>
+                        <polyline points="13 2 13 9 20 9"/>
+                      </svg>
+                      {expandedOrder === order.id ? "Ocultar archivos" : "Archivos y clips"}
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                        className={`transition-transform ${expandedOrder === order.id ? "rotate-180" : ""}`}>
+                        <polyline points="6 9 12 15 18 9"/>
+                      </svg>
+                    </button>
+                    {expandedOrder === order.id && adminToken && (
+                      <div className="mt-3">
+                        <ArchivosAdmin
+                          orderId={order.id}
+                          adminToken={adminToken}
+                          clipsContratados={order.clips_mensuales || 20}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

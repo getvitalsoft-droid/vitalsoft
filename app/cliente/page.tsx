@@ -10,6 +10,7 @@ import {
   Copy, Check, Pause, Play, X, ExternalLink,
   ChevronDown, Gift, AlertCircle, Loader2
 } from "lucide-react";
+import ArchivosCliente from "@/components/ArchivosCliente";
 
 // ─── Tipos ──────────────────────────────────────────────────
 
@@ -33,6 +34,7 @@ interface PortalData {
     estado: string;
     estadoLabel: string;
     driveFolder: string | null;
+    clips_mensuales: number | null;
     is_paused: boolean;
     pause_until: string | null;
     stripe_subscription_id: string | null;
@@ -295,16 +297,24 @@ function ClientePortal({ token }: { token: string }) {
             </div>
           )}
 
-          {/* Drive */}
+          {/* Archivos — subida de material y galería de clips */}
+          <ArchivosCliente
+            orderId={order.id}
+            clienteToken={token}
+            clipsContratados={order.clips_mensuales || 20}
+            estado={order.estado}
+          />
+
+          {/* Drive legacy — solo para pedidos anteriores que ya tienen carpeta */}
           {order.driveFolder && (
             <a
               href={order.driveFolder}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white/60 hover:text-white hover:border-white/20 transition-all mb-4"
+              className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white/40 hover:text-white/60 hover:border-white/15 transition-all"
             >
               <ExternalLink size={14} />
-              Abrir mi carpeta Drive
+              <span>Acceder a carpeta Drive <span className="text-white/20 text-xs">(anterior)</span></span>
             </a>
           )}
 
