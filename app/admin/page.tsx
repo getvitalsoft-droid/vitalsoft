@@ -590,11 +590,36 @@ export default function AdminPage() {
 
         {/* NEGOCIO */}
         {mainTab === "negocio" && (
-          <NegocioTab
-            data={negocio}
-            loading={negocioLoading}
-            onLoad={loadNegocio}
-          />
+          <>
+            {/* Panel de aviso del sistema */}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-2xl p-5 mb-5">
+              <p className="text-white/60 text-xs font-semibold mb-1">⚠️ Aviso del sistema</p>
+              <p className="text-white/30 text-xs mb-3 leading-relaxed">
+                Para mostrar un banner en toda la web ve a <strong className="text-white/50">Supabase → Table Editor → avisos_sistema</strong>.
+                Edita la fila, pon <code className="text-[#d4f53c] text-[10px]">activo = true</code> y guarda. Para quitarlo pon <code className="text-[#d4f53c] text-[10px]">activo = false</code>.
+              </p>
+              <div className="grid grid-cols-3 gap-2 text-[10px]">
+                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-center">
+                  <div className="text-blue-300 font-bold mb-0.5">info</div>
+                  <div className="text-white/30">Banner azul informativo</div>
+                </div>
+                <div className="bg-yellow-400/10 border border-yellow-400/20 rounded-lg px-3 py-2 text-center">
+                  <div className="text-yellow-300 font-bold mb-0.5">warning</div>
+                  <div className="text-white/30">Banner amarillo de aviso</div>
+                </div>
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-center">
+                  <div className="text-red-300 font-bold mb-0.5">error</div>
+                  <div className="text-white/30">Banner rojo de error</div>
+                </div>
+              </div>
+            </div>
+
+            <NegocioTab
+              data={negocio}
+              loading={negocioLoading}
+              onLoad={loadNegocio}
+            />
+          </>
         )}
 
         {mainTab === "reportes" && (
