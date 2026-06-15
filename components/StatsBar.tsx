@@ -2,10 +2,10 @@
 import { motion } from "framer-motion";
 
 const pasos = [
-  { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu carpeta compartida de Google Drive — sin apps nuevas, sin aprender nada." },
+  { num: "01", title: "Subes tu contenido", desc: "Podcast, entrevista, vídeo largo o stream. Lo subes a tu portal VitalSoft — sin apps nuevas, sin aprender nada." },
   { num: "02", title: "Encontramos los mejores momentos", desc: "Seleccionamos los clips con más potencial para formato corto. Tú no tienes que marcar nada." },
   { num: "03", title: "Editamos y adaptamos", desc: "Subtítulos animados, ritmo, formato vertical 9:16 y optimización para cada plataforma." },
-  { num: "04", title: "Recibes semanas de contenido listo para publicar", desc: "Los clips aparecen en tu Drive en 24–48h. Revisas, pides ajustes si los necesitas, y publicas cuando quieras." },
+  { num: "04", title: "Recibes semanas de contenido listo para publicar", desc: "Los clips aparecen en tu portal VitalSoft en 24–48h. Revisas, pides ajustes si los necesitas, y publicas cuando quieras." },
 ];
 
 const requisitos = [

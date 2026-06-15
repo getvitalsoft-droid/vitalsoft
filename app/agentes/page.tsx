@@ -1136,7 +1136,7 @@ export default function AgentesPage() {
               <div className="space-y-5 text-white/50 text-xs leading-relaxed">
                 <div>
                   <p className="text-white/70 font-semibold mb-2">¿Qué es VitalSoft?</p>
-                  <p>VitalSoft es un servicio de edición por suscripción. Convertimos contenido largo (podcasts, entrevistas, vídeos) en clips cortos para TikTok, Reels y YouTube Shorts. El cliente sube su material a un Drive compartido y nosotros entregamos los clips en 24–48h.</p>
+                  <p>VitalSoft es un servicio de edición por suscripción. Convertimos contenido largo (podcasts, entrevistas, vídeos) en clips cortos para TikTok, Reels y YouTube Shorts. El cliente sube su material a su portal de cliente y nosotros entregamos los clips en 24–48h.</p>
                 </div>
 
                 <div>
@@ -1170,7 +1170,7 @@ export default function AgentesPage() {
                     {[
                       "Identifica a tu contacto — ¿graba contenido largo de forma regular?",
                       "Usa el link de la landing general para que explore o el link directo al plan si ya sabes cuál encaja.",
-                      "Responde sus dudas: el servicio no requiere aprender nada, solo subir el material al Drive.",
+                      "Responde sus dudas: el servicio no requiere aprender nada, solo subir el material desde su portal de cliente.",
                       "El cobro es automático por Stripe. Tú no gestionas pagos.",
                       "Tu comisión del 20% se libera a los 14 días del pago.",
                     ].map((s, i) => (
@@ -1234,7 +1234,7 @@ export default function AgentesPage() {
                 <div className="bg-white/[0.02] border border-white/[0.05] rounded-xl p-4">
                   <p className="text-white/40 text-[11px] leading-relaxed">
                     <span className="text-white/60 font-semibold">⚠️ Esta documentación es tu referencia para cada venta.</span>{" "}
-                    Revísala periódicamente — está sujeta a cambios. Por ejemplo, próximamente el sistema de entrega cambiará de Google Drive a un portal propio integrado en VitalSoft.
+                    Revísala periódicamente — está sujeta a cambios. Por ejemplo, el sistema de entrega ya usa un portal propio integrado en VitalSoft.
                   </p>
                 </div>
 

@@ -36,7 +36,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Error al generar el enlace." }, { status: 500 });
     }
 
-    const magicLink = data.properties.action_link;
+    const rawLink = data.properties.action_link;
+    // Supabase genera el link con el SITE_URL configurado en el proyecto (producción).
+    // En entornos de preview lo reemplazamos por NEXT_PUBLIC_SITE_URL para que
+    // el enlace del email apunte al entorno correcto.
+    const magicLink = rawLink.replace(
+      /^https?:\/\/[^/]+/,
+      siteUrl.replace(/\/$/, "")
+    );
 
     // Enviar email con Resend directamente (no SMTP de Supabase)
     const { error: resendError } = await resend.emails.send({

@@ -11,10 +11,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { session_id, nombre_proyecto, redes_sociales, tipo_contenido,
       plataformas, duracion_media, frecuencia_grabacion, idioma,
-      drive_link, referencias, instrucciones, drive_pendiente } = body;
+      referencias, instrucciones } = body;
 
     if (!session_id) return NextResponse.json({ error: "Datos requeridos." }, { status: 400 });
-    if (!drive_link && !drive_pendiente) return NextResponse.json({ error: "El link de Drive es obligatorio." }, { status: 400 });
+
 
     // Buscar order por session_id
     const { data: order, error: orderErr } = await supabase
@@ -32,10 +32,10 @@ export async function POST(req: NextRequest) {
       plataformas: plataformas || [],
       duracion_media, frecuencia_grabacion,
       idioma: idioma || "Español",
-      drive_link: drive_link || null,
+
       referencias,
       notas_importantes: instrucciones,
-      drive_pendiente: drive_pendiente || false,
+
     });
     if (onbErr) return NextResponse.json({ error: onbErr.message }, { status: 500 });
 
@@ -45,19 +45,19 @@ export async function POST(req: NextRequest) {
     if (ESTADOS_ONBOARDING.includes(order.estado)) {
       await supabase.from("orders").update({
         estado: "esperando_material",
-        material_link: drive_link || null,
+
         fecha_onboarding: new Date().toISOString(),
       }).eq("id", order.id);
     } else {
       await supabase.from("orders").update({
-        material_link: drive_link || null,
+
       }).eq("id", order.id);
     }
 
     await supabase.from("activity_logs").insert({
       admin: "cliente", accion: "onboarding_completado",
       objetivo_tipo: "order", objetivo_id: order.id,
-      detalle: `${email} · Drive: ${drive_link}`,
+detalle: email,
     });
 
     return NextResponse.json({ success: true });

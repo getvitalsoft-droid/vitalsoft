@@ -85,7 +85,7 @@ export async function PATCH(req: NextRequest) {
         email: data.cliente_email,
         nombre: data.cliente_nombre,
         plan: data.plan || "Plan VitalSoft",
-        driveFolder: data.drive_folder || null,
+        
         completions: data.review_completions || 1,
       }).catch(console.error);
     }
@@ -105,7 +105,7 @@ export async function PATCH(req: NextRequest) {
             </p>
             ${motivo ? `<div style="background:#1a1a1a;border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;color:#aaa">${motivo}</div>` : ""}
             <p style="color:#888;font-size:13px;line-height:1.7">
-              Por favor, sube el material corregido a tu carpeta Drive. El plazo de entrega empezará de nuevo cuando validemos el nuevo material.
+              Por favor, sube el material corregido desde tu portal de cliente. El plazo de entrega empezará de nuevo cuando validemos el nuevo material.
             </p>
             <p style="color:#555;font-size:11px;margin-top:20px">¿Tienes dudas? Escríbenos a <a href="mailto:${process.env.ADMIN_EMAIL}" style="color:#d4f53c">${process.env.ADMIN_EMAIL}</a></p>
           </div>`,

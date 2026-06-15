@@ -15,7 +15,6 @@ const MOCK_DATA = {
     importe: 250,
     estado: "en_edicion",
     estadoLabel: "En edición",
-    driveFolder: null,
     is_paused: false,
     pause_until: null,
     stripe_subscription_id: "sub_preview",
@@ -138,7 +137,7 @@ export default function ClientePreviewClient() {
 
           <button className="flex items-center gap-2 bg-white/[0.03] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white/60 hover:text-white hover:border-white/20 transition-all w-full mb-2">
             <ExternalLink size={14} />
-            Abrir mi carpeta Drive
+Ver portal de cliente
           </button>
         </div>
 

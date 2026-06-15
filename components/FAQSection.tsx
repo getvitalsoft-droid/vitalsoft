@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 const faqs = [
   {
     q: "¿Qué necesito enviaros para empezar?",
-    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu carpeta Drive compartida y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
+    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu portal VitalSoft y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
   },
   {
     q: "¿Quién selecciona los momentos para los clips?",
@@ -14,7 +14,7 @@ const faqs = [
   },
   {
     q: "¿Cuál es el tiempo de entrega?",
-    a: "El plazo empieza cuando recibimos tu material en Drive y lo validamos, no desde el pago. Una vez validado: Starter 48h, Growth 36h, Scale 24h, Pro prioridad máxima. Si el material llega con problemas de calidad, te lo comunicamos antes de empezar.",
+    a: "El plazo empieza cuando recibimos tu material y lo validamos, no desde el pago. Una vez validado: Starter 48h, Growth 36h, Scale 24h, Pro prioridad máxima. Si el material llega con problemas de calidad, te lo comunicamos antes de empezar.",
   },
   {
     q: "¿Y si no me gusta algún clip?",
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "¿Cómo funciona la entrega?",
-    a: "Tras suscribirte compartes una carpeta de Google Drive con nosotros. Subes tu material con las instrucciones del onboarding. Validamos el contenido, producimos los clips y los subimos al mismo Drive. Tú publicas cuando y donde quieras.",
+    a: "Tras suscribirte accedes a tu portal de cliente. Subes tu material desde tu portal de cliente. Validamos el contenido, producimos los clips y los entregamos en el mismo portal. Tú publicas cuando y donde quieras.",
   },
   {
     q: "¿Qué formatos entregáis?",

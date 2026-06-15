@@ -125,14 +125,7 @@ export async function POST(req: NextRequest) {
             sospechoso: sospechosoEl, sospechoso_motivo: sospechosoMotivoEl,
           });
 
-          // Drive — no bloqueante
-          if (order?.id) {
-            fetch(`${process.env.NEXT_PUBLIC_SITE_URL}/api/drive`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", "x-internal-secret": process.env.CRON_SECRET || "" },
-              body: JSON.stringify({ clienteNombre: nombre || metaEmail.split("@")[0], clienteEmail: metaEmail, plan, orderId: order.id }),
-            }).catch(e => console.error("[Drive] Error:", e));
-          }
+
 
           // Referido de cliente
           if (clientRef && metaEmail && customerId) {
