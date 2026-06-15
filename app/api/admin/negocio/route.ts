@@ -10,16 +10,8 @@ const sb = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-function isAdmin(req: NextRequest) {
-  const token = req.headers.get("x-admin-token");
-  return token === process.env.ADMIN_SECRET_TOKEN;
-}
-
 async function verificarAdminNegocio(req: NextRequest): Promise<boolean> {
-  // Opción 1: token de admin explícito (x-admin-token header)
-  const adminToken = req.headers.get("x-admin-token");
-  if (adminToken && adminToken === process.env.ADMIN_SECRET_TOKEN) return true;
-  // Opción 2: JWT de Supabase — usar cliente con anon key para verificar el token del usuario
+  // Auth: JWT de Supabase — Bearer token del admin autenticado
   const bearer = req.headers.get("authorization")?.replace("Bearer ", "");
   if (!bearer) return false;
   try {

@@ -13,12 +13,11 @@ const sb = createClient(
 );
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 
-// Verificar que viene de un cron autorizado o del admin
+// Solo crons autorizados pueden aplicar créditos
 function isAuthorized(req: NextRequest): boolean {
   const cronSecret = req.headers.get("x-cron-secret");
-  if (cronSecret === process.env.CRON_SECRET) return true;
-  const adminToken = req.headers.get("x-admin-token");
-  return adminToken === process.env.ADMIN_SECRET_TOKEN;
+  const querySecret = new URL(req.url).searchParams.get("secret");
+  return cronSecret === process.env.CRON_SECRET || querySecret === process.env.CRON_SECRET;
 }
 
 /**
