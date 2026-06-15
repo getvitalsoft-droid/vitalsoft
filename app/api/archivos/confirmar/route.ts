@@ -91,13 +91,15 @@ export async function POST(req: NextRequest) {
   }
 
   // Log de actividad
-  await sb.from("activity_logs").insert({
-    admin: subido_por === "admin" ? "admin" : "cliente",
-    accion: tipo === "bruto" ? "material_subido" : "clip_subido",
-    objetivo_tipo: "order",
-    objetivo_id: order_id,
-    detalle: `${nombre} (${tamanio_bytes ? Math.round(tamanio_bytes / 1024 / 1024) + " MB" : "tamaño desconocido"})`,
-  }).catch(console.error);
+  (async () => {
+    await sb.from("activity_logs").insert({
+      admin: subido_por === "admin" ? "admin" : "cliente",
+      accion: tipo === "bruto" ? "material_subido" : "clip_subido",
+      objetivo_tipo: "order",
+      objetivo_id: order_id,
+      detalle: `${nombre} (${tamanio_bytes ? Math.round(tamanio_bytes / 1024 / 1024) + " MB" : "tamaño desconocido"})`,
+    });
+  })().catch(console.error);
 
   return NextResponse.json({ success: true, archivo });
 }
