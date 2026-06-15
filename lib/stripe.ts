@@ -1,13 +1,3 @@
-export const STRIPE_PAYMENT_LINKS = {
-  starter: process.env.NEXT_PUBLIC_STRIPE_STARTER_LINK ?? "#",
-  growth:  process.env.NEXT_PUBLIC_STRIPE_GROWTH_LINK ?? "#",
-  scale:   process.env.NEXT_PUBLIC_STRIPE_SCALE_LINK ?? "#",
-  pro:     process.env.NEXT_PUBLIC_STRIPE_PRO_LINK ?? "#",
-  custom:  process.env.NEXT_PUBLIC_STRIPE_CUSTOM_LINK ?? "#",
-} as const;
-
-export type PlanKey = keyof typeof STRIPE_PAYMENT_LINKS;
-
 const EXACT_PRICES: Record<number, number> = {
   1: 25, 2: 45, 3: 60, 4: 80, 5: 100,
   6: 115, 7: 130, 8: 140, 9: 145, 10: 150,
@@ -32,17 +22,8 @@ export function savings(videos: number): number {
   return Math.max(0, fullPrice(videos) - calcPrice(videos));
 }
 
-// ref debe ser el código del agente sin prefijo, ej: "VSAIROZN"
-// El webhook espera client_reference_id = "ref_VSAIROZN"
-export function buildStripeUrl(plan: PlanKey, ref?: string): string {
-  const base = STRIPE_PAYMENT_LINKS[plan];
-  if (base === "#") return "#";
-  if (!ref) return base;
-  return `${base}?client_reference_id=ref_${ref}`;
-}
-
 export interface PricingPlan {
-  key: PlanKey; name: string; price: number; videos: number;
+  key: string; name: string; price: number; videos: number;
   featured?: boolean; features: string[]; turnaround: string; revisions: string;
 }
 
