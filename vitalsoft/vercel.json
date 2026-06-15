@@ -1,8 +1,0 @@
-{
-  "crons": [
-    {
-      "path": "/api/cron/comisiones",
-      "schedule": "0 9 * * *"
-    }
-  ]
-}
