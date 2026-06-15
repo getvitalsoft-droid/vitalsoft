@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyToken as verifyClienteToken } from "@/lib/cliente-token";
+import { verifyClientToken } from "@/lib/cliente-token";
 
 const BUCKET = "vitalsoft-archivos";
 const EXPIRY = 60 * 60; // 1 hora
@@ -36,8 +36,8 @@ export async function GET(req: NextRequest) {
     const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "").split(",").map(e => e.trim());
     if (user && adminEmails.includes(user.email || "")) esAdmin = true;
   } else if (clienteToken) {
-    const payload = verifyClienteToken(clienteToken);
-    if (payload) clienteEmail = payload.email;
+    const payload = verifyClientToken(clienteToken);
+    if (payload) clienteEmail = payload;
   }
 
   if (!esAdmin && !clienteEmail) {

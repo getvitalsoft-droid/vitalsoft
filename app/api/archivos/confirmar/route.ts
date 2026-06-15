@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyToken as verifyClienteToken } from "@/lib/cliente-token";
+import { verifyClientToken } from "@/lib/cliente-token";
 
 const sb = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,10 +31,10 @@ export async function POST(req: NextRequest) {
   if (tipo === "bruto") {
     const clienteToken = req.headers.get("x-cliente-token");
     if (!clienteToken) return NextResponse.json({ error: "Token requerido" }, { status: 401 });
-    const payload = verifyClienteToken(clienteToken);
+    const payload = verifyClientToken(clienteToken);
     if (!payload) return NextResponse.json({ error: "Token inválido" }, { status: 401 });
     const { data: order } = await sb.from("orders").select("cliente_email").eq("id", order_id).single();
-    if (!order || order.cliente_email !== payload.email) {
+    if (!order || order.cliente_email !== payload) {
       return NextResponse.json({ error: "Order no encontrado" }, { status: 404 });
     }
     subido_por = "cliente";

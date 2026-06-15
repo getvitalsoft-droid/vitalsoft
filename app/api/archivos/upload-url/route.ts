@@ -10,7 +10,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { verifyToken as verifyClienteToken } from "@/lib/cliente-token";
+import { verifyClientToken } from "@/lib/cliente-token";
 import { rateLimit, LIMITS, getIP } from "@/lib/rateLimit";
 
 const BUCKET = "vitalsoft-archivos";
@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     if (!clienteToken) {
       return NextResponse.json({ error: "Token requerido" }, { status: 401 });
     }
-    const payload = verifyClienteToken(clienteToken);
+    const payload = verifyClientToken(clienteToken);
     if (!payload) {
       return NextResponse.json({ error: "Token inválido o caducado" }, { status: 401 });
     }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
       .select("id, cliente_email")
       .eq("id", order_id)
       .single();
-    if (!order || order.cliente_email !== payload.email) {
+    if (!order || order.cliente_email !== payload) {
       return NextResponse.json({ error: "Order no encontrado" }, { status: 404 });
     }
     subido_por = "cliente";
