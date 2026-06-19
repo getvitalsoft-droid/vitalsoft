@@ -13,14 +13,14 @@ const fade = (delay = 0) => ({
 const TRAS_EL_PAGO = [
   { paso: "1", titulo: "Email de confirmación", desc: "En los minutos siguientes al pago recibes un email con acceso al onboarding y la confirmación de tu suscripción." },
   { paso: "2", titulo: "Formulario de onboarding", desc: "Un formulario breve donde nos cuentas tu canal, el tipo de contenido que produces, referencias de estilo y cómo entregarás el material." },
-  { paso: "3", titulo: "Portal de cliente activado", desc: "Activamos tu portal de cliente. Tendrás acceso permanente desde el primer día para subir material y descargar clips." },
+  { paso: "3", titulo: "Drive compartido asignado", desc: "Creamos y compartimos contigo una carpeta de Google Drive exclusiva. Tendrás acceso permanente desde el primer día." },
   { paso: "4", titulo: "Listo para empezar", desc: "Una vez completado el onboarding, solo tienes que subir tu material para que empiece el primer ciclo de producción." },
 ];
 
 const CICLO_MENSUAL = [
   {
     titulo: "Subes tu contenido",
-    desc: "Podcast, vídeo largo, entrevista o clase. Lo subes directamente desde tu portal de cliente. Sin formatos especiales, sin requisitos extraños. Solo el archivo.",
+    desc: "Podcast, vídeo largo, entrevista o clase. Lo subes a tu carpeta de Drive. Sin formatos especiales, sin requisitos extraños. Solo el archivo.",
     nota: "Fecha de subida recomendada: los primeros días del mes para recibir los clips antes del día 15.",
   },
   {
@@ -39,8 +39,8 @@ const CICLO_MENSUAL = [
     nota: "Tiempo de producción: 24–48h según tu plan desde la validación del material.",
   },
   {
-    titulo: "Entrega en tu portal",
-    desc: "Los clips aparecen en tu portal organizados y listos. Puedes descargarlos, revisarlos y publicarlos cuando quieras en cualquier plataforma.",
+    titulo: "Entrega en Drive",
+    desc: "Los clips aparecen en tu carpeta Drive organizados y listos. Puedes descargarlos, revisarlos y publicarlos cuando quieras en cualquier plataforma.",
     nota: "Los archivos se entregan en todos los formatos incluidos en tu plan.",
   },
   {
@@ -75,8 +75,8 @@ const REVISIONES_NO = [
 
 const MES_A_MES = [
   { titulo: "El flujo se repite cada ciclo", desc: "Cada mes subes contenido nuevo y recibes un lote nuevo de clips. El proceso es siempre igual, predecible y sin gestión de tu parte." },
-  { titulo: "Tu historial crece como archivo", desc: "Todos los clips producidos quedan en tu portal de forma permanente. Tienes acceso a todo el historial de entregas en cualquier momento." },
-  { titulo: "Puedes pausar cuando necesites", desc: "Si un mes no tienes material o quieres tomarte un descanso, puedes pausar tu suscripción hasta 30 días desde tu portal de cliente. Sin cobros durante la pausa." },
+  { titulo: "Tu Drive crece como archivo", desc: "Todos los clips producidos quedan en tu Drive de forma permanente. Tienes acceso a todo el historial de entregas en cualquier momento." },
+  { titulo: "Puedes pausar cuando necesites", desc: "Si un mes no tienes material o quieres tomarte un descanso, puedes pausar tu suscripción hasta 30 días. Sin cobros durante la pausa." },
   { titulo: "Cancelas cuando quieras", desc: "Sin permanencia. Si decides cancelar, sigues activo hasta el final del período ya pagado. No hay penalizaciones ni cargos extra." },
 ];
 
@@ -145,7 +145,7 @@ export default function ComoFuncionaContent() {
         <div className="text-white/40 text-sm font-light leading-relaxed">
           Resolución mínima de entrega: <span className="text-white/60">1080p</span>.<br />
           Todos los clips incluyen subtítulos animados.<br />
-          Acceso permanente a todos los archivos en tu portal.
+          Acceso permanente a todos los archivos en tu Drive.
         </div>
       </Section>
 

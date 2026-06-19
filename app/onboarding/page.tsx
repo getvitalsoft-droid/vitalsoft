@@ -22,11 +22,12 @@ function OnboardingForm() {
   const [error, setError] = useState("");
   const [planInfo, setPlanInfo] = useState<PlanInfo | null>(null);
 
+  const [drivePendiente, setDrivePendiente] = useState(false);
   const [form, setForm] = useState({
     nombre_proyecto: "", redes_sociales: "",
     tipo_contenido: "", plataformas: [] as string[],
     duracion_media: "", frecuencia_grabacion: "",
-    idioma: "Español",
+    idioma: "Español", drive_link: "",
     referencias: "", instrucciones: "",
   });
 
@@ -43,15 +44,46 @@ function OnboardingForm() {
     ? form.plataformas.filter((x: string) => x !== p)
     : [...form.plataformas, p]);
 
+  const pasosDrive = [
+    {
+      num: "1",
+      texto: "Ve a Google Drive (drive.google.com) e inicia sesión con tu cuenta de Google.",
+      img: "/onboarding/drive-paso1.png",
+      alt: "Acceder a Google Drive",
+    },
+    {
+      num: "2",
+      texto: "Crea una carpeta nueva. Llámala como quieras, por ejemplo 'VitalSoft – Tu nombre'.",
+      img: "/onboarding/drive-paso2.png",
+      alt: "Crear carpeta en Drive",
+    },
+    {
+      num: "3",
+      texto: "Haz clic derecho sobre la carpeta → 'Compartir'. En el campo de invitación escribe hola@vitalsoft.pro y dale permisos de Editor.",
+      img: "/onboarding/drive-paso3.png",
+      alt: "Compartir carpeta con VitalSoft",
+    },
+    {
+      num: "4",
+      texto: "Copia el enlace de la carpeta (botón 'Copiar enlace') y pégalo en el campo de abajo.",
+      img: "/onboarding/drive-paso4.png",
+      alt: "Copiar enlace de carpeta",
+    },
+  ];
+
   const inp = "w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-white text-sm outline-none focus:border-[rgba(232,255,71,0.4)] transition-colors placeholder:text-white/20 resize-none";
   const labelCls = "block text-xs text-white/35 font-medium mb-1.5";
 
   const handleSubmit = async () => {
+    if (!drivePendiente && !form.drive_link) {
+      setError("Indica el link de tu carpeta de Drive o selecciona que lo enviarás más tarde.");
+      return;
+    }
     setLoading(true); setError("");
     const res = await fetch("/api/onboarding", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, session_id: sessionId }),
+      body: JSON.stringify({ ...form, session_id: sessionId, drive_pendiente: drivePendiente }),
     });
     const data = await res.json();
     if (data.success) setDone(true);
@@ -82,11 +114,15 @@ function OnboardingForm() {
         <div className="text-5xl mb-6">✅</div>
         <h2 className="font-display font-black text-2xl mb-3 text-[#d4f53c]">¡Todo listo!</h2>
         <p className="text-white/55 text-sm leading-relaxed mb-6">
-          Hemos recibido tu configuración. Accede a tu portal de cliente para subir tu primer material y empezamos a producir.
+          Hemos recibido tu configuración. En cuanto subas tu primer material al Drive empezamos a producir.
         </p>
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl p-5 text-left space-y-3 mb-4">
           <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">Próximos pasos</p>
-          <p className="text-white/45 text-xs flex gap-2"><span>📁</span><span>Sube tu primera grabación desde el portal de cliente cuando estés listo</span></p>
+          {drivePendiente ? (
+            <p className="text-white/45 text-xs flex gap-2"><span>📁</span><span>Cuando tengas el material listo, súbelo al Drive y envíanos el enlace a hola@vitalsoft.pro</span></p>
+          ) : (
+            <p className="text-white/45 text-xs flex gap-2"><span>📁</span><span>Sube tu primera grabación a la carpeta de Drive que nos has indicado</span></p>
+          )}
           <p className="text-white/45 text-xs flex gap-2"><span>⏱️</span><span>El plazo empieza cuando recibimos y validamos tu material, no ahora</span></p>
           <p className="text-white/45 text-xs flex gap-2"><span>📧</span><span>Recibirás un email cuando empecemos la edición</span></p>
           <p className="text-white/45 text-xs flex gap-2"><span>✏️</span><span>Podrás solicitar ajustes una vez recibas los clips</span></p>
@@ -213,13 +249,59 @@ function OnboardingForm() {
             <div className="space-y-5">
               <h2 className="font-display font-bold text-sm mb-4 text-white/60 uppercase tracking-widest">03 — Material y entrega</h2>
 
+              {/* Instrucciones Drive en desplegable */}
+              <details className="bg-white/[0.02] border border-white/[0.07] rounded-xl overflow-hidden group">
+                <summary className="px-4 py-3 cursor-pointer flex items-center justify-between list-none">
+                  <div>
+                    <p className="text-white/55 text-xs font-semibold">¿Necesitas ayuda para obtener el enlace?</p>
+                    <p className="text-white/25 text-xs mt-0.5">Ver cómo compartir tu carpeta de Google Drive</p>
+                  </div>
+                  <span className="text-white/30 text-xs ml-3 flex-shrink-0 group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div className="border-t border-white/[0.06] divide-y divide-white/[0.04]">
+                  {pasosDrive.map((paso) => (
+                    <div key={paso.num} className="p-4">
+                      <div className="flex gap-3 items-start mb-3">
+                        <span className="text-[#d4f53c] font-display font-black text-sm flex-shrink-0 w-5">{paso.num}.</span>
+                        <p className="text-white/50 text-xs leading-relaxed">{paso.texto}</p>
+                      </div>
+                      <div className="rounded-lg overflow-hidden border border-white/[0.06] ml-8">
+                        <Image src={paso.img} alt={paso.alt} width={600} height={340} className="w-full h-auto object-cover" priority={paso.num === "1"} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </details>
 
-
-              {/* Aviso: material se sube desde el portal */}
-              <div className="bg-[rgba(232,255,71,0.04)] border border-[rgba(232,255,71,0.12)] rounded-xl p-4">
-                <p className="text-[#d4f53c] text-xs font-semibold mb-1">📁 Tu material se sube desde el portal</p>
-                <p className="text-white/40 text-xs leading-relaxed">Una vez completado el onboarding, accederás a tu portal de cliente donde podrás subir tus grabaciones directamente. No necesitas preparar nada ahora.</p>
-              </div>
+              {!drivePendiente ? (
+                <div>
+                  <label className={labelCls}>Enlace de tu carpeta de Google Drive *</label>
+                  <input type="url"
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    value={form.drive_link}
+                    onChange={e => { set("drive_link", e.target.value); setError(""); }}
+                    className={inp}
+                  />
+                  <p className="text-white/20 text-xs mt-1.5">
+                    Ejemplo: <span className="text-white/35">drive.google.com/drive/folders/xxxxx</span>
+                  </p>
+                  <button type="button"
+                    onClick={() => { setDrivePendiente(true); set("drive_link", ""); setError(""); }}
+                    className="text-white/25 text-xs mt-2 hover:text-white/45 transition-colors underline">
+                    Aún no tengo el material preparado →
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-[rgba(232,255,71,0.03)] border border-[rgba(232,255,71,0.1)] rounded-xl p-4">
+                  <p className="text-[#d4f53c] text-xs font-semibold mb-1">Sin material por ahora</p>
+                  <p className="text-white/40 text-xs mb-3">Completaremos el onboarding y te enviaremos instrucciones por email cuando estés listo para subir tu primera grabación.</p>
+                  <button type="button"
+                    onClick={() => setDrivePendiente(false)}
+                    className="text-white/30 text-xs hover:text-white/50 transition-colors underline">
+                    ← Tengo el enlace ahora
+                  </button>
+                </div>
+              )}
 
               {/* Campo instrucciones unificado */}
               <div>
@@ -243,7 +325,7 @@ function OnboardingForm() {
 
               <div className="flex gap-2">
                 <button onClick={() => setStep(2)} className="flex-1 py-3 border border-white/10 text-white/40 font-display font-bold rounded-xl text-sm">← Atrás</button>
-                <button onClick={handleSubmit} disabled={loading}
+                <button onClick={handleSubmit} disabled={loading || (!drivePendiente && !form.drive_link)}
                   className="flex-1 py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-40">
                   {loading ? "Enviando..." : "Confirmar →"}
                 </button>

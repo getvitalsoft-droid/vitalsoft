@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 const faqs = [
   {
     q: "¿Qué necesito enviaros para empezar?",
-    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu portal VitalSoft y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
+    a: "Solo el archivo de tu grabación. No necesitas cámara profesional, micrófono especial ni formatos concretos. Grabas como siempre, lo subes a tu carpeta Drive compartida y nosotros nos encargamos del resto. Aceptamos MP4, MOV, AVI, MKV y la mayoría de formatos estándar de audio y vídeo.",
   },
   {
     q: "¿Quién selecciona los momentos para los clips?",
@@ -46,7 +46,7 @@ const faqs = [
   },
   {
     q: "¿Cómo funciona la entrega?",
-    a: "Tras suscribirte accedes a tu portal de cliente. Subes tu material desde tu portal de cliente. Validamos el contenido, producimos los clips y los entregamos en el mismo portal. Tú publicas cuando y donde quieras.",
+    a: "Tras suscribirte recibes un email de onboarding con las instrucciones. Compartes una carpeta de Google Drive con nosotros, subes tu material y nosotros entregamos los clips ahí. Tú publicas cuando y donde quieras.",
   },
   {
     q: "¿Qué formatos entregáis?",

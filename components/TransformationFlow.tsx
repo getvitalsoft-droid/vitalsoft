@@ -18,7 +18,7 @@ const OUTPUT = {
   label: "Lo que recibes",
   items: [
     { icon: "🗓️", text: "Semanas de publicaciones listas para TikTok, Reels y Shorts", accent: true },
-    { icon: "📁", text: "Entrega en tu portal en 24–48h" },
+    { icon: "📁", text: "Entrega en tu Drive en 24–48h" },
     { icon: "📱", text: "Entre 10 y 40 clips por plan · hasta 100 con plan personalizado", accent: false },
     { icon: "↕️", text: "Formato 9:16 listo para TikTok y Reels" },
     { icon: "◻️", text: "Formato 1:1 para Instagram feed" },
@@ -30,8 +30,8 @@ const OUTPUT = {
 const PASOS = [
   {
     n: "01",
-    titulo: "Compartes tu carpeta de trabajo",
-    desc: "Durante el onboarding accedes a tu portal de cliente. Subes tu material directamente y recibirás todos los clips en el mismo portal.",
+    titulo: "Compartes tu carpeta de Drive",
+    desc: "Durante el onboarding nos compartes una carpeta de Google Drive exclusiva. Trabajaremos siempre desde ahí y ahí recibirás todos tus clips.",
     color: "text-accent",
   },
   {
@@ -43,13 +43,13 @@ const PASOS = [
   {
     n: "03",
     titulo: "Subes tu primera grabación",
-    desc: "Podcast, vídeo, entrevista o clase. Lo subes a la carpeta compartida. Sin formatos especiales, sin instrucciones complicadas.",
+    desc: "Podcast, vídeo, entrevista o clase. Lo subes a tu carpeta de Drive. Sin formatos especiales, sin instrucciones complicadas.",
     color: "text-white/60",
   },
   {
     n: "04",
     titulo: "Convertimos tu grabación en clips listos para publicar",
-    desc: "Seleccionamos momentos, editamos, añadimos subtítulos y formateamos. Los clips aparecen en tu portal en 24–48h desde la validación.",
+    desc: "Seleccionamos momentos, editamos, añadimos subtítulos y formateamos. Los clips aparecen en tu Drive en 24–48h desde la validación.",
     color: "text-white/60",
   },
   {

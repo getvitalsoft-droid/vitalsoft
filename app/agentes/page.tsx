@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, type ReactNode } from "react";
+import AvisoSistema from "@/components/AvisoSistema";
 import { calcPrice } from "@/lib/stripe";
 
 interface Venta {
@@ -1244,6 +1245,8 @@ export default function AgentesPage() {
             </div>
           </div>
         )}
+
+
 
       </div>
     </main>

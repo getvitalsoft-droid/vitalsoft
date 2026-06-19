@@ -11,9 +11,11 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { session_id, nombre_proyecto, redes_sociales, tipo_contenido,
       plataformas, duracion_media, frecuencia_grabacion, idioma,
+      drive_link, drive_pendiente,
       referencias, instrucciones } = body;
 
     if (!session_id) return NextResponse.json({ error: "Datos requeridos." }, { status: 400 });
+    if (!drive_link && !drive_pendiente) return NextResponse.json({ error: "El link de Drive es obligatorio." }, { status: 400 });
 
 
     // Buscar order por session_id
@@ -32,7 +34,8 @@ export async function POST(req: NextRequest) {
       plataformas: plataformas || [],
       duracion_media, frecuencia_grabacion,
       idioma: idioma || "Español",
-
+      drive_link: drive_link || null,
+      drive_pendiente: drive_pendiente || false,
       referencias,
       notas_importantes: instrucciones,
 
@@ -47,6 +50,7 @@ export async function POST(req: NextRequest) {
         estado: "esperando_material",
 
         fecha_onboarding: new Date().toISOString(),
+        material_link: drive_link || null,
       }).eq("id", order.id);
     } else {
       await supabase.from("orders").update({

@@ -23,7 +23,7 @@ async function verificarAdminNegocio(req: NextRequest): Promise<boolean> {
     );
     const { data: { user }, error } = await sbAuth.auth.getUser(bearer);
     if (error || !user) return false;
-    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "getvitalsoft@gmail.com")
+    const adminEmails = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || "hola@vitalsoft.pro")
       .split(",").map(e => e.trim().toLowerCase());
     return adminEmails.includes(user.email?.toLowerCase() || "");
   } catch { return false; }

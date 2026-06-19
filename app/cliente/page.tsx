@@ -10,7 +10,11 @@ import {
   Copy, Check, Pause, Play, X, ExternalLink,
   ChevronDown, Gift, AlertCircle, Loader2
 } from "lucide-react";
-import ArchivosCliente from "@/components/ArchivosCliente";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { calcPrice } from "@/lib/stripe";
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
 
 // ─── Tipos ──────────────────────────────────────────────────
 
@@ -33,6 +37,7 @@ interface PortalData {
     importe: number;
     estado: string;
     estadoLabel: string;
+    driveFolder: string | null;
     clips_mensuales: number | null;
     is_paused: boolean;
     pause_until: string | null;
@@ -67,7 +72,80 @@ const ESTADO_COLOR: Record<string, string> = {
 
 // ─── Portal principal ────────────────────────────────────────
 
-function ClientePortal({ token }: { token: string }) {
+// Componente interno de Stripe Elements para actualizar tarjeta
+function FormularioPago({ token, clientSecret, onSuccess, onCancel }: {
+  token: string;
+  clientSecret: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!stripe || !elements) return;
+    setLoading(true); setError("");
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) { setLoading(false); return; }
+
+    const { setupIntent, error: stripeError } = await stripe.confirmCardSetup(
+      clientSecret,
+      { payment_method: { card: cardElement } }
+    );
+
+    if (stripeError) {
+      setError(stripeError.message || "Error al procesar la tarjeta");
+      setLoading(false);
+      return;
+    }
+
+    // Notificar al backend para establecer el nuevo método como predeterminado
+    const res = await fetch("/api/cliente/setup-pago", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "x-cliente-token": token },
+      body: JSON.stringify({ setupIntentId: setupIntent?.id }),
+    });
+
+    if (res.ok) {
+      onSuccess();
+    } else {
+      const d = await res.json();
+      setError(d.error || "Error al actualizar el método de pago");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <p className="text-white/40 text-xs mb-4 leading-relaxed">Introduce tu nueva tarjeta. La anterior dejará de usarse en los próximos cobros.</p>
+      <div className="bg-white/[0.05] border border-white/10 rounded-lg px-3 py-3 mb-4">
+        <CardElement options={{
+          style: {
+            base: { color: "#ffffff", fontSize: "14px", "::placeholder": { color: "rgba(255,255,255,0.25)" } },
+            invalid: { color: "#f87171" },
+          }
+        }} />
+      </div>
+      {error && <p className="text-red-400 text-xs mb-3">{error}</p>}
+      <div className="flex gap-2">
+        <button type="button" onClick={onCancel} disabled={loading}
+          className="flex-1 py-2.5 border border-white/10 rounded-xl text-white/40 text-sm disabled:opacity-50">
+          Cancelar
+        </button>
+        <button type="submit" disabled={loading || !stripe}
+          className="flex-1 py-2.5 bg-[#d4f53c] text-[#080808] font-bold text-sm rounded-xl disabled:opacity-40 transition-all">
+          {loading ? "Guardando..." : "Actualizar tarjeta"}
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function ClientePortal({ token, onSessionExpired }: { token: string; onSessionExpired?: () => void }) {
   const [data, setData] = useState<PortalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -83,6 +161,21 @@ function ClientePortal({ token }: { token: string }) {
   const [showCredits, setShowCredits] = useState(false);
   const [reviewDismissed, setReviewDismissed] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState("");
+  const [showPlanModal, setShowPlanModal] = useState(false);
+  const [showPagoModal, setShowPagoModal] = useState(false);
+  const [planClips, setPlanClips] = useState(20);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [pagoLoading, setPagoLoading] = useState(false);
+  const [pagoClientSecret, setPagoClientSecret] = useState("");
+  const [pagoConfirmado, setPagoConfirmado] = useState(false);
+  const [showClipsModal, setShowClipsModal] = useState(false);
+  const [clipsExtra, setClipsExtra] = useState(5);
+  const [clipsExtraClientSecret, setClipsExtraClientSecret] = useState("");
+  const [clipsExtraModo, setClipsExtraModo] = useState<"unico"|"mensual"|null>(null);
+  const [clipsExtraPrecio, setClipsExtraPrecio] = useState(0);
+  const [clipsExtraLoading, setClipsExtraLoading] = useState(false);
+  const [clipsExtraOk, setClipsExtraOk] = useState(false);
+  const [cambioOk, setCambioOk] = useState("");
 
   const headers = { "Content-Type": "application/json", "x-cliente-token": token };
 
@@ -95,7 +188,11 @@ function ClientePortal({ token }: { token: string }) {
     }
     try {
       const res = await fetch("/api/cliente/portal", { headers: { "x-cliente-token": token } });
-      if (!res.ok) { setError("Sesión expirada. Solicita un nuevo enlace."); return; }
+      if (!res.ok) {
+        if (onSessionExpired) onSessionExpired();
+        setError("Sesión expirada. Solicita un nuevo enlace.");
+        return;
+      }
       setData(await res.json());
     } catch { setError("Error de conexión"); }
     setLoading(false);
@@ -137,6 +234,58 @@ function ClientePortal({ token }: { token: string }) {
     } else {
       setActionDone(`Error: ${json.error}`);
     }
+  };
+
+  const iniciarClipsExtra = async (modo: "unico" | "mensual") => {
+    setClipsExtraLoading(true);
+    const res = await fetch("/api/cliente/clips-extra", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-cliente-token": token },
+      body: JSON.stringify({ clips_extra: clipsExtra, modo }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setClipsExtraClientSecret(d.clientSecret);
+      setClipsExtraModo(modo);
+      setClipsExtraPrecio(d.precioExtra);
+    } else {
+      setError(d.error || "Error al procesar");
+    }
+    setClipsExtraLoading(false);
+  };
+
+  const handleCambiarPlan = async () => {
+    setPlanLoading(true);
+    const res = await fetch("/api/cliente/cambiar-plan", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-cliente-token": token },
+      body: JSON.stringify({ clips: planClips }),
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setCambioOk(`Plan actualizado a ${d.plan} (€${d.precio}/mes). Efectivo desde el próximo ciclo.`);
+      setShowPlanModal(false);
+      await loadData();
+    } else {
+      setError(d.error || "Error al cambiar el plan");
+    }
+    setPlanLoading(false);
+  };
+
+  const iniciarCambioPago = async () => {
+    setPagoLoading(true);
+    const res = await fetch("/api/cliente/setup-pago", {
+      method: "POST",
+      headers: { "x-cliente-token": token },
+    });
+    const d = await res.json();
+    if (res.ok) {
+      setPagoClientSecret(d.clientSecret);
+      setShowPagoModal(true);
+    } else {
+      setError(d.error || "Error al iniciar el proceso");
+    }
+    setPagoLoading(false);
   };
 
   const handleCancelar = async () => {
@@ -296,13 +445,51 @@ function ClientePortal({ token }: { token: string }) {
             </div>
           )}
 
-          {/* Archivos — subida de material y galería de clips */}
-          <ArchivosCliente
-            orderId={order.id}
-            clienteToken={token}
-            clipsContratados={order.clips_mensuales || 20}
-            estado={order.estado}
-          />
+          {/* Material — Drive */}
+          <div className="bg-white/[0.03] border border-white/[0.07] rounded-xl p-5">
+            <p className="text-white/60 text-xs font-semibold mb-1">Tu carpeta de entrega</p>
+            <p className="text-white/25 text-xs mb-4 leading-relaxed">
+              Todo tu material y tus clips se gestionan a través de Google Drive. Aquí tienes las instrucciones para empezar.
+            </p>
+
+            {/* Instrucciones en accordion */}
+            <details className="bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden group mb-4">
+              <summary className="px-4 py-3 cursor-pointer flex items-center justify-between list-none">
+                <p className="text-white/50 text-xs font-semibold">¿Cómo funciona el Drive compartido?</p>
+                <span className="text-white/30 text-xs ml-3 flex-shrink-0 group-open:rotate-180 transition-transform">▼</span>
+              </summary>
+              <div className="border-t border-white/[0.06] divide-y divide-white/[0.04]">
+                {[
+                  { num: "1", texto: "Accede a tu carpeta compartida de Google Drive con el botón de abajo.", img: "/onboarding/drive-paso1.png", alt: "Acceder a Drive" },
+                  { num: "2", texto: "Cuando tengas material listo, súbelo a la carpeta. Puedes subir archivos de vídeo de cualquier formato y tamaño.", img: "/onboarding/drive-paso2.png", alt: "Subir material" },
+                  { num: "3", texto: "Nosotros procesamos tu material y subimos los clips terminados a la misma carpeta, en una subcarpeta llamada 'Clips'.", img: "/onboarding/drive-paso3.png", alt: "Recibir clips" },
+                  { num: "4", texto: "Te avisamos por email cuando tus clips estén listos. Puedes descargarlos directamente desde Drive.", img: "/onboarding/drive-paso4.png", alt: "Descargar clips" },
+                ].map((paso) => (
+                  <div key={paso.num} className="p-4">
+                    <div className="flex gap-3 items-start mb-3">
+                      <span className="text-[#d4f53c] font-display font-black text-sm flex-shrink-0 w-5">{paso.num}.</span>
+                      <p className="text-white/50 text-xs leading-relaxed">{paso.texto}</p>
+                    </div>
+                    <div className="rounded-lg overflow-hidden border border-white/[0.06] ml-8">
+                      <img src={paso.img} alt={paso.alt} className="w-full h-auto object-cover" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </details>
+
+            {order.driveFolder ? (
+              <a href={order.driveFolder} target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 w-full bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-bold text-sm rounded-xl px-4 py-3 transition-all">
+                <ExternalLink size={14} />
+                Abrir mi carpeta de Drive
+              </a>
+            ) : (
+              <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl px-4 py-3 text-center">
+                <p className="text-white/30 text-xs">Tu carpeta se asignará en breve. Te avisaremos por email.</p>
+              </div>
+            )}
+          </div>
 
 
 
@@ -390,6 +577,36 @@ function ClientePortal({ token }: { token: string }) {
               Gestionar suscripción
             </div>
 
+            {/* Clips extra */}
+            <button onClick={() => setShowClipsModal(true)}
+              className="w-full flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-[rgba(212,245,60,0.3)] hover:bg-[rgba(212,245,60,0.04)] rounded-xl px-4 py-3 text-left transition-all">
+              <Gift size={15} className="text-[#d4f53c] flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-white/80">Comprar clips extra</div>
+                <div className="text-xs text-white/30">Añade clips este mes, pago único o ampliando tu plan</div>
+              </div>
+            </button>
+
+            {/* Cambiar plan */}
+            <button onClick={() => { setPlanClips(order.clips_mensuales || 20); setShowPlanModal(true); }}
+              className="w-full flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-[rgba(212,245,60,0.3)] hover:bg-[rgba(212,245,60,0.04)] rounded-xl px-4 py-3 text-left transition-all">
+              <ChevronDown size={15} className="text-[#d4f53c] flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-white/80">Cambiar plan</div>
+                <div className="text-xs text-white/30">Ajusta el número de clips mensuales</div>
+              </div>
+            </button>
+
+            {/* Método de pago */}
+            <button onClick={iniciarCambioPago} disabled={pagoLoading}
+              className="w-full flex items-center gap-3 bg-white/[0.03] border border-white/[0.08] hover:border-blue-400/30 hover:bg-blue-400/5 rounded-xl px-4 py-3 text-left transition-all disabled:opacity-50">
+              <Gift size={15} className="text-blue-400 flex-shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-white/80">Actualizar método de pago</div>
+                <div className="text-xs text-white/30">Cambia tu tarjeta de crédito</div>
+              </div>
+            </button>
+
             {canPause && !order.is_paused && (
               <button
                 onClick={() => setShowPausaModal(true)}
@@ -431,6 +648,12 @@ function ClientePortal({ token }: { token: string }) {
             )}
           </div>
         ) : null}
+
+        {cambioOk && (
+          <div className="bg-[rgba(212,245,60,0.06)] border border-[rgba(212,245,60,0.2)] rounded-xl px-4 py-3 text-xs text-[#d4f53c] text-center">
+            ✓ {cambioOk}
+          </div>
+        )}
 
         <p className="text-center text-white/20 text-xs mt-6">
           ¿Problemas? Escríbenos a{" "}
@@ -516,6 +739,151 @@ function ClientePortal({ token }: { token: string }) {
           </div>
         </div>
       )}
+
+      {/* Modal clips extra */}
+      {showClipsModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { if (!clipsExtraLoading) { setShowClipsModal(false); setClipsExtraClientSecret(""); setClipsExtraModo(null); setClipsExtraOk(false); } }} />
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm z-10">
+
+            {clipsExtraOk ? (
+              <div className="text-center py-4">
+                <div className="text-3xl mb-3">✅</div>
+                <p className="text-white/60 text-sm mb-1">
+                  {clipsExtraModo === "mensual" ? "Clips añadidos y plan actualizado." : "Clips extra adquiridos."}
+                </p>
+                <p className="text-white/30 text-xs">Los clips estarán disponibles en breve.</p>
+                <button onClick={() => { setShowClipsModal(false); setClipsExtraOk(false); setClipsExtraClientSecret(""); setClipsExtraModo(null); loadData(); }}
+                  className="mt-4 w-full py-2.5 bg-[#d4f53c] text-[#080808] font-bold text-sm rounded-xl">Cerrar</button>
+              </div>
+            ) : clipsExtraClientSecret ? (
+              <Elements stripe={stripePromise} options={{ clientSecret: clipsExtraClientSecret, appearance: { theme: "night", variables: { colorPrimary: "#d4f53c", colorBackground: "#111111", colorText: "#ffffff", borderRadius: "8px" } } }}>
+                <FormularioPago
+                  token={token}
+                  clientSecret={clipsExtraClientSecret}
+                  onSuccess={() => setClipsExtraOk(true)}
+                  onCancel={() => { setClipsExtraClientSecret(""); setClipsExtraModo(null); }}
+                />
+              </Elements>
+            ) : (
+              <>
+                <h3 className="font-display font-bold text-lg mb-1">Clips extra</h3>
+                <p className="text-white/40 text-xs mb-5 leading-relaxed">Añade clips adicionales este mes. Elige cuántos necesitas y si quieres que sea un pago único o que tu plan cambie a partir del próximo mes.</p>
+
+                <div className="mb-5">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-white/50 text-xs">Clips adicionales</span>
+                    <span className="text-[#d4f53c] font-display font-bold text-lg">{clipsExtra}</span>
+                  </div>
+                  <input type="range" min={1} max={50} value={clipsExtra}
+                    onChange={e => setClipsExtra(Number(e.target.value))}
+                    className="w-full accent-[#d4f53c]" />
+                  <div className="flex justify-between text-white/20 text-[10px] mt-1">
+                    <span>1</span><span>25</span><span>50</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <button onClick={() => iniciarClipsExtra("unico")} disabled={clipsExtraLoading}
+                    className="w-full flex items-center justify-between bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-left transition-all disabled:opacity-40">
+                    <div>
+                      <p className="text-white/70 text-sm font-semibold">Pago único</p>
+                      <p className="text-white/30 text-xs">Solo este mes, sin cambios en tu suscripción</p>
+                    </div>
+                    <span className="text-[#d4f53c] font-bold text-sm flex-shrink-0 ml-3">
+                      €{Math.round((calcPrice(order?.clips_mensuales || 20) / (order?.clips_mensuales || 20)) * clipsExtra)}
+                    </span>
+                  </button>
+
+                  <button onClick={() => iniciarClipsExtra("mensual")} disabled={clipsExtraLoading}
+                    className="w-full flex items-center justify-between bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 rounded-xl px-4 py-3 text-left transition-all disabled:opacity-40">
+                    <div>
+                      <p className="text-white/70 text-sm font-semibold">Ampliar plan mensual</p>
+                      <p className="text-white/30 text-xs">Este mes + a partir del próximo, {(order?.clips_mensuales || 20) + clipsExtra} clips/mes</p>
+                    </div>
+                    <span className="text-[#d4f53c] font-bold text-sm flex-shrink-0 ml-3">
+                      €{Math.round((calcPrice(order?.clips_mensuales || 20) / (order?.clips_mensuales || 20)) * clipsExtra)}
+                    </span>
+                  </button>
+                </div>
+
+                {clipsExtraLoading && <p className="text-white/30 text-xs text-center mt-3">Preparando pago...</p>}
+                <button onClick={() => setShowClipsModal(false)} className="w-full mt-3 py-2 text-white/20 text-xs">Cancelar</button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal cambiar plan */}
+      {showPlanModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowPlanModal(false)} />
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm z-10">
+            <h3 className="font-display font-bold text-lg mb-1">Cambiar plan</h3>
+            <p className="text-white/40 text-xs mb-5 leading-relaxed">El cambio se aplica desde el próximo ciclo de facturación. Sin cancelaciones ni reembolsos.</p>
+
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-white/50 text-xs">Clips mensuales</span>
+                <span className="text-[#d4f53c] font-display font-bold text-lg">{planClips}</span>
+              </div>
+              <input type="range" min={1} max={100} value={planClips}
+                onChange={e => setPlanClips(Number(e.target.value))}
+                className="w-full accent-[#d4f53c]" />
+              <div className="flex justify-between text-white/20 text-[10px] mt-1">
+                <span>1</span><span>25</span><span>50</span><span>75</span><span>100</span>
+              </div>
+            </div>
+
+            <div className="bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 mb-5 flex justify-between items-center">
+              <span className="text-white/50 text-sm">{planClips} clips/mes</span>
+              <span className="text-white font-bold text-lg">€{Math.round(calcPrice(planClips))}/mes</span>
+            </div>
+
+            <div className="flex gap-2">
+              <button onClick={() => setShowPlanModal(false)} className="flex-1 py-2.5 border border-white/10 rounded-xl text-white/40 text-sm">Cancelar</button>
+              <button onClick={handleCambiarPlan} disabled={planLoading || planClips === (order?.clips_mensuales || 20)}
+                className="flex-1 py-2.5 bg-[#d4f53c] text-[#080808] font-bold text-sm rounded-xl disabled:opacity-40 transition-all">
+                {planLoading ? "Guardando..." : "Confirmar cambio"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal método de pago con Stripe Elements */}
+      {showPagoModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-4 pb-4 sm:pb-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => { if (!pagoLoading) { setShowPagoModal(false); setPagoConfirmado(false); setPagoClientSecret(""); } }} />
+          <div className="relative bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm z-10">
+            <h3 className="font-display font-bold text-lg mb-1">Actualizar tarjeta</h3>
+            {pagoConfirmado ? (
+              <div className="text-center py-4">
+                <div className="text-3xl mb-3">✅</div>
+                <p className="text-white/60 text-sm">Tarjeta actualizada correctamente.</p>
+                <button onClick={() => { setShowPagoModal(false); setPagoConfirmado(false); setPagoClientSecret(""); }}
+                  className="mt-4 w-full py-2.5 bg-[#d4f53c] text-[#080808] font-bold text-sm rounded-xl">Cerrar</button>
+              </div>
+            ) : pagoClientSecret ? (
+              <Elements stripe={stripePromise} options={{ clientSecret: pagoClientSecret, appearance: { theme: "night", variables: { colorPrimary: "#d4f53c", colorBackground: "#111111", colorText: "#ffffff", borderRadius: "8px" } } }}>
+                <FormularioPago
+                  token={token}
+                  clientSecret={pagoClientSecret}
+                  onSuccess={() => { setPagoConfirmado(true); setCambioOk("Método de pago actualizado correctamente."); }}
+                  onCancel={() => { setShowPagoModal(false); setPagoClientSecret(""); }}
+                />
+              </Elements>
+            ) : (
+              <div className="text-center py-4">
+                <Loader2 className="animate-spin text-white/30 mx-auto" size={24} />
+                <p className="text-white/30 text-xs mt-2">Preparando formulario...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
     </main>
   );
 }
@@ -623,18 +991,31 @@ function ClienteLogin() {
 
 function ClientePageInner() {
   const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const [token, setToken] = useState<string | null>(null);
+  const [listo, setListo] = useState(false);
 
-  if (token) {
-    // Guardar en localStorage para que la pestaña de "Revisa tu email" detecte
-    // que ya se accedió y se pueda cerrar sola
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem("vs_cliente_token", token);
-      window.history.replaceState({}, "", "/cliente");
+  useEffect(() => {
+    // Leer token de la URL — en el cliente, searchParams ya está disponible
+    const urlToken = searchParams.get("token");
+    if (urlToken) {
+      window.localStorage.setItem("vs_cliente_token", urlToken);
+      setTimeout(() => window.history.replaceState({}, "", "/cliente"), 100);
+      setToken(urlToken);
+    } else {
+      // Sin token en URL — recuperar sesión guardada (1h)
+      const saved = window.localStorage.getItem("vs_cliente_token");
+      if (saved) setToken(saved);
     }
-    return <ClientePortal token={token} />;
-  }
-  return <ClienteLogin />;
+    setListo(true);
+  }, [searchParams]);
+
+  // Esperar a que el efecto haya corrido antes de decidir qué mostrar
+  if (!listo) return null;
+  if (!token) return <ClienteLogin />;
+  return <ClientePortal token={token} onSessionExpired={() => {
+    window.localStorage.removeItem("vs_cliente_token");
+    setToken(null);
+  }} />;
 }
 
 export default function ClientePage() {

@@ -81,7 +81,10 @@ export async function GET(req: NextRequest) {
       importe: order.importe,
       estado: order.estado,
       estadoLabel: ESTADO_LABELS[order.estado] || order.estado,
-      clips_mensuales: order.clips_mensuales,
+      driveFolder: order.drive_folder_id
+        ? `https://drive.google.com/drive/folders/${order.drive_folder_id}`
+        : null,
+      clips_mensuales: order.clips_mensuales ?? null,
       is_paused: order.is_paused,
       pause_until: order.pause_until,
       stripe_subscription_id: order.stripe_subscription_id,

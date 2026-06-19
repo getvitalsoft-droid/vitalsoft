@@ -27,6 +27,7 @@ const ESTADOS_ORDER = ["onboarding_pendiente","esperando_material","material_rec
 
 export default function AdminPage() {
   const [step, setStep] = useState<"login"|"sending"|"dashboard">("login");
+  const [sesionEnOtraPestana, setSesionEnOtraPestana] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -61,13 +62,24 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "vs_admin_session" && e.newValue) {
+        setSesionEnOtraPestana(true);
+        setTimeout(() => { try { window.close(); } catch {} }, 1500);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
     setMounted(true);
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, sess) => {
-      if (sess?.user) { setSession(sess); setAdminToken(sess.access_token); setStep("dashboard"); cargarTodo(sess.access_token); }
+      if (sess?.user) { setSession(sess); setAdminToken(sess.access_token); setStep("dashboard"); cargarTodo(sess.access_token); window.localStorage.setItem("vs_admin_session", sess.access_token.slice(-8)); }
       else if (event === "SIGNED_OUT") { setStep("login"); setSession(null); }
     });
     supabase.auth.getSession().then(({ data: { session: sess } }) => {
-      if (sess?.user) { setSession(sess); setAdminToken(sess.access_token); setStep("dashboard"); cargarTodo(sess.access_token); }
+      if (sess?.user) { setSession(sess); setAdminToken(sess.access_token); setStep("dashboard"); cargarTodo(sess.access_token); window.localStorage.setItem("vs_admin_session", sess.access_token.slice(-8)); }
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -157,7 +169,7 @@ export default function AdminPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8"><div className="font-display font-black text-2xl mb-1"><span className="text-[#d4f53c]">Vital</span>Soft</div><p className="text-white/40 text-sm">Panel de Administración</p></div>
         <form onSubmit={sendMagicLink} className="bg-white/[0.04] border border-white/[0.08] rounded-2xl p-8 space-y-4">
-          <div><label className="block text-xs text-white/40 mb-1.5">Email</label><input type="email" required placeholder="getvitalsoft@gmail.com" value={email} onChange={e => setEmail(e.target.value)} className={inp} /></div>
+          <div><label className="block text-xs text-white/40 mb-1.5">Email</label><input type="email" required placeholder="hola@vitalsoft.pro" value={email} onChange={e => setEmail(e.target.value)} className={inp} /></div>
           {error && <p className="text-red-400 text-xs">{error}</p>}
           <button type="submit" disabled={loading} className="w-full py-3 bg-[#d4f53c] hover:bg-[#b8e032] text-[#080808] font-display font-black rounded-xl transition-all disabled:opacity-50">{loading ? "Enviando..." : "Enviar enlace →"}</button>
         </form>
@@ -167,7 +179,23 @@ export default function AdminPage() {
 
   if (step === "sending") return (
     <main className="min-h-screen bg-[#080808] flex items-center justify-center px-4">
-      <div className="text-center max-w-sm"><div className="text-5xl mb-6">📧</div><h2 className="font-display font-black text-xl mb-3">Revisa tu email</h2><p className="text-white/40 text-sm mb-6">Enlace enviado a <strong className="text-white/60">{email}</strong></p><button onClick={() => setStep("login")} className="text-white/25 text-xs">← Volver</button></div>
+      <div className="text-center max-w-sm">
+        {sesionEnOtraPestana ? (
+          <>
+            <div className="text-5xl mb-6">✅</div>
+            <h2 className="font-display font-black text-xl mb-3">Ya iniciaste sesión</h2>
+            <p className="text-white/40 text-sm mb-4">El panel se abrió en otra pestaña. Puedes cerrar esta.</p>
+            <button onClick={() => window.close()} className="text-white/25 text-xs underline hover:text-white/40">Cerrar esta pestaña</button>
+          </>
+        ) : (
+          <>
+            <div className="text-5xl mb-6">📧</div>
+            <h2 className="font-display font-black text-xl mb-3">Revisa tu email</h2>
+            <p className="text-white/40 text-sm mb-6">Enlace enviado a <strong className="text-white/60">{email}</strong></p>
+            <button onClick={() => setStep("login")} className="text-white/25 text-xs">← Volver</button>
+          </>
+        )}
+      </div>
     </main>
   );
 
